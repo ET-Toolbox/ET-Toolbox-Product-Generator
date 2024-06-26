@@ -9,7 +9,7 @@ from dateutil import parser
 
 import cl
 from GEDI import GEDICanopyHeight
-from GEOS5FP import GEOS5FP
+from geos5fp import GEOS5FP
 from LandsatL2C2 import LandsatL2C2
 from modisci import MODISCI
 from PTJPLSM import PTJPLSM, DEFAULT_PREVIEW_QUALITY, DEFAULT_RESAMPLING

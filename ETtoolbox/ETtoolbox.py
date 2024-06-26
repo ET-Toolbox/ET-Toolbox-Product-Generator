@@ -8,7 +8,7 @@ import numpy as np
 import cl
 import rasters as rt
 from GEDI import GEDICanopyHeight
-from GEOS5FP import GEOS5FP
+from geos5fp import GEOS5FP
 from GFS import forecast_Ta_C, forecast_RH, get_GFS_listing, forecast_SWin
 from HLS.HLS2 import HLS2CMR
 from LANCE import retrieve_VNP43MA4N, retrieve_VNP43IA4N, retrieve_VNP21NRT_emissivity, available_LANCE_dates
@@ -22,7 +22,7 @@ from SRTM import SRTM
 from soil_grids import SoilGrids
 from VIIRS_orbit.VIIRS_orbit import solar_to_UTC
 from daterange import date_range
-from downscaling import bias_correct, downscale_soil_moisture, downscale_air_temperature, \
+from geos5fp.downscaling import bias_correct, downscale_soil_moisture, downscale_air_temperature, \
     downscale_vapor_pressure_deficit, downscale_relative_humidity
 from rasters import Raster, RasterGrid
 from sentinel import sentinel_tile_grid

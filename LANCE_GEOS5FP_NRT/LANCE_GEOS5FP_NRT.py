@@ -4,7 +4,7 @@ from typing import Dict, Callable
 import boto3
 import rasters
 from GEDI import GEDICanopyHeight
-from GEOS5FP import GEOS5FP
+from geos5fp import GEOS5FP
 from LANCE import *
 from LANCE import LANCENotAvailableError
 from modisci import MODISCI
@@ -12,7 +12,7 @@ from PTJPL import PTJPL
 from PTJPLSM import PTJPLSM
 from SRTM import SRTM
 from soil_grids import SoilGrids
-from downscaling import downscale_air_temperature, downscale_soil_moisture, downscale_vapor_pressure_deficit, \
+from geos5fp.downscaling import downscale_air_temperature, downscale_soil_moisture, downscale_vapor_pressure_deficit, \
     downscale_relative_humidity, bias_correct
 
 from LANCE import ARCHIVE

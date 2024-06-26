@@ -9,7 +9,7 @@ import logging
 from dateutil import parser
 from typing import Dict, Callable
 from GEDI import GEDICanopyHeight
-from GEOS5FP import GEOS5FP
+from geos5fp import GEOS5FP
 from modisci import MODISCI
 from SRTM import SRTM
 from PTJPL import PTJPL

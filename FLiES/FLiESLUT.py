@@ -23,7 +23,7 @@ with warnings.catch_warnings():
     tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
     # from keras.engine.saving import load_model
 
-from GEOS5FP import GEOS5FP
+from geos5fp import GEOS5FP
 from SRTM import SRTM
 
 import numpy as np

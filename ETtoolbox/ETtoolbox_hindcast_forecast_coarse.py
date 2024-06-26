@@ -5,7 +5,7 @@ from typing import List, Callable, Union
 from os.path import join
 import cl
 from GEDI import GEDICanopyHeight
-from GEOS5FP import GEOS5FP
+from geos5fp import GEOS5FP
 from LANCE_GEOS5FP_NRT import LANCE_GEOS5FP_NRT, LANCENotAvailableError, GEOS5FPNotAvailableError
 from LANCE_GFS_forecast import LANCE_GFS_forecast
 from modisci import MODISCI

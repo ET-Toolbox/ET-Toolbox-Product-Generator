@@ -9,7 +9,7 @@ import warnings
 
 import cl
 import rasters as rt
-from GEOS5FP import GEOS5FP
+from geos5fp import GEOS5FP
 from SRTM import SRTM
 from model.model import DEFAULT_PREVIEW_QUALITY, DEFAULT_RESAMPLING, Model
 from rasters import Raster, RasterGrid

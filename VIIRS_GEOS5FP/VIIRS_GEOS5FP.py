@@ -3,7 +3,7 @@ from os.path import splitext
 from typing import Dict, Callable
 
 from GEDI import GEDICanopyHeight
-from GEOS5FP import GEOS5FP
+from geos5fp import GEOS5FP
 from LANCE import *
 from modisci import MODISCI
 from PTJPL import PTJPL
@@ -13,7 +13,7 @@ from soil_grids import SoilGrids
 from VIIRS.VNP09GA import VNP09GA
 from VIIRS.VNP21A1D import VNP21A1D
 from VIIRS.VNP43MA4 import VNP43MA4
-from downscaling import downscale_air_temperature, downscale_soil_moisture, downscale_vapor_pressure_deficit, \
+from geos5fp.downscaling import downscale_air_temperature, downscale_soil_moisture, downscale_vapor_pressure_deficit, \
     downscale_relative_humidity, bias_correct
 from PTJPL import FLOOR_TOPT
 
