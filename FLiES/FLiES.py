@@ -29,7 +29,7 @@ with warnings.catch_warnings():
     from keras.models import load_model
 
 import rasters as rt
-from GEOS5FP import GEOS5FP
+from geos5fp import GEOS5FP
 from SRTM import SRTM
 from koppengeiger import load_koppen_geiger
 from rasters import Raster, RasterGeometry

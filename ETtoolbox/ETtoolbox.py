@@ -8,7 +8,7 @@ import numpy as np
 import cl
 import rasters as rt
 from GEDI import GEDICanopyHeight
-from GEOS5FP import GEOS5FP
+from geos5fp import GEOS5FP
 from GFS import forecast_Ta_C, forecast_RH, get_GFS_listing, forecast_SWin
 from HLS.HLS2 import HLS2CMR
 from LANCE import retrieve_VNP43MA4N, retrieve_VNP43IA4N, retrieve_VNP21NRT_emissivity, available_LANCE_dates

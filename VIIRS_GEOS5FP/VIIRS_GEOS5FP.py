@@ -3,7 +3,7 @@ from os.path import splitext
 from typing import Dict, Callable
 
 from GEDI import GEDICanopyHeight
-from GEOS5FP import GEOS5FP
+from geos5fp import GEOS5FP
 from LANCE import *
 from modisci import MODISCI
 from PTJPL import PTJPL

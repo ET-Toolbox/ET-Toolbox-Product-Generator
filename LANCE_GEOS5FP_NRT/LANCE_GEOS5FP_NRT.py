@@ -4,7 +4,7 @@ from typing import Dict, Callable
 import boto3
 import rasters
 from GEDI import GEDICanopyHeight
-from GEOS5FP import GEOS5FP
+from geos5fp import GEOS5FP
 from LANCE import *
 from LANCE import LANCENotAvailableError
 from modisci import MODISCI
