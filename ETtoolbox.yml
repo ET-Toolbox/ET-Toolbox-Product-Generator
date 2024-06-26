@@ -57,3 +57,4 @@ dependencies:
       - rasters>=1.0.5
       - sentinelsat
       - spacetrack
+      - git+https://github.com/JPL-Evapotranspiration-Algorithms/modland.git@main
