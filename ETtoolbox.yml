@@ -59,3 +59,4 @@ dependencies:
       - spacetrack
       - git+https://github.com/JPL-Evapotranspiration-Algorithms/modland.git@main
       - git+https://github.com/JPL-Evapotranspiration-Algorithms/koppengeiger.git@main
+      - git+https://github.com/JPL-Evapotranspiration-Algorithms/soil_grids.git@main
