@@ -12,7 +12,7 @@ from PTJPL import PTJPL
 from PTJPLSM import PTJPLSM
 from SRTM import SRTM
 from soil_grids import SoilGrids
-from downscaling import downscale_air_temperature, downscale_soil_moisture, downscale_vapor_pressure_deficit, \
+from geos5fp.downscaling import downscale_air_temperature, downscale_soil_moisture, downscale_vapor_pressure_deficit, \
     downscale_relative_humidity, bias_correct
 
 from LANCE import ARCHIVE

@@ -10,7 +10,7 @@ from PTJPL import PTJPL
 from PTJPLSM import PTJPLSM, GEOS5FPNotAvailableError
 from SRTM import SRTM
 from soil_grids import SoilGrids
-from downscaling import downscale_air_temperature, downscale_soil_moisture, bias_correct
+from geos5fp.downscaling import downscale_air_temperature, downscale_soil_moisture, bias_correct
 from sentinel import sentinel_tile_grid
 
 DEFAULT_GFS_DOWNLOAD_DIRECTORY = "GFS_download_directory"

@@ -22,7 +22,7 @@ from SRTM import SRTM
 from soil_grids import SoilGrids
 from VIIRS_orbit.VIIRS_orbit import solar_to_UTC
 from daterange import date_range
-from downscaling import bias_correct, downscale_soil_moisture, downscale_air_temperature, \
+from geos5fp.downscaling import bias_correct, downscale_soil_moisture, downscale_air_temperature, \
     downscale_vapor_pressure_deficit, downscale_relative_humidity
 from rasters import Raster, RasterGrid
 from sentinel import sentinel_tile_grid
