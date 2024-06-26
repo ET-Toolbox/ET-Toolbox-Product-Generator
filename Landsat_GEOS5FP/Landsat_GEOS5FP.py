@@ -8,7 +8,7 @@ from sentinel import sentinel_tile_grid
 import logging
 from dateutil import parser
 from typing import Dict, Callable
-from GEDI import GEDICanopyHeight
+from gedi_canopy_height import GEDICanopyHeight
 from geos5fp import GEOS5FP
 from modisci import MODISCI
 from SRTM import SRTM

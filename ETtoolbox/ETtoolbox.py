@@ -7,7 +7,7 @@ import numpy as np
 
 import cl
 import rasters as rt
-from GEDI import GEDICanopyHeight
+from gedi_canopy_height import GEDICanopyHeight
 from geos5fp import GEOS5FP
 from GFS import forecast_Ta_C, forecast_RH, get_GFS_listing, forecast_SWin
 from HLS.HLS2 import HLS2CMR

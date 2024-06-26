@@ -14,7 +14,7 @@ import rasters as rt
 
 from BESS import BESS, DEFAULT_DOWNSCALE_AIR, DEFAULT_DOWNSCALE_HUMIDITY, DEFAULT_DOWNSCALE_MOISTURE
 
-from GEDI import GEDICanopyHeight
+from gedi_canopy_height import GEDICanopyHeight
 
 from geos5fp import GEOS5FP
 from modisci import MODISCI
