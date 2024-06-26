@@ -58,4 +58,4 @@ dependencies:
       - sentinelsat
       - spacetrack
       - git+https://github.com/JPL-Evapotranspiration-Algorithms/modland.git@main
-      - git+git@github.com:JPL-Evapotranspiration-Algorithms/koppengeiger.git@main
+      - git+https://github.com/JPL-Evapotranspiration-Algorithms/koppengeiger.git@main
