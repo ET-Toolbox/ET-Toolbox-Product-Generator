@@ -1,5 +1,5 @@
 import sys
-from LANCE_GFS_forecast.LANCE_GFS_forecast import available_LANCE_dates
+from ETtoolbox.LANCE_GFS_forecast import available_LANCE_dates
 
 def main(argv=sys.argv):
     dates = available_LANCE_dates("VNP43MA4N")
