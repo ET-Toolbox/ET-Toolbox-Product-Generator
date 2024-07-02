@@ -28,6 +28,8 @@ from ETtoolbox.ERS_credentials import get_ERS_credentials
 from rasters import RasterGrid
 from time import sleep
 
+from ETtoolbox.M2M_credentials.M2M_credentials import get_M2M_credentials
+
 class M2MAPIUnavailableError(Exception):
     pass
 
@@ -55,7 +57,7 @@ class EEAPI:
             host_URL = self._M2MHOST
 
         if username is None or password is None:
-            credentials = get_ERS_credentials()
+            credentials = get_M2M_credentials()
             username = credentials["username"]
             password = credentials["password"]
 
