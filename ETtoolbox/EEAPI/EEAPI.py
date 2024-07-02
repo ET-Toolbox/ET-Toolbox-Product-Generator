@@ -51,6 +51,7 @@ class EEAPI:
             self,
             username: str = None,
             password: str = None,
+            API_key: str = None,
             host_URL: str = None,
             download_directory: str = None):
         if host_URL is None:
@@ -63,7 +64,7 @@ class EEAPI:
 
         self._username = username
         self._password = password
-        self._API_key = None
+        self._API_key = API_key
 
         self.host_URL = host_URL
 
@@ -83,7 +84,7 @@ class EEAPI:
         return json.dumps(
             {
                 "host": self.host_URL,
-                "key": self.API_key,
+                # "key": self.API_key,
                 "download_directory": self.download_directory
             },
             indent=2
