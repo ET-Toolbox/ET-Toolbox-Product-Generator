@@ -3,7 +3,7 @@ import sys
 from datetime import date
 from typing import Union
 from dateutil import parser
-import cl
+import colored_logging
 from sentinel import Sentinel
 
 
@@ -13,7 +13,7 @@ def find_sentinel(
         tile: str):
     logger = logging.getLogger(__name__)
 
-    logger.info(f"searching Sentinel L2A at {cl.place(tile)}")
+    logger.info(f"searching Sentinel L2A at {colored_logging.place(tile)}")
 
     sentinel = Sentinel()
     listing = sentinel.search_L2A(
@@ -23,13 +23,13 @@ def find_sentinel(
     )
 
     listing = listing.sort_values(by="date")
-    logger.info(f"found {cl.val(len(listing))} Sentinel scenes")
+    logger.info(f"found {colored_logging.val(len(listing))} Sentinel scenes")
 
     for i, row in listing.iterrows():
         date_UTC = row.date
         granule_ID = row.ID
 
-        logger.info("* date: " + cl.time(f"{date_UTC} UTC") + " granule: " + cl.val(granule_ID))
+        logger.info("* date: " + colored_logging.time(f"{date_UTC} UTC") + " granule: " + colored_logging.val(granule_ID))
 
 
 def main(argv=sys.argv):

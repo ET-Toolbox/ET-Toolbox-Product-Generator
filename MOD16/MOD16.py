@@ -521,7 +521,7 @@ class MOD16(FLiES):
         if IGBP is None:
             IGBP = self.IGBP_subset(geometry)
 
-        image = Raster(float32(array(LUT['cl'])[IGBP]), geometry=IGBP.geometry).to_geometry(geometry,
+        image = Raster(float32(array(LUT['colored_logging'])[IGBP]), geometry=IGBP.geometry).to_geometry(geometry,
                                                                                             resampling=resampling)
 
         return image
@@ -1000,7 +1000,7 @@ class MOD16(FLiES):
             results['rcorr'] = rcorr
 
         # query biome-specific mean potential stomatal conductance per unit leaf area
-        # CL = array(LUT['cl'])[IGBP]
+        # CL = array(LUT['colored_logging'])[IGBP]
         CL = self.CL(geometry=geometry, IGBP=IGBP_subset)
 
         CL = where(water, nan, CL)

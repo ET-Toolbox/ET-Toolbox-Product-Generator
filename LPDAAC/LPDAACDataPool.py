@@ -23,7 +23,7 @@ from bs4 import BeautifulSoup
 from dateutil import parser
 from pycksum import cksum
 
-import cl
+import colored_logging
 from ERS_credentials import get_ERS_credentials
 
 DEFAULT_REMOTE = "https://e4ftl01.cr.usgs.gov"
@@ -115,7 +115,7 @@ class LPDAACDataPool:
                 raise ConnectionError(message)
 
     def _check_remote(self):
-        logger.info(f"checking URL: {cl.URL(self.remote)}")
+        logger.info(f"checking URL: {colored_logging.URL(self.remote)}")
 
         try:
             response = requests.head(self.remote)
@@ -133,9 +133,9 @@ class LPDAACDataPool:
 
         if status == 200:
             logger.info(
-                "remote verified with status " + cl.val(200) +
-                " in " + cl.time(f"{duration:0.2f}") +
-                " seconds: " + cl.URL(self.remote))
+                "remote verified with status " + colored_logging.val(200) +
+                " in " + colored_logging.time(f"{duration:0.2f}") +
+                " seconds: " + colored_logging.URL(self.remote))
         else:
             message = f"status: {status} URL: {self.remote}"
 
@@ -197,13 +197,13 @@ class LPDAACDataPool:
 
     def get_metadata(self, data_URL: str) -> OrderedDict:
         metadata_URL = f"{data_URL}.xml"
-        logger.info(f"checking metadata: {cl.URL(metadata_URL)}")
+        logger.info(f"checking metadata: {colored_logging.URL(metadata_URL)}")
         request = urllib.request.Request(metadata_URL)
         response = urllib.request.urlopen(request)
         duration = response.elapsed.total_seconds()
         body = response.read().decode()
         metadata = xmltodict.parse(body)
-        logger.info("metadata retrieved in " + cl.val(f"{duration:0.2f}") + " seconds: " + cl.URL(metadata_URL))
+        logger.info("metadata retrieved in " + colored_logging.val(f"{duration:0.2f}") + " seconds: " + colored_logging.URL(metadata_URL))
 
         return metadata
 
@@ -282,12 +282,12 @@ class LPDAACDataPool:
             filename = download_location
 
         if exists(filename):
-            logger.info(f"file already retrieved: {cl.file(filename)}")
+            logger.info(f"file already retrieved: {colored_logging.file(filename)}")
             return filename
 
         # metadata = self.get_metadata(URL)
         metadata_URL = f"{URL}.xml"
-        logger.info(f"checking metadata: {cl.URL(metadata_URL)}")
+        logger.info(f"checking metadata: {colored_logging.URL(metadata_URL)}")
 
         if isdir(download_location):
             metadata_filename = join(download_location, posixpath.basename(metadata_URL))
@@ -360,9 +360,9 @@ class LPDAACDataPool:
             metadata["GranuleMetaDataFile"]["GranuleURMetaData"]["DataFiles"]["DataFileContainer"]["FileSize"])
 
         logger.info(
-            f"metadata retrieved {checksum_type} checksum: {cl.val(remote_checksum)} size: {cl.val(remote_filesize)} URL: {cl.URL(metadata_URL)}")
+            f"metadata retrieved {checksum_type} checksum: {colored_logging.val(remote_checksum)} size: {colored_logging.val(remote_filesize)} URL: {colored_logging.URL(metadata_URL)}")
         makedirs(dirname(filename), exist_ok=True)
-        logger.info(f"downloading {cl.URL(URL)} -> {cl.file(filename)}")
+        logger.info(f"downloading {colored_logging.URL(URL)} -> {colored_logging.file(filename)}")
 
         # Use a temporary file for downloading
         temporary_filename = f"{filename}.download"
@@ -399,7 +399,7 @@ class LPDAACDataPool:
                                 f"removing corrupted file with local checksum {local_checksum} and remote checksum {remote_checksum}: {temporary_filename}")
                             remove(temporary_filename)
                     else:
-                        logger.info(f"resuming incomplete download: {cl.file(temporary_filename)}")
+                        logger.info(f"resuming incomplete download: {colored_logging.file(temporary_filename)}")
 
                 command = f"wget -nc -c --user {self._username} --password {self._password} -O {temporary_filename} {URL}"
                 logger.info(command)
@@ -420,7 +420,7 @@ class LPDAACDataPool:
                 shutil.move(temporary_filename, filename)
 
                 logger.info(
-                    f"successful download with filesize {cl.val(local_filesize)} checksum {cl.val(local_checksum)}: {cl.file(filename)}")
+                    f"successful download with filesize {colored_logging.val(local_filesize)} checksum {colored_logging.val(local_checksum)}: {colored_logging.file(filename)}")
 
                 return filename
             except Exception as e:

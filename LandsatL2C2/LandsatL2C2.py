@@ -20,7 +20,7 @@ from matplotlib.colors import LinearSegmentedColormap
 from pyproj import Proj, transform
 from shapely.geometry import Polygon, Point
 
-import cl
+import colored_logging
 import rasters
 import rasters as rt
 from EEAPI import EEAPI
@@ -344,7 +344,7 @@ class LandsatL2C2Granule(object):
         return display_string
 
     def remove(self):
-        self.logger.info("removing granule source: " + cl.file(self.path))
+        self.logger.info("removing granule source: " + colored_logging.file(self.path))
 
         path = Path(self.path)
 
@@ -356,7 +356,7 @@ class LandsatL2C2Granule(object):
         parent = path.parent
 
         if len([item for item in listdir(parent) if not item.startswith(".")]) == 0:
-            self.logger.info("removing empty directory: " + cl.dir(parent))
+            self.logger.info("removing empty directory: " + colored_logging.dir(parent))
             rmtree(parent)
 
     @property
@@ -573,11 +573,11 @@ class LandsatL2C2Granule(object):
         if preview_quality is None:
             preview_quality = self.preview_quality
 
-        self.logger.info(f"saving Landsat {cl.val(product_name)}: {cl.file(product_filename)}")
+        self.logger.info(f"saving Landsat {colored_logging.val(product_name)}: {colored_logging.file(product_filename)}")
         image.to_geotiff(product_filename)
 
         if save_preview:
-            self.logger.info(f"saving Landsat {cl.val(product_name)} preview: {cl.file(preview_filename)}")
+            self.logger.info(f"saving Landsat {colored_logging.val(product_name)} preview: {colored_logging.file(preview_filename)}")
             image.percentilecut.to_geojpeg(preview_filename, quality=preview_quality, remove_XML=True)
 
         return product_filename
@@ -796,7 +796,7 @@ class LandsatL2C2Granule(object):
             product = "WST_K"
 
         if exists(product_filename):
-            self.logger.info(f"loading Landsat {cl.val(product)}: {cl.file(product_filename)}")
+            self.logger.info(f"loading Landsat {colored_logging.val(product)}: {colored_logging.file(product_filename)}")
 
             if return_raster:
                 image = Raster.open(product_filename)
@@ -1183,11 +1183,11 @@ class LandsatL2C2(EEAPI):
         if preview_quality is None:
             preview_quality = self.preview_quality
 
-        self.logger.info(f"saving Landsat {cl.val(product_name)} mosaic: {cl.file(product_filename)}")
+        self.logger.info(f"saving Landsat {colored_logging.val(product_name)} mosaic: {colored_logging.file(product_filename)}")
         image.to_geotiff(product_filename)
 
         if save_preview:
-            self.logger.info(f"saving Landsat {cl.val(product_name)} mosaic preview: {cl.file(preview_filename)}")
+            self.logger.info(f"saving Landsat {colored_logging.val(product_name)} mosaic preview: {colored_logging.file(preview_filename)}")
             image.percentilecut.to_geojpeg(preview_filename, quality=preview_quality, remove_XML=True)
 
         return product_filename
@@ -1274,7 +1274,7 @@ class LandsatL2C2(EEAPI):
 
         if tiles is None and target_geometry is not None:
             tiles = self.WRS2.tiles(target_vector, eliminate_redundancy=True).tile
-            self.logger.info("Landsat path/row tiles: " + cl.place(', '.join(tiles)))
+            self.logger.info("Landsat path/row tiles: " + colored_logging.place(', '.join(tiles)))
 
         if isinstance(tiles, str):
             tiles = [tiles]
@@ -1293,9 +1293,9 @@ class LandsatL2C2(EEAPI):
         for dataset in datasets:
             for tile in tiles:
                 self.logger.info(
-                    f"searching dataset {cl.val(dataset)} tile {cl.place(tile)}" +
-                    " from " + cl.time(f"{start:%Y-%m-%d}") +
-                    " to " + cl.time(f"{end:%Y-%m-%d}")
+                    f"searching dataset {colored_logging.val(dataset)} tile {colored_logging.place(tile)}" +
+                    " from " + colored_logging.time(f"{start:%Y-%m-%d}") +
+                    " to " + colored_logging.time(f"{end:%Y-%m-%d}")
                 )
 
                 search_results = super(LandsatL2C2, self).scene_search(
@@ -1309,7 +1309,7 @@ class LandsatL2C2(EEAPI):
                     ascending=ascending
                 )
 
-                self.logger.info(f"found {cl.val(len(search_results))} scenes")
+                self.logger.info(f"found {colored_logging.val(len(search_results))} scenes")
 
                 search_results["dataset"] = dataset
 
@@ -1480,10 +1480,10 @@ class LandsatL2C2(EEAPI):
             bands: List[str] = None) -> LandsatL2C2Granule or None:
 
         if bands is None:
-            self.logger.info(f"retrieving whole Landsat L2 C2 granule: {cl.name(granule_ID)}")
+            self.logger.info(f"retrieving whole Landsat L2 C2 granule: {colored_logging.name(granule_ID)}")
         else:
             bands = [self.translate_band_name(band, dataset) for band in bands]
-            self.logger.info(f"retrieving Landsat L2 C2 granule: {cl.name(granule_ID)} bands: {', '.join(bands)}")
+            self.logger.info(f"retrieving Landsat L2 C2 granule: {colored_logging.name(granule_ID)} bands: {', '.join(bands)}")
 
         directory = super(LandsatL2C2, self).retrieve_granule(
             dataset=dataset,
@@ -1571,7 +1571,7 @@ class LandsatL2C2(EEAPI):
         if band_names is None:
             band_names = self.required_bands(product)
 
-        # self.logger.info(f"retrieving Landsat L2 C2 granule: {cl.name(granule_ID)}")
+        # self.logger.info(f"retrieving Landsat L2 C2 granule: {colored_logging.name(granule_ID)}")
         granule = self.retrieve_granule(
             dataset=dataset,
             date_UTC=date_UTC,
@@ -1583,7 +1583,7 @@ class LandsatL2C2(EEAPI):
         time_UTC = granule.time_UTC
 
         source_filename = granule.path
-        self.logger.info(f"processing {cl.val(product)} for granule: {cl.val(granule_ID)}")
+        self.logger.info(f"processing {colored_logging.val(product)} for granule: {colored_logging.val(granule_ID)}")
 
         image, product_filename = granule.product(
             product=product,
@@ -1596,7 +1596,7 @@ class LandsatL2C2(EEAPI):
             granule.remove()
 
         pixel_count = np.count_nonzero(~np.isnan(image))
-        self.logger.info(f"retrieved {cl.val(product)} {cl.val(pixel_count)} pixels from {cl.val(granule_ID)}")
+        self.logger.info(f"retrieved {colored_logging.val(product)} {colored_logging.val(pixel_count)} pixels from {colored_logging.val(granule_ID)}")
 
         return image, product_filename, source_filename, time_UTC
 
@@ -1618,7 +1618,7 @@ class LandsatL2C2(EEAPI):
         generating_mosaic = False
 
         if geometry is not None and target is not None:
-            self.logger.info(f"generating mosaic: {cl.name(target)}")
+            self.logger.info(f"generating mosaic: {colored_logging.name(target)}")
             generating_mosaic = True
 
         scenes = self.scene_search(
@@ -1635,23 +1635,23 @@ class LandsatL2C2(EEAPI):
 
         dates_available = sorted(set(scenes.date_UTC))
         results_rows = []
-        self.logger.info(f"processing {cl.val(len(scenes))} results")
+        self.logger.info(f"processing {colored_logging.val(len(scenes))} results")
 
         for i, date_UTC in enumerate(dates_available):
             product_filenames = {}
             mosaic_time_UTC = None
-            self.logger.info(f"processing {cl.val(len(products))} products: {cl.val(', '.join(products))}")
+            self.logger.info(f"processing {colored_logging.val(len(products))} products: {colored_logging.val(', '.join(products))}")
 
             for product in products:
-                self.logger.info(f"processing product: {cl.name(product)}")
+                self.logger.info(f"processing product: {colored_logging.name(product)}")
                 day_scenes = scenes[scenes.date_UTC == date_UTC]
                 sensors = sorted(np.unique(day_scenes.sensor))
 
-                self.logger.info(f"processing {cl.val(len(sensors))} sensors: {cl.val(', '.join(sensors))}")
+                self.logger.info(f"processing {colored_logging.val(len(sensors))} sensors: {colored_logging.val(', '.join(sensors))}")
 
                 for sensor in sensors:
                     mosaic_previously_generated = False
-                    self.logger.info(f"processing sensor: {cl.name(sensor)}")
+                    self.logger.info(f"processing sensor: {colored_logging.name(sensor)}")
                     image = None
                     scene_image = None
                     mosaic_filename = None
@@ -1660,18 +1660,18 @@ class LandsatL2C2(EEAPI):
                     if generating_mosaic:
                         mosaic_filename = None
                         self.logger.info(
-                            f"generating {cl.val(sensor)} {cl.val(product)} " +
-                            "on " + cl.time(f"{date_UTC:%Y-%m-%d} for target {cl.name(target)}")
+                            f"generating {colored_logging.val(sensor)} {colored_logging.val(product)} " +
+                            "on " + colored_logging.time(f"{date_UTC:%Y-%m-%d} for target {colored_logging.name(target)}")
                         )
                     else:
                         self.logger.info(
-                            f"generating {cl.val(sensor)} {cl.val(product)} mosaic " +
-                            "at " + cl.place(target) +
-                            " on " + cl.time(f"{date_UTC:%Y-%m-%d}")
+                            f"generating {colored_logging.val(sensor)} {colored_logging.val(product)} mosaic " +
+                            "at " + colored_logging.place(target) +
+                            " on " + colored_logging.time(f"{date_UTC:%Y-%m-%d}")
                         )
 
                     day_scene_count = len(day_scenes)
-                    self.logger.info(f"processing {cl.val(day_scene_count)} scenes for date {cl.time(date_UTC)}")
+                    self.logger.info(f"processing {colored_logging.val(day_scene_count)} scenes for date {colored_logging.time(date_UTC)}")
 
                     for j, scene in day_scenes.iterrows():
                         granule_ID = scene.granule_ID
@@ -1682,7 +1682,7 @@ class LandsatL2C2(EEAPI):
 
                         try:
                             self.logger.info(
-                                f"processing {cl.val(product)} scene image for granule: {cl.val(granule_ID)}")
+                                f"processing {colored_logging.val(product)} scene image for granule: {colored_logging.val(granule_ID)}")
 
                             scene_image, scene_product_filename, source_filename, time_UTC = self.process_scene(
                                 product=product,
@@ -1695,24 +1695,24 @@ class LandsatL2C2(EEAPI):
                             )
 
                             if j == 0:
-                                self.logger.info(f"date/time of first granule: {cl.time(time_UTC)}")
+                                self.logger.info(f"date/time of first granule: {colored_logging.time(time_UTC)}")
                                 mosaic_time_UTC = time_UTC
                                 mosaic_filename = self.mosaic_filename(product, time_UTC, target, sensor)
                                 product_filenames[product] = mosaic_filename
 
                                 if exists(mosaic_filename):
-                                    self.logger.info(f"Landsat mosaic already exists: {cl.file(mosaic_filename)}")
+                                    self.logger.info(f"Landsat mosaic already exists: {colored_logging.file(mosaic_filename)}")
                                     mosaic_previously_generated = True
                                     continue
                                 else:
-                                    self.logger.info(f"mosaic filename: {cl.file(mosaic_filename)}")
+                                    self.logger.info(f"mosaic filename: {colored_logging.file(mosaic_filename)}")
 
                             if scene_image is None:
                                 raise ValueError("failed to generate scene image")
 
                             if scene_image is not None and np.all(np.isnan(scene_image)):
                                 self.logger.warning(
-                                    "no pixels retrieved over target geometry from granule: " + cl.val(granule_ID))
+                                    "no pixels retrieved over target geometry from granule: " + colored_logging.val(granule_ID))
 
                             if generating_mosaic:
                                 if image is None:
@@ -1734,7 +1734,7 @@ class LandsatL2C2(EEAPI):
 
                         if not exists(mosaic_filename):
                             image.cmap = self.product_cmap(product)
-                            self.logger.info(f"writing Landsat {cl.val(product)} mosaic: {cl.file(mosaic_filename)}")
+                            self.logger.info(f"writing Landsat {colored_logging.val(product)} mosaic: {colored_logging.file(mosaic_filename)}")
                             image.to_geotiff(mosaic_filename)
 
                         if mosaic_filename is not None and not exists(mosaic_filename):
@@ -1825,7 +1825,7 @@ class LandsatL2C2(EEAPI):
             )
 
             if exists(mosaic_filename):
-                self.logger.info(f"loading Landsat {cl.val(product)} mosaic: {cl.file(mosaic_filename)}")
+                self.logger.info(f"loading Landsat {colored_logging.val(product)} mosaic: {colored_logging.file(mosaic_filename)}")
 
                 if return_raster:
                     sensor_image = Raster.open(mosaic_filename)
@@ -1858,19 +1858,19 @@ class LandsatL2C2(EEAPI):
                                 bands=bands
                             )
 
-                            self.logger.info(f"processing {cl.val(product)} for granule: {cl.val(granule_ID)}")
+                            self.logger.info(f"processing {colored_logging.val(product)} for granule: {colored_logging.val(granule_ID)}")
                             scene_image = granule.product(product=product, geometry=geometry)
 
                             pixel_count = np.count_nonzero(~np.isnan(scene_image))
                             self.logger.info(
-                                f"retrieved {cl.val(product)} {cl.val(pixel_count)} pixels from {granule_ID}")
+                                f"retrieved {colored_logging.val(product)} {colored_logging.val(pixel_count)} pixels from {granule_ID}")
 
                             if self.remove_sources:
                                 granule.remove()
 
                         if np.all(np.isnan(scene_image)):
                             self.logger.warning(
-                                "no pixels retrieved over target geometry from granule: " + cl.val(granule_ID))
+                                "no pixels retrieved over target geometry from granule: " + colored_logging.val(granule_ID))
 
                         if sensor_image is None:
                             sensor_image = scene_image

@@ -13,7 +13,7 @@ from matplotlib.colors import LinearSegmentedColormap
 from shapely.geometry import Point, Polygon
 from skimage.transform import resize
 
-import cl
+import colored_logging
 import rasters
 import rasters as rt
 from modland.indices import parsehv, generate_MODLAND_grid
@@ -52,11 +52,11 @@ class VNP21A1DGranule(VIIRSGranule):
             h, v = self.hv
             grid = generate_MODLAND_grid(h, v, QC.shape[0])
 
-            logger.info("opening VIIRS file: " + cl.file(self.filename))
+            logger.info("opening VIIRS file: " + colored_logging.file(self.filename))
 
             logger.info(
-                f"loading {cl.val(dataset_name)} " +
-                "at " + cl.val(f"{grid.cell_size:0.2f} m") + " resolution"
+                f"loading {colored_logging.val(dataset_name)} " +
+                "at " + colored_logging.val(f"{grid.cell_size:0.2f} m") + " resolution"
             )
 
             QC = Raster(QC, geometry=grid)
@@ -110,11 +110,11 @@ class VNP21A1DGranule(VIIRSGranule):
             h, v = self.hv
             grid = generate_MODLAND_grid(h, v, DN.shape[0])
 
-            logger.info("opening VIIRS file: " + cl.file(self.filename))
+            logger.info("opening VIIRS file: " + colored_logging.file(self.filename))
 
             logger.info(
-                f"loading {cl.val(dataset_name)} " +
-                "at " + cl.val(f"{grid.cell_size:0.2f} m") + " resolution"
+                f"loading {colored_logging.val(dataset_name)} " +
+                "at " + colored_logging.val(f"{grid.cell_size:0.2f} m") + " resolution"
             )
 
             DN = Raster(DN, geometry=grid)
@@ -157,7 +157,7 @@ class VNP21A1DGranule(VIIRSGranule):
             product_filename = self.product_filename(f"Emis_14")
 
         if product_filename is not None and exists(product_filename):
-            logger.info("loading VIIRS emissivity band 14: " + cl.file(product_filename))
+            logger.info("loading VIIRS emissivity band 14: " + colored_logging.file(product_filename))
             image = Raster.open(product_filename)
         else:
             image = self.dataset(
@@ -173,7 +173,7 @@ class VNP21A1DGranule(VIIRSGranule):
             raise ValueError("blank emissivity band 14 image")
 
         if save_data and not exists(product_filename):
-            logger.info(f"writing VIIRS emissivity band 14: {cl.file(product_filename)} {cl.val(image.shape)}")
+            logger.info(f"writing VIIRS emissivity band 14: {colored_logging.file(product_filename)} {colored_logging.val(image.shape)}")
             image.to_geotiff(product_filename)
 
             if save_preview:
@@ -196,7 +196,7 @@ class VNP21A1DGranule(VIIRSGranule):
             product_filename = self.product_filename(f"Emis_15")
 
         if product_filename is not None and exists(product_filename):
-            logger.info("loading VIIRS emissivity band 15: " + cl.file(product_filename))
+            logger.info("loading VIIRS emissivity band 15: " + colored_logging.file(product_filename))
             image = Raster.open(product_filename)
         else:
             image = self.dataset(
@@ -212,7 +212,7 @@ class VNP21A1DGranule(VIIRSGranule):
             raise ValueError("blank emissivity band 15 image")
 
         if save_data and not exists(product_filename):
-            logger.info(f"writing VIIRS emissivity band 15: {cl.file(product_filename)} {cl.val(image.shape)}")
+            logger.info(f"writing VIIRS emissivity band 15: {colored_logging.file(product_filename)} {colored_logging.val(image.shape)}")
             image.to_geotiff(product_filename)
 
             if save_preview:
@@ -235,7 +235,7 @@ class VNP21A1DGranule(VIIRSGranule):
             product_filename = self.product_filename(f"Emis_16")
 
         if product_filename is not None and exists(product_filename):
-            logger.info("loading VIIRS emissivity band 16: " + cl.file(product_filename))
+            logger.info("loading VIIRS emissivity band 16: " + colored_logging.file(product_filename))
             image = Raster.open(product_filename)
         else:
             image = self.dataset(
@@ -251,7 +251,7 @@ class VNP21A1DGranule(VIIRSGranule):
             raise ValueError("blank emissivity band 16 image")
 
         if save_data and not exists(product_filename):
-            logger.info(f"writing VIIRS emissivity band 16: {cl.file(product_filename)} {cl.val(image.shape)}")
+            logger.info(f"writing VIIRS emissivity band 16: {colored_logging.file(product_filename)} {colored_logging.val(image.shape)}")
             image.to_geotiff(product_filename)
 
             if save_preview:
@@ -274,7 +274,7 @@ class VNP21A1DGranule(VIIRSGranule):
             product_filename = self.product_filename(f"LST_1KM")
 
         if product_filename is not None and exists(product_filename):
-            logger.info("loading VIIRS LST 1km: " + cl.file(product_filename))
+            logger.info("loading VIIRS LST 1km: " + colored_logging.file(product_filename))
             image = Raster.open(product_filename)
         else:
             image = self.dataset(
@@ -293,7 +293,7 @@ class VNP21A1DGranule(VIIRSGranule):
             raise ValueError("blank LST 1km image")
 
         if save_data and not exists(product_filename):
-            logger.info(f"writing VIIRS LST 1km: {cl.file(product_filename)} {cl.val(image.shape)}")
+            logger.info(f"writing VIIRS LST 1km: {colored_logging.file(product_filename)} {colored_logging.val(image.shape)}")
             image.to_geotiff(product_filename)
 
             if save_preview:
@@ -322,7 +322,7 @@ class VNP21A1DGranule(VIIRSGranule):
             product_filename = self.product_filename(f"View_Angle")
 
         if product_filename is not None and exists(product_filename):
-            logger.info("loading VIIRS view angle: " + cl.file(product_filename))
+            logger.info("loading VIIRS view angle: " + colored_logging.file(product_filename))
             image = Raster.open(product_filename)
         else:
             image = self.dataset(
@@ -338,7 +338,7 @@ class VNP21A1DGranule(VIIRSGranule):
             raise ValueError("blank view angle image")
 
         if save_data and not exists(product_filename):
-            logger.info(f"writing VIIRS view angle: {cl.file(product_filename)} {cl.val(image.shape)}")
+            logger.info(f"writing VIIRS view angle: {colored_logging.file(product_filename)} {colored_logging.val(image.shape)}")
             image.to_geotiff(product_filename)
 
             if save_preview:
@@ -497,9 +497,9 @@ class VNP21A1D(VIIRSDataPool):
             DN = np.array(f[dataset_name])
             grid = generate_MODLAND_grid(h, v, DN.shape[0])
             logger.info(
-                "loading " + cl.val(dataset_name) +
-                "at " + cl.val(f"{grid.cell_size} m") + " resolution " +
-                "from " + cl.file(filename)
+                "loading " + colored_logging.val(dataset_name) +
+                "at " + colored_logging.val(f"{grid.cell_size} m") + " resolution " +
+                "from " + colored_logging.file(filename)
             )
 
             DN = Raster(DN, geometry=grid)
@@ -552,7 +552,7 @@ class VNP21A1D(VIIRSDataPool):
         ST_C.cmap = "jet"
 
         if filename is not None:
-            logger.info("writing ST_C mosaic: " + cl.file(filename))
+            logger.info("writing ST_C mosaic: " + colored_logging.file(filename))
             ST_C.to_geotiff(filename)
 
         return ST_C
@@ -577,9 +577,9 @@ class VNP21A1D(VIIRSDataPool):
             end = parser.parse(end).date()
 
         if start == end:
-            logger.info(f"processing VIIRS at {cl.place(target)} on {cl.time(start)}")
+            logger.info(f"processing VIIRS at {colored_logging.place(target)} on {colored_logging.time(start)}")
         else:
-            logger.info(f"processing VIIRS at {cl.place(target)} from {cl.time(start)} to {cl.time(end)}"
+            logger.info(f"processing VIIRS at {colored_logging.place(target)} from {colored_logging.time(start)} to {colored_logging.time(end)}"
                         )
 
         if not isinstance(target_geometry, RasterGeometry):
@@ -603,12 +603,12 @@ class VNP21A1D(VIIRSDataPool):
                 )
 
                 if exists(product_filename):
-                    logger.info(f"VIIRS {cl.val(product)} already exists: {cl.file(product_filename)}")
+                    logger.info(f"VIIRS {colored_logging.val(product)} already exists: {colored_logging.file(product_filename)}")
                 else:
                     logger.info(
-                        f"generating VIIRS {cl.val(product)} mosaic " +
-                        "at " + cl.place(target) +
-                        "on " + cl.time(f"{acquisition_date:%Y-%m-%d}")
+                        f"generating VIIRS {colored_logging.val(product)} mosaic " +
+                        "at " + colored_logging.place(target) +
+                        "on " + colored_logging.time(f"{acquisition_date:%Y-%m-%d}")
                     )
 
                     if product == "ST_C":

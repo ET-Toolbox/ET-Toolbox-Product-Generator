@@ -83,7 +83,7 @@ def check_LANCE_already_processed(
         products: List[str]):
     already_processed = True
     logger.info(
-        f"checking if LANCE GEOS-5 FP has previously been processed at {cl.place(target)} on {cl.time(target_date)}")
+        f"checking if LANCE GEOS-5 FP has previously been processed at {colored_logging.place(target)} on {colored_logging.time(target_date)}")
 
     for product in products:
         filename = generate_LANCE_output_filename(
@@ -96,17 +96,17 @@ def check_LANCE_already_processed(
 
         if exists(filename):
             logger.info(
-                f"found previous LANCE GEOS-5 FP {cl.name(product)} at {cl.place(target)} on {cl.time(target_date)}: {cl.file(filename)}")
+                f"found previous LANCE GEOS-5 FP {colored_logging.name(product)} at {colored_logging.place(target)} on {colored_logging.time(target_date)}: {colored_logging.file(filename)}")
         else:
             logger.info(
-                f"did not find previous LANCE GEOS-5 FP {cl.name(product)} at {cl.place(target)} on {cl.time(target_date)}")
+                f"did not find previous LANCE GEOS-5 FP {colored_logging.name(product)} at {colored_logging.place(target)} on {colored_logging.time(target_date)}")
             already_processed = False
 
     return already_processed
 
 
 def load_LANCE(LANCE_output_directory: str, target_date: Union[date, str], target: str, products: List[str] = None):
-    logger.info(f"loading LANCE GEOS-5 FP products for {cl.place(target)} on {cl.time(target_date)}")
+    logger.info(f"loading LANCE GEOS-5 FP products for {colored_logging.place(target)} on {colored_logging.time(target_date)}")
 
     dataset = {}
 
@@ -117,9 +117,9 @@ def load_LANCE(LANCE_output_directory: str, target_date: Union[date, str], targe
     )
 
     pattern = join(directory, "*.tif")
-    logger.info(f"searching for LANCE product: {cl.val(pattern)}")
+    logger.info(f"searching for LANCE product: {colored_logging.val(pattern)}")
     filenames = glob(pattern)
-    logger.info(f"found {cl.val(len(filenames))} LANCE files")
+    logger.info(f"found {colored_logging.val(len(filenames))} LANCE files")
 
     for filename in filenames:
         product = splitext(basename(filename))[0].split("_")[-1]
@@ -127,7 +127,7 @@ def load_LANCE(LANCE_output_directory: str, target_date: Union[date, str], targe
         if products is not None and product not in products:
             continue
 
-        logger.info(f"loading LANCE GEOS-5 FP file: {cl.file(filename)}")
+        logger.info(f"loading LANCE GEOS-5 FP file: {colored_logging.file(filename)}")
         image = rt.Raster.open(filename)
         dataset[product] = image
 
@@ -189,11 +189,11 @@ def LANCE_GEOS5FP_NRT(
     if isinstance(target_date, str):
         target_date = parser.parse(target_date).date()
 
-    logger.info(f"LANCE target date: {cl.time(target_date)}")
+    logger.info(f"LANCE target date: {colored_logging.time(target_date)}")
     time_solar = datetime(target_date.year, target_date.month, target_date.day, 13, 30)
-    logger.info(f"LANCE target time solar: {cl.time(time_solar)}")
+    logger.info(f"LANCE target time solar: {colored_logging.time(time_solar)}")
     time_UTC = solar_to_UTC(time_solar, geometry.centroid.latlon.x)
-    logger.info(f"LANCE target time UTC: {cl.time(time_UTC)}")
+    logger.info(f"LANCE target time UTC: {colored_logging.time(time_UTC)}")
 
     if working_directory is None:
         working_directory = "."
@@ -213,17 +213,17 @@ def LANCE_GEOS5FP_NRT(
     if elevation_km is None:
         elevation_km = SRTM_connection.elevation_km(geometry)
 
-    logger.info(f"LANCE working directory: {cl.dir(working_directory)}")
+    logger.info(f"LANCE working directory: {colored_logging.dir(working_directory)}")
 
     if LANCE_download_directory is None:
         LANCE_download_directory = join(working_directory, DEFAULT_LANCE_DOWNLOAD_DIRECTORY)
 
-    logger.info(f"LANCE download directory: {cl.dir(LANCE_download_directory)}")
+    logger.info(f"LANCE download directory: {colored_logging.dir(LANCE_download_directory)}")
 
     if LANCE_output_directory is None:
         LANCE_output_directory = join(working_directory, DEFAULT_LANCE_OUTPUT_DIRECTORY)
 
-    logger.info(f"LANCE output directory: {cl.dir(LANCE_output_directory)}")
+    logger.info(f"LANCE output directory: {colored_logging.dir(LANCE_output_directory)}")
 
     if output_bucket_name is not None:
         logger.info(f"output S3 bucket: {output_bucket_name}")
@@ -253,7 +253,7 @@ def LANCE_GEOS5FP_NRT(
     LANCE_dates = available_LANCE_dates("VNP43MA4N", archive=ARCHIVE)
     earliest_LANCE_date = LANCE_dates[0]
     latest_LANCE_date = LANCE_dates[-1]
-    logger.info(f"LANCE is available from {cl.time(earliest_LANCE_date)} to {cl.time(latest_LANCE_date)}")
+    logger.info(f"LANCE is available from {colored_logging.time(earliest_LANCE_date)} to {colored_logging.time(latest_LANCE_date)}")
 
     if target_date < earliest_LANCE_date:
         raise LANCENotAvailableError(
@@ -285,7 +285,7 @@ def LANCE_GEOS5FP_NRT(
 
     if ST_C is None:
         logger.info(
-            f"retrieving {cl.name('VNP21_NRT')} {cl.name('ST_C')} from LANCE on {cl.time(LANCE_processing_date)}")
+            f"retrieving {colored_logging.name('VNP21_NRT')} {colored_logging.name('ST_C')} from LANCE on {colored_logging.time(LANCE_processing_date)}")
 
         ST_K = retrieve_VNP21NRT_ST(
             geometry=geometry,
@@ -303,7 +303,7 @@ def LANCE_GEOS5FP_NRT(
 
     if NDVI is None:
         logger.info(
-            f"retrieving {cl.name('VNP43IA4N')} {cl.name('NDVI')} from LANCE on {cl.time(LANCE_processing_date)}")
+            f"retrieving {colored_logging.name('VNP43IA4N')} {colored_logging.name('NDVI')} from LANCE on {colored_logging.time(LANCE_processing_date)}")
 
         NDVI = retrieve_VNP43IA4N(
             geometry=geometry,
@@ -317,7 +317,7 @@ def LANCE_GEOS5FP_NRT(
 
     if emissivity is None:
         logger.info(
-            f"retrieving {cl.name('VNP21_NRT')} {cl.name('emissivity')} from LANCE on {cl.time(LANCE_processing_date)}")
+            f"retrieving {colored_logging.name('VNP21_NRT')} {colored_logging.name('emissivity')} from LANCE on {colored_logging.time(LANCE_processing_date)}")
         emissivity = retrieve_VNP21NRT_emissivity(geometry=geometry, date_solar=LANCE_processing_date,
                                                   directory=LANCE_download_directory, resampling="cubic")
 
@@ -328,7 +328,7 @@ def LANCE_GEOS5FP_NRT(
 
     if albedo is None:
         logger.info(
-            f"retrieving {cl.name('VNP43MA4N')} {cl.name('albedo')} from LANCE on {cl.time(LANCE_processing_date)}")
+            f"retrieving {colored_logging.name('VNP43MA4N')} {colored_logging.name('albedo')} from LANCE on {colored_logging.time(LANCE_processing_date)}")
 
         albedo = retrieve_VNP43MA4N(
             geometry=geometry,
@@ -535,7 +535,7 @@ def LANCE_GEOS5FP_NRT(
     if Rn is None or isinstance(Rn, str):
         if Rn == "BESS":
             logger.info(
-                f"generating net radiation using Breathing Earth System Simulator for {cl.place(target)} at {cl.time(time_UTC)} UTC")
+                f"generating net radiation using Breathing Earth System Simulator for {colored_logging.place(target)} at {colored_logging.time(time_UTC)} UTC")
 
             ST_K = ST_C + 273.15
             Ta_K = Ta_C + 273.15
@@ -564,7 +564,7 @@ def LANCE_GEOS5FP_NRT(
         if Rn == "Verma":
             Rn = None
 
-    logger.info(f"running PT-JPL-SM ET model hindcast at {cl.time(time_UTC)}")
+    logger.info(f"running PT-JPL-SM ET model hindcast at {colored_logging.time(time_UTC)}")
 
     if model_name == "PTJPLSM":
         PTJPL_results = model.PTJPL(
@@ -621,7 +621,7 @@ def LANCE_GEOS5FP_NRT(
             continue
 
         logger.info(
-            f"writing LANCE GEOS-5 FP {cl.name(product)} at {cl.place(target)} at {cl.time(time_UTC)} to file: {cl.file(filename)}")
+            f"writing LANCE GEOS-5 FP {colored_logging.name(product)} at {colored_logging.place(target)} at {colored_logging.time(time_UTC)} to file: {colored_logging.file(filename)}")
         image.to_geotiff(filename)
 
         ## TODO upload to S3 bucket

@@ -17,7 +17,7 @@ from soil_grids import SoilGrids
 from glob import glob
 import numpy as np
 import rasters as rt
-import cl
+import colored_logging
 
 DEFAULT_Landsat_DOWNLOAD_DIRECTORY = "Landsat_download"
 DEFAULT_Landsat_OUTPUT_DIRECTORY = "Landsat_output"
@@ -78,7 +78,7 @@ def check_Landsat_already_processed(
         target: str,
         products: List[str]):
     already_processed = True
-    logger.info(f"checking if Landsat GEOS-5 FP has previously been processed at {cl.place(target)} on {cl.time(target_date)}")
+    logger.info(f"checking if Landsat GEOS-5 FP has previously been processed at {colored_logging.place(target)} on {colored_logging.time(target_date)}")
     
     for product in products:
         filename = generate_Landsat_output_filename(
@@ -90,9 +90,9 @@ def check_Landsat_already_processed(
         )
 
         if exists(filename):
-            logger.info(f"found previous Landsat GEOS-5 FP {cl.name(product)} at {cl.place(target)} on {cl.time(target_date)}: {cl.file(filename)}")
+            logger.info(f"found previous Landsat GEOS-5 FP {colored_logging.name(product)} at {colored_logging.place(target)} on {colored_logging.time(target_date)}: {colored_logging.file(filename)}")
         else:
-            logger.info(f"did not find previous Landsat GEOS-5 FP {cl.name(product)} at {cl.place(target)} on {cl.time(target_date)}")
+            logger.info(f"did not find previous Landsat GEOS-5 FP {colored_logging.name(product)} at {colored_logging.place(target)} on {colored_logging.time(target_date)}")
             already_processed = False
     
     return already_processed
@@ -109,7 +109,7 @@ def load_Landsat(Landsat_output_directory: str, target_date: Union[date, str], t
     filenames = glob(join(directory, "*.tif"))
 
     for filename in filenames:
-        logger.info(f"loading Landsat GEOS-5 FP file: {cl.file(filename)}")
+        logger.info(f"loading Landsat GEOS-5 FP file: {colored_logging.file(filename)}")
         product = splitext(basename(filename))[0].split("_")[-1]
         image = rt.Raster.open(filename)
         dataset[product] = image
@@ -161,33 +161,33 @@ def Landsat_GEOS5FP(
         target_variables: List[str] = DEFAULT_TARGET_VARIABLES) -> Dict[str, rt.Raster]:
     results = {}
     
-    logger.info(f"processing Landsat GOES-5 FP for target {cl.name(target)} ({cl.val(geometry.cell_width)}m, {cl.val(geometry.rows)} rows {cl.val(geometry.cols)} cols)")
+    logger.info(f"processing Landsat GOES-5 FP for target {colored_logging.name(target)} ({colored_logging.val(geometry.cell_width)}m, {colored_logging.val(geometry.rows)} rows {colored_logging.val(geometry.cols)} cols)")
 
     if isinstance(target_date, str):
         target_date = parser.parse(target_date).date()
 
-    logger.info(f"Landsat target date: {cl.time(target_date)}")
+    logger.info(f"Landsat target date: {colored_logging.time(target_date)}")
     time_solar = datetime(target_date.year, target_date.month, target_date.day, 13, 30)
-    logger.info(f"Landsat target time solar: {cl.time(time_solar)}")
+    logger.info(f"Landsat target time solar: {colored_logging.time(time_solar)}")
     time_UTC = solar_to_UTC(time_solar, geometry.centroid.latlon.x)
-    logger.info(f"Landsat target time UTC: {cl.time(time_UTC)}")
+    logger.info(f"Landsat target time UTC: {colored_logging.time(time_UTC)}")
 
     if working_directory is None:
         working_directory = "."
     
     working_directory = abspath(expanduser(working_directory))
     
-    logger.info(f"Landsat working directory: {cl.dir(working_directory)}")
+    logger.info(f"Landsat working directory: {colored_logging.dir(working_directory)}")
     
     if Landsat_download_directory is None:
         Landsat_download_directory = join(working_directory, DEFAULT_Landsat_DOWNLOAD_DIRECTORY)
     
-    logger.info(f"Landsat download directory: {cl.dir(Landsat_download_directory)}")
+    logger.info(f"Landsat download directory: {colored_logging.dir(Landsat_download_directory)}")
 
     if Landsat_output_directory is None:
         Landsat_output_directory = join(working_directory, DEFAULT_Landsat_OUTPUT_DIRECTORY)
 
-    logger.info(f"Landsat output directory: {cl.dir(Landsat_output_directory)}")
+    logger.info(f"Landsat output directory: {colored_logging.dir(Landsat_output_directory)}")
 
     Landsat_already_processed = check_Landsat_already_processed(
         Landsat_output_directory=Landsat_output_directory, 
@@ -235,7 +235,7 @@ def Landsat_GEOS5FP(
     )
 
     if ST_C is None:
-        logger.info(f"retrieving {cl.name('ST_C')} from Landsat on {cl.time(Landsat_processing_date)}")
+        logger.info(f"retrieving {colored_logging.name('ST_C')} from Landsat on {colored_logging.time(Landsat_processing_date)}")
         
         ST_C = landsat.product(
             acquisition_date=target_date,
@@ -247,7 +247,7 @@ def Landsat_GEOS5FP(
     results["ST_C"] = ST_C
     
     if emissivity is None:
-        logger.info(f"retrieving {cl.name('emissivity')} from Landsat on {cl.time(Landsat_processing_date)}")
+        logger.info(f"retrieving {colored_logging.name('emissivity')} from Landsat on {colored_logging.time(Landsat_processing_date)}")
         
         emissivity = landsat.product(
             acquisition_date=target_date,
@@ -261,7 +261,7 @@ def Landsat_GEOS5FP(
     results["emissivity"] = emissivity
 
     if NDVI is None:
-        logger.info(f"retrieving {cl.name('NDVI')} from Landsat on {cl.time(Landsat_processing_date)}")
+        logger.info(f"retrieving {colored_logging.name('NDVI')} from Landsat on {colored_logging.time(Landsat_processing_date)}")
 
         NDVI = landsat.product(
             acquisition_date=target_date,
@@ -273,7 +273,7 @@ def Landsat_GEOS5FP(
     results["NDVI"] = NDVI
     
     if albedo is None:
-        logger.info(f"retrieving {cl.name('VNP43MA4N')} {cl.name('albedo')} from Landsat on {cl.time(Landsat_processing_date)}")
+        logger.info(f"retrieving {colored_logging.name('VNP43MA4N')} {colored_logging.name('albedo')} from Landsat on {colored_logging.time(Landsat_processing_date)}")
 
         albedo = landsat.product(
             acquisition_date=target_date,
@@ -311,7 +311,7 @@ def Landsat_GEOS5FP(
             show_distribution=show_distribution
         )
 
-    logger.info(f"running PT-JPL-SM ET model forecast at {cl.time(time_UTC)}")
+    logger.info(f"running PT-JPL-SM ET model forecast at {colored_logging.time(time_UTC)}")
         
     PTJPL_results = model.PTJPL(
         geometry=geometry,
@@ -341,7 +341,7 @@ def Landsat_GEOS5FP(
             product=product
         )
 
-        logger.info(f"writing Landsat GEOS-5 FP {cl.name(product)} at {cl.place(target)} at {cl.time(time_UTC)} to file: {cl.file(filename)}")
+        logger.info(f"writing Landsat GEOS-5 FP {colored_logging.name(product)} at {colored_logging.place(target)} at {colored_logging.time(time_UTC)} to file: {colored_logging.file(filename)}")
         image.to_geotiff(filename)
 
     return results

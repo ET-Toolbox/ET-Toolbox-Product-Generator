@@ -14,7 +14,7 @@ import numpy as np
 from dateutil import parser
 from scipy.stats import zscore
 
-import cl
+import colored_logging
 import rasters as rt
 
 from ERS_credentials import get_ERS_credentials
@@ -129,10 +129,10 @@ class BESS(FLiES):
                 GEDI_download = join(static_directory, DEFAULT_GEDI_DOWNLOAD)
 
             try:
-                self.logger.info("preparing gedi_canopy_height canopy height dataset: " + cl.dir(GEDI_download))
+                self.logger.info("preparing gedi_canopy_height canopy height dataset: " + colored_logging.dir(GEDI_download))
                 GEDI_connection = GEDICanopyHeight(source_directory=GEDI_download)
                 GEDI_filename = GEDI_connection.VRT
-                self.logger.info("gedi_canopy_height VRT ready: " + cl.file(GEDI_filename))
+                self.logger.info("gedi_canopy_height VRT ready: " + colored_logging.file(GEDI_filename))
             except Exception as e:
                 raise GEDINotAvailable(f"unable to prepare gedi_canopy_height: {GEDI_download}")
 
@@ -143,7 +143,7 @@ class BESS(FLiES):
                 CI_directory = join(static_directory, DEFAULT_CI_DOWNLOAD)
 
             try:
-                self.logger.info("preparing MODIS clumping index dataset: " + cl.dir(CI_directory))
+                self.logger.info("preparing MODIS clumping index dataset: " + colored_logging.dir(CI_directory))
 
                 if ERS_credentials is None:
                     ERS_credentials = get_ERS_credentials()
@@ -155,7 +155,7 @@ class BESS(FLiES):
                 )
 
                 filename = ORNL_connection.download()
-                self.logger.info("MODIS clumping index ready: " + cl.file(filename))
+                self.logger.info("MODIS clumping index ready: " + colored_logging.file(filename))
             except Exception as e:
                 raise CINotAvailable(f"unable to prepare clumping index: {CI_directory}")
 
@@ -1602,9 +1602,9 @@ class BESS(FLiES):
         results = {}
 
         self.logger.info(
-            f"processing {cl.name('BESS')} " +
-            f"tile {cl.place(target)} {cl.val(geometry.shape)} " +
-            f"at {cl.time(time_UTC)} UTC"
+            f"processing {colored_logging.name('BESS')} " +
+            f"tile {colored_logging.place(target)} {colored_logging.val(geometry.shape)} " +
+            f"at {colored_logging.time(time_UTC)} UTC"
         )
 
         if isinstance(time_UTC, str):

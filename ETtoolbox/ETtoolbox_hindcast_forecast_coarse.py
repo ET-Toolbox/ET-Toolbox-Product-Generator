@@ -3,7 +3,7 @@ import logging
 from datetime import datetime, timedelta, date
 from typing import List, Callable, Union
 from os.path import join
-import cl
+import colored_logging
 from gedi_canopy_height import GEDICanopyHeight
 from geos5fp import GEOS5FP
 from LANCE_GEOS5FP_NRT import LANCE_GEOS5FP_NRT, LANCENotAvailableError, GEOS5FPNotAvailableError
@@ -79,7 +79,7 @@ def ET_toolbox_hindcast_tile(
         present_date = datetime.utcnow().date()
 
     logger.info(
-        f"generating ET Toolbox hindcast and forecast at tile {cl.place(tile)} centered on present date: {cl.time(present_date)}")
+        f"generating ET Toolbox hindcast and forecast at tile {colored_logging.place(tile)} centered on present date: {colored_logging.time(present_date)}")
 
     if geometry is None:
         geometry = sentinel_tile_grid.grid(tile, cell_size=meso_cell_size)
@@ -106,10 +106,10 @@ def ET_toolbox_hindcast_tile(
 
     for relative_days in range(-7, 1):
         target_date = present_date + timedelta(days=relative_days)
-        logger.info(f"LANCE GEOS-5 FP target date: {cl.time(target_date)} ({cl.time(relative_days)} days)")
+        logger.info(f"LANCE GEOS-5 FP target date: {colored_logging.time(target_date)} ({colored_logging.time(relative_days)} days)")
 
         time_solar = datetime(target_date.year, target_date.month, target_date.day, 13, 30)
-        logger.info(f"LANCE target time solar: {cl.time(time_solar)}")
+        logger.info(f"LANCE target time solar: {colored_logging.time(time_solar)}")
 
         try:
             LANCE_GEOS5FP_NRT(
@@ -159,7 +159,7 @@ def ET_toolbox_hindcast_tile(
             missing_dates.append(target_date)
             continue
 
-    logger.info("missing LANCE GEOS-5 FP dates: " + ", ".join(cl.time(d) for d in missing_dates))
+    logger.info("missing LANCE GEOS-5 FP dates: " + ", ".join(colored_logging.time(d) for d in missing_dates))
 
 
 def ET_toolbox_hindcast_forecast_tile(
@@ -202,7 +202,7 @@ def ET_toolbox_hindcast_forecast_tile(
         present_date = datetime.utcnow().date()
 
     logger.info(
-        f"generating ET Toolbox hindcast and forecast at tile {cl.place(tile)} centered on present date: {cl.time(present_date)}")
+        f"generating ET Toolbox hindcast and forecast at tile {colored_logging.place(tile)} centered on present date: {colored_logging.time(present_date)}")
 
     if geometry is None:
         geometry = sentinel_tile_grid.grid(tile, cell_size=meso_cell_size)
@@ -229,10 +229,10 @@ def ET_toolbox_hindcast_forecast_tile(
 
     for relative_days in range(-7, 1):
         target_date = present_date + timedelta(days=relative_days)
-        logger.info(f"LANCE GEOS-5 FP target date: {cl.time(target_date)} ({cl.time(relative_days)} days)")
+        logger.info(f"LANCE GEOS-5 FP target date: {colored_logging.time(target_date)} ({colored_logging.time(relative_days)} days)")
 
         time_solar = datetime(target_date.year, target_date.month, target_date.day, 13, 30)
-        logger.info(f"LANCE target time solar: {cl.time(time_solar)}")
+        logger.info(f"LANCE target time solar: {colored_logging.time(time_solar)}")
 
         try:
             LANCE_GEOS5FP_NRT(
@@ -282,13 +282,13 @@ def ET_toolbox_hindcast_forecast_tile(
             missing_dates.append(target_date)
             continue
 
-    logger.info("missing LANCE GEOS-5 FP dates: " + ", ".join(cl.time(d) for d in missing_dates))
+    logger.info("missing LANCE GEOS-5 FP dates: " + ", ".join(colored_logging.time(d) for d in missing_dates))
 
     forecast_dates = missing_dates + [present_date + timedelta(days=d) for d in range(8)]
 
     for target_date in forecast_dates:
         relative_days = target_date - present_date
-        logger.info(f"GFS LANCE target date: {cl.time(target_date)} ({cl.time(relative_days)} days)")
+        logger.info(f"GFS LANCE target date: {colored_logging.time(target_date)} ({colored_logging.time(relative_days)} days)")
 
         try:
             LANCE_GFS_forecast(

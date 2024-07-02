@@ -13,7 +13,7 @@ import pandas as pd
 from dateutil import parser
 from shapely.geometry import Point, Polygon
 
-import cl
+import colored_logging
 import rasters as rt
 from LPDAAC import LPDAACDataPool
 from modland import find_MODLAND_tiles
@@ -127,11 +127,11 @@ class VIIRSGranule:
             DN = np.array(f[dataset_name])
             grid = generate_MODLAND_grid(h, v, DN.shape[0])
 
-            logger.info("opening VIIRS file: " + cl.file(self.filename))
+            logger.info("opening VIIRS file: " + colored_logging.file(self.filename))
 
             logger.info(
-                f"loading {cl.val(dataset_name)} " +
-                "at " + cl.val(f"{grid.cell_size:0.2f} m") + " resolution"
+                f"loading {colored_logging.val(dataset_name)} " +
+                "at " + colored_logging.val(f"{grid.cell_size:0.2f} m") + " resolution"
             )
 
             DN = Raster(DN, geometry=grid)

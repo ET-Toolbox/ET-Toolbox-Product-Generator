@@ -7,7 +7,7 @@ from typing import Dict, List
 import numpy as np
 import warnings
 
-import cl
+import colored_logging
 import rasters as rt
 from geos5fp import GEOS5FP
 from SRTM import SRTM
@@ -571,7 +571,7 @@ class STIC(Model):
         t = Timer()
 
         while (np.nanmax(LE_change) >= LE_convergence_target and iteration <= max_iterations):
-            logger.info(f"running STIC iteration {cl.val(iteration)} / {cl.val(max_iterations)}")
+            logger.info(f"running STIC iteration {colored_logging.val(iteration)} / {colored_logging.val(max_iterations)}")
 
             if Rg is None:
 
@@ -686,7 +686,7 @@ class STIC(Model):
             LE_old = LE_new
             LE_max_change = np.nanmax(LE_change)
             logger.info(
-                f"completed STIC iteration {cl.val(iteration)} / {cl.val(max_iterations)} with max LE change: {cl.val(LE_max_change)} ({t} seconds)")
+                f"completed STIC iteration {colored_logging.val(iteration)} / {colored_logging.val(max_iterations)} with max LE change: {colored_logging.val(LE_max_change)} ({t} seconds)")
             iteration += 1
 
         iteration -= 1

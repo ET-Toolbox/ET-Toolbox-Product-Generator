@@ -38,7 +38,7 @@ from rasters import Point, Polygon, BBox
 from shapely.geometry.base import BaseGeometry
 from six import string_types
 
-import cl
+import colored_logging
 import rasters
 from rasters import RasterGrid, Raster, RasterGeometry, WGS84, CRS
 
@@ -616,7 +616,7 @@ class SentinelGranule:
             target_resolution: float = None,
             apply_cloud_mask: bool = True) -> Raster:
         source_resolution = self.band_cell_size(band)
-        self.logger.info(f"loading Sentinel band {cl.val(band)} ({cl.val(source_resolution)}m)")
+        self.logger.info(f"loading Sentinel band {colored_logging.val(band)} ({colored_logging.val(source_resolution)}m)")
         dn = self.band_DN(band)
         dn = rasters.where(dn == self.dn_nodata, np.nan, dn)
 
@@ -640,7 +640,7 @@ class SentinelGranule:
 
             if source_resolution != target_resolution:
                 self.logger.info(
-                    f"resampling Sentinel band {cl.val(band)} ({cl.val(source_resolution)}m -> {cl.val(target_resolution)}m)")
+                    f"resampling Sentinel band {colored_logging.val(band)} ({colored_logging.val(source_resolution)}m -> {colored_logging.val(target_resolution)}m)")
                 reflectance = reflectance.to_grid(target_grid, resampling=resampling)
 
         return reflectance
@@ -721,7 +721,7 @@ class SentinelGranule:
             preview_filename = product_filename.replace(".tif", ".jpeg")
 
         if exists(product_filename):
-            self.logger.info(f"loading Sentinel NDVI: {cl.file(product_filename)}")
+            self.logger.info(f"loading Sentinel NDVI: {colored_logging.file(product_filename)}")
             NDVI = Raster.open(product_filename)
         else:
             NIR = self.get_NIR(target_resolution=target_resolution, apply_cloud_mask=apply_cloud_mask)
@@ -729,11 +729,11 @@ class SentinelGranule:
             NDVI = np.clip((NIR - red) / (NIR + red), -1, 1)
 
         if save_data and not exists(product_filename):
-            self.logger.info(f"saving Sentinel NDVI: {cl.file(product_filename)}")
+            self.logger.info(f"saving Sentinel NDVI: {colored_logging.file(product_filename)}")
             NDVI.to_COG(product_filename)
 
             if save_preview:
-                self.logger.info(f"saving Sentinel NDVI preview: {cl.file(preview_filename)}")
+                self.logger.info(f"saving Sentinel NDVI preview: {colored_logging.file(preview_filename)}")
                 NDVI.percentilecut.to_geojpeg(preview_filename, quality=20, remove_XML=True)
 
         if return_filename:
@@ -792,7 +792,7 @@ class SentinelGranule:
             preview_filename = product_filename.replace(".tif", ".jpeg")
 
         if exists(product_filename):
-            self.logger.info(f"loading Sentinel albedo: {cl.file(product_filename)}")
+            self.logger.info(f"loading Sentinel albedo: {colored_logging.file(product_filename)}")
             albedo = Raster.open(product_filename)
         else:
             b2 = self.band_reflectance(2, target_resolution=target_resolution, apply_cloud_mask=apply_cloud_mask)
@@ -818,11 +818,11 @@ class SentinelGranule:
             albedo = np.clip(albedo, -1, 1)
 
         if save_data and not exists(product_filename):
-            self.logger.info(f"saving Sentinel albedo: {cl.file(product_filename)}")
+            self.logger.info(f"saving Sentinel albedo: {colored_logging.file(product_filename)}")
             albedo.to_COG(product_filename)
 
             if save_preview:
-                self.logger.info(f"saving Sentinel albedo preview: {cl.file(preview_filename)}")
+                self.logger.info(f"saving Sentinel albedo preview: {colored_logging.file(preview_filename)}")
                 albedo.percentilecut.to_geojpeg(preview_filename, quality=20, remove_XML=True)
 
         if geometry is not None:
@@ -1017,7 +1017,7 @@ class SentinelTileGrid(MGRS):
         bbox = self.bbox(tile).buffer(buffer)
         projection = self.UTM_proj4(tile)
         grid = RasterGrid.from_bbox(bbox=bbox, cell_size=cell_size, crs=projection)
-        # logger.info(f"tile {cl.place(tile)} at resolution {cl.val(cell_size)} {grid.shape}")
+        # logger.info(f"tile {colored_logging.place(tile)} at resolution {colored_logging.val(cell_size)} {grid.shape}")
 
         return grid
 
@@ -1349,7 +1349,7 @@ class Sentinel(SentinelAPI, SentinelTileGrid):
         if start_date is None:
             start_date = end_date - timedelta(days=DEFAULT_SEARCH_DAYS)
 
-        self.logger.info(f"searching Sentinel L2A between {cl.time(start_date)} and {cl.time(end_date)}")
+        self.logger.info(f"searching Sentinel L2A between {colored_logging.time(start_date)} and {colored_logging.time(end_date)}")
         listing = self.search_L2A(geometry, start_date, end_date, cloud_min, cloud_max, max_results)
 
         if len(listing) == 0:
@@ -1359,9 +1359,9 @@ class Sentinel(SentinelAPI, SentinelTileGrid):
 
         # filter to most recent for each sensor at each target
         S2A_listing = self.filter_to_sensor(listing, "S2A")
-        self.logger.info(f"{cl.val(len(S2A_listing))} S2A granules found")
+        self.logger.info(f"{colored_logging.val(len(S2A_listing))} S2A granules found")
         S2B_listing = self.filter_to_sensor(listing, "S2B")
-        self.logger.info(f"{cl.val(len(S2B_listing))} S2B granules found")
+        self.logger.info(f"{colored_logging.val(len(S2B_listing))} S2B granules found")
 
         listing = pd.concat([S2A_listing, S2B_listing])
 
@@ -1401,13 +1401,13 @@ class Sentinel(SentinelAPI, SentinelTileGrid):
             makedirs(directory_path)
 
         download_filename = self.source_filename(ID)
-        self.logger.info(f"downloading Sentinel granule: {cl.name(ID)}")
+        self.logger.info(f"downloading Sentinel granule: {colored_logging.name(ID)}")
         self.download(id=UUID, directory_path=directory_path)
 
         if exists(download_filename):
-            self.logger.info(f"download successful: {cl.file(download_filename)}")
+            self.logger.info(f"download successful: {colored_logging.file(download_filename)}")
         else:
-            raise IOError(f"downloaded Sentinel file not found: {cl.file(download_filename)}")
+            raise IOError(f"downloaded Sentinel file not found: {colored_logging.file(download_filename)}")
 
         granule = SentinelGranule(
             filename=download_filename,
@@ -1527,29 +1527,29 @@ class Sentinel(SentinelAPI, SentinelTileGrid):
             product_filename = granule.product_filename(product_name)
 
             if exists(product_filename):
-                self.logger.info(f"Sentinel {cl.name(product_name)} already exists: {cl.file(product_filename)}")
+                self.logger.info(f"Sentinel {colored_logging.name(product_name)} already exists: {colored_logging.file(product_filename)}")
 
             if exists(product_filename):
                 product_filenames[product_name] = product_filename
                 continue
 
             logger.info(
-                f"processing Sentinel granule: {cl.name(granule_ID)} target: {cl.place(tile)} date: {cl.time(acquisition_date)}")
+                f"processing Sentinel granule: {colored_logging.name(granule_ID)} target: {colored_logging.place(tile)} date: {colored_logging.time(acquisition_date)}")
             start_time = perf_counter()
-            logger.info(f"downloading Sentinel granule: {cl.name(sentinel_ID)}")
+            logger.info(f"downloading Sentinel granule: {colored_logging.name(sentinel_ID)}")
             self.download(sentinel_ID, download_directory)
             end_time = perf_counter()
             duration_seconds = end_time - start_time
-            logger.info("download completed in " + cl.time(f"{duration_seconds:0.2f}") + " seconds")
+            logger.info("download completed in " + colored_logging.time(f"{duration_seconds:0.2f}") + " seconds")
 
             if exists(sentinel_filename):
-                logger.info(f"download successful: {cl.file(sentinel_filename)}")
+                logger.info(f"download successful: {colored_logging.file(sentinel_filename)}")
             else:
-                logger.info(f"file not found: {cl.file(sentinel_filename)}")
+                logger.info(f"file not found: {colored_logging.file(sentinel_filename)}")
 
             if not exists(product_filename):
                 start_time = datetime.now()
-                logger.info(f"downloading Sentinel granule: {cl.name(sentinel_ID)}")
+                logger.info(f"downloading Sentinel granule: {colored_logging.name(sentinel_ID)}")
                 self.download(sentinel_ID, download_directory)
                 end_time = datetime.now()
                 duration = end_time - start_time
@@ -1557,9 +1557,9 @@ class Sentinel(SentinelAPI, SentinelTileGrid):
                 logger.info(f"download completed in {duration_seconds:0.2f} seconds")
 
                 if exists(sentinel_filename):
-                    logger.info(f"download successful: {cl.file(sentinel_filename)}")
+                    logger.info(f"download successful: {colored_logging.file(sentinel_filename)}")
                 else:
-                    logger.info(f"file not found: {cl.file(sentinel_filename)}")
+                    logger.info(f"file not found: {colored_logging.file(sentinel_filename)}")
 
                 granule = SentinelGranule(
                     filename=sentinel_filename,
@@ -1569,8 +1569,8 @@ class Sentinel(SentinelAPI, SentinelTileGrid):
                 )
 
                 logger.info(
-                    f"generating Sentinel {cl.name(product_name)} at {cl.val(self.target_resolution)} m "
-                    f"for tile {cl.name(tile)} on " + cl.time(f"{acquisition_date:%Y-%m-%d}")
+                    f"generating Sentinel {colored_logging.name(product_name)} at {colored_logging.val(self.target_resolution)} m "
+                    f"for tile {colored_logging.name(tile)} on " + colored_logging.time(f"{acquisition_date:%Y-%m-%d}")
                 )
                 start_time = datetime.now()
 
@@ -1579,14 +1579,14 @@ class Sentinel(SentinelAPI, SentinelTileGrid):
                 elif product_name == "albedo":
                     product_image, product_filename = granule.get_albedo(return_filename=True)
                 else:
-                    raise ValueError(f"unrecognized product: {cl.name(product_name)}")
+                    raise ValueError(f"unrecognized product: {colored_logging.name(product_name)}")
 
                 product_filenames[product_name] = product_filename
 
                 end_time = datetime.now()
                 duration = end_time - start_time
                 duration_seconds = duration.total_seconds()
-                logger.info(f"{cl.name(product_name)} completed in " + cl.time(f"{duration_seconds:0.2f}") + " seconds")
+                logger.info(f"{colored_logging.name(product_name)} completed in " + colored_logging.time(f"{duration_seconds:0.2f}") + " seconds")
 
             if product_name not in product_filenames:
                 raise ValueError(f"unable to produce Sentinel product: {product_name}")
@@ -1623,12 +1623,12 @@ class Sentinel(SentinelAPI, SentinelTileGrid):
             end_date = None
 
         if end_date is None:
-            self.logger.info(f"searching Sentinel target {cl.name(tile)} on " + cl.time(f"{start_date:%Y-%m-%d}"))
+            self.logger.info(f"searching Sentinel target {colored_logging.name(tile)} on " + colored_logging.time(f"{start_date:%Y-%m-%d}"))
         else:
             self.logger.info(
-                f"searching Sentinel target {cl.name(tile)} "
-                f"from " + cl.time("f{start_date:%Y-%m-%d}") +
-                " to " + cl.time("f{end_date:%Y-%m-%d}")
+                f"searching Sentinel target {colored_logging.name(tile)} "
+                f"from " + colored_logging.time("f{start_date:%Y-%m-%d}") +
+                " to " + colored_logging.time("f{end_date:%Y-%m-%d}")
             )
 
         sentinel_listing = self.search_L2A(
@@ -1641,7 +1641,7 @@ class Sentinel(SentinelAPI, SentinelTileGrid):
             max_results=max_results
         )
 
-        self.logger.info(f"found {cl.val(len(sentinel_listing))} granules")
+        self.logger.info(f"found {colored_logging.val(len(sentinel_listing))} granules")
 
         for product_name in product_names:
             sentinel_listing[product_name] = pd.Series(dtype=str)
@@ -1671,7 +1671,7 @@ def sentinel(tile: str, start: Union[date, str], end: Union[date, str]):
     listing = listing[["date", "ID"]]
 
     for i, (acquisition_date, ID) in listing.iterrows():
-        logger.info("* " + cl.time(f"{acquisition_date:%Y-%m-%d}") + ": " + cl.val(ID))
+        logger.info("* " + colored_logging.time(f"{acquisition_date:%Y-%m-%d}") + ": " + colored_logging.val(ID))
 
     return listing
 

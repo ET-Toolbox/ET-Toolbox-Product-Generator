@@ -11,7 +11,7 @@ import pandas as pd
 from modland import find_MODLAND_tiles
 from shapely.geometry import Point, Polygon
 
-import cl
+import colored_logging
 import rasters as rt
 from modland.indices import generate_MODLAND_grid
 from rasters import Raster, RasterGrid, RasterGeometry
@@ -40,7 +40,7 @@ class VNP43MA4Granule(VIIRSGranule):
             product_filename = self.product_filename(f"M{band}")
 
         if product_filename is not None and exists(product_filename):
-            logger.info(f"loading VNP43MA4 NBAR M{band}: {cl.file(product_filename)}")
+            logger.info(f"loading VNP43MA4 NBAR M{band}: {colored_logging.file(product_filename)}")
             image = Raster.open(product_filename)
         else:
             image = self.dataset(
@@ -61,7 +61,7 @@ class VNP43MA4Granule(VIIRSGranule):
                 image = rt.where(QA == 0, image, np.nan)
 
         if save_data and not exists(product_filename):
-            logger.info(f"writing VNP43MA4 NBAR M{band}: {cl.file(product_filename)}")
+            logger.info(f"writing VNP43MA4 NBAR M{band}: {colored_logging.file(product_filename)}")
             image.to_geotiff(product_filename, include_preview=include_preview)
 
         if geometry is not None:
@@ -80,7 +80,7 @@ class VNP43MA4Granule(VIIRSGranule):
             product_filename = self.product_filename(f"VNP43MA4_QA_M{band}")
 
         if product_filename is not None and exists(product_filename):
-            logger.info(f"loading VNP43MA4 QA M{band}: {cl.file(product_filename)}")
+            logger.info(f"loading VNP43MA4 QA M{band}: {colored_logging.file(product_filename)}")
             image = Raster.open(product_filename)
         else:
             dataset_name = f"HDFEOS/GRIDS/VIIRS_Grid_BRDF/Data Fields/BRDF_Albedo_Band_Mandatory_Quality_M{int(band)}"
@@ -90,17 +90,17 @@ class VNP43MA4Granule(VIIRSGranule):
                 h, v = self.hv
                 grid = generate_MODLAND_grid(h, v, image.shape[0])
 
-                logger.info("opening file: " + cl.file(self.filename))
+                logger.info("opening file: " + colored_logging.file(self.filename))
 
                 logger.info(
-                    f"loading {cl.val(dataset_name)} " +
-                    "at " + cl.val(f"{grid.cell_size:0.2f} m") + " resolution"
+                    f"loading {colored_logging.val(dataset_name)} " +
+                    "at " + colored_logging.val(f"{grid.cell_size:0.2f} m") + " resolution"
                 )
 
                 image = Raster(image, geometry=grid)
 
         if save_data and not exists(product_filename):
-            logger.info(f"writing VNP43MA4 QA M{band}: {cl.file(product_filename)}")
+            logger.info(f"writing VNP43MA4 QA M{band}: {colored_logging.file(product_filename)}")
             image.to_geotiff(product_filename, include_preview=include_preview)
 
         if geometry is not None:
@@ -213,10 +213,10 @@ class VNP43MA4(VIIRSDataPool):
             **kwargs
         )
 
-        logger.info(f"VNP43MA4 LP-DAAC URL: {cl.URL(self.remote)}")
-        logger.info(f"VNP43MA4 working directory: {cl.dir(self.working_directory)}")
-        logger.info(f"VNP43MA4 download directory: {cl.dir(self.download_directory)}")
-        logger.info(f"VNP43MA4 products directory: {cl.dir(self.products_directory)}")
+        logger.info(f"VNP43MA4 LP-DAAC URL: {colored_logging.URL(self.remote)}")
+        logger.info(f"VNP43MA4 working directory: {colored_logging.dir(self.working_directory)}")
+        logger.info(f"VNP43MA4 download directory: {colored_logging.dir(self.download_directory)}")
+        logger.info(f"VNP43MA4 products directory: {colored_logging.dir(self.products_directory)}")
 
     def search(
             self,
@@ -252,7 +252,7 @@ class VNP43MA4(VIIRSDataPool):
         )
 
         makedirs(download_location, exist_ok=True)
-        logger.info(f"download location: {cl.dir(download_location)}")
+        logger.info(f"download location: {colored_logging.dir(download_location)}")
 
         if exists(download_location):
             filenames = glob(join(download_location, f"VNP43MA4.A{date_UTC:%Y%j}.{tile}.*.h5"))
@@ -345,7 +345,7 @@ class VNP43MA4(VIIRSDataPool):
             raise ValueError("VIIRS composite did not generate")
 
         if save_data and filename is not None:
-            logger.info("writing composite: " + cl.file(filename))
+            logger.info("writing composite: " + colored_logging.file(filename))
             composite.to_geotiff(filename)
 
         return composite

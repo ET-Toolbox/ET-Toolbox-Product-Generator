@@ -25,7 +25,7 @@ import shapely.wkt
 from dateutil import parser
 from shapely.geometry import Point, Polygon, shape
 
-import cl
+import colored_logging
 from ERS_credentials import get_ERS_credentials
 from credentials import get_credentials
 from rasters import RasterGrid
@@ -548,10 +548,10 @@ class EEAPI:
 
     def download_file(self, URL: str, filename: str):
         if exists(filename):
-            self.logger.info(f"file already downloaded: {cl.file(filename)}")
+            self.logger.info(f"file already downloaded: {colored_logging.file(filename)}")
             return filename
 
-        self.logger.info(f"downloading: {cl.URL(URL)} -> {cl.file(filename)}")
+        self.logger.info(f"downloading: {colored_logging.URL(URL)} -> {colored_logging.file(filename)}")
         directory = dirname(filename)
         makedirs(directory, exist_ok=True)
         partial_filename = f"{filename}.download"
@@ -561,7 +561,7 @@ class EEAPI:
         download_end = perf_counter()
         download_duration = download_end - download_start
         self.logger.info(
-            "completed download in " + cl.val(f"{download_duration:0.2f}") + " seconds: " + cl.file(filename))
+            "completed download in " + colored_logging.val(f"{download_duration:0.2f}") + " seconds: " + colored_logging.file(filename))
 
         if not exists(partial_filename):
             raise IOError(f"unable to download URL: {URL}")
@@ -660,7 +660,7 @@ class EEAPI:
                 date_UTC=date_UTC,
                 granule_ID=granule_ID,
                 band_names=bands):
-            self.logger.info(f"granule {cl.val(granule_ID)} already retrieved: {cl.dir(granule_directory)}")
+            self.logger.info(f"granule {colored_logging.val(granule_ID)} already retrieved: {colored_logging.dir(granule_directory)}")
 
             return granule_directory
 
@@ -669,8 +669,8 @@ class EEAPI:
         if bands is not None:
             self.logger.info(
                 "attempting to download" +
-                " bands: " + cl.val(', '.join(bands)) +
-                " entity ID: " + cl.val(entity_ID)
+                " bands: " + colored_logging.val(', '.join(bands)) +
+                " entity ID: " + colored_logging.val(entity_ID)
             )
 
             band_listing = self.download_bands(
@@ -683,8 +683,8 @@ class EEAPI:
         if bands is not None and band_listing is None:
             self.logger.info(
                 "unable to directly download" +
-                " bands: " + cl.val(', '.join(bands)) +
-                " entity ID: " + cl.val(entity_ID)
+                " bands: " + colored_logging.val(', '.join(bands)) +
+                " entity ID: " + colored_logging.val(entity_ID)
             )
 
         if bands is None or band_listing is None:
@@ -708,15 +708,15 @@ class EEAPI:
                     date_UTC=date_UTC,
                     granule_ID=granule_ID,
                     band_names=bands):
-                self.logger.info(f"granule {cl.val(granule_ID)} already retrieved: {cl.dir(granule_directory)}")
+                self.logger.info(f"granule {colored_logging.val(granule_ID)} already retrieved: {colored_logging.dir(granule_directory)}")
 
                 if exists(tarfile_filename):
-                    self.logger.info("removing archive: " + cl.file(tarfile_filename))
+                    self.logger.info("removing archive: " + colored_logging.file(tarfile_filename))
 
                 return granule_directory
 
             try:
-                self.logger.info(f"attempting download of entire granule: {cl.val(entity_ID)} URL: {cl.URL(URL)}")
+                self.logger.info(f"attempting download of entire granule: {colored_logging.val(entity_ID)} URL: {colored_logging.URL(URL)}")
                 self.download_file(URL, tarfile_filename)
 
                 with tarfile.open(tarfile_filename) as file:
@@ -728,13 +728,13 @@ class EEAPI:
                 raise IOError(f"failed to download file: {tarfile_filename}")
 
             try:
-                self.logger.info(f"extracting: {cl.file(tarfile_filename)} -> {cl.dir(granule_directory)}")
+                self.logger.info(f"extracting: {colored_logging.file(tarfile_filename)} -> {colored_logging.dir(granule_directory)}")
 
                 with tarfile.open(tarfile_filename) as file:
                     file.extractall(granule_directory)
                     filenames = sorted(glob(join(granule_directory, "*")))
 
-                    self.logger.info(f"extraced {cl.val(len(filenames))} files")
+                    self.logger.info(f"extraced {colored_logging.val(len(filenames))} files")
 
                     for filename in filenames:
                         filename_base, extension = splitext(filename)
@@ -742,12 +742,12 @@ class EEAPI:
                         filename_lower = filename_base + extension_lower
 
                         if filename != filename_lower:
-                            # self.logger.info("fixing filename extension: " + cl.file(filename_lower))
+                            # self.logger.info("fixing filename extension: " + colored_logging.file(filename_lower))
                             os.rename(filename, filename_lower)
 
-                        self.logger.info(f"* {cl.file(filename_lower)}")
+                        self.logger.info(f"* {colored_logging.file(filename_lower)}")
 
-                self.logger.info("removing archive: " + cl.file(tarfile_filename))
+                self.logger.info("removing archive: " + colored_logging.file(tarfile_filename))
                 os.remove(tarfile_filename)
             except Exception as e:
                 self.logger.exception(e)
@@ -755,7 +755,7 @@ class EEAPI:
 
         if not self.validate_granule_retrieval(dataset=dataset, date_UTC=date_UTC, granule_ID=granule_ID,
                                                band_names=bands):
-            raise IOError("failed to retrieve granule: " + cl.val(granule_ID))
+            raise IOError("failed to retrieve granule: " + colored_logging.val(granule_ID))
 
         return granule_directory
 
@@ -798,8 +798,8 @@ class EEAPI:
 
         self.logger.info(
             "searching scenes" +
-            " from " + cl.time(f"{start:%Y-%m-%d}") +
-            " to " + cl.time(f"{end:%Y-%m-%d}")
+            " from " + colored_logging.time(f"{start:%Y-%m-%d}") +
+            " to " + colored_logging.time(f"{end:%Y-%m-%d}")
         )
 
         # if datasets is not None:
@@ -822,7 +822,7 @@ class EEAPI:
             cloud_percent_max=cloud_percent_max
         )
 
-        self.logger.info(f"found {cl.val(len(scenes))} scenes")
+        self.logger.info(f"found {colored_logging.val(len(scenes))} scenes")
 
         downloads = []
 

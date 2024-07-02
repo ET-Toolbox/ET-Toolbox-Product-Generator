@@ -16,7 +16,7 @@ import pandas as pd
 from dateutil import parser
 from scipy.stats import zscore
 
-import cl
+import colored_logging
 from FLiES.daylight_hours import day_angle_rad_from_doy, solar_dec_deg_from_day_angle_rad
 from FLiES.solar_zenith_angle import sza_deg_from_lat_dec_hour
 from model.model import Model
@@ -97,7 +97,7 @@ class FLiES(Model):
 
         static_directory = abspath(expanduser(static_directory))
 
-        self.logger.info(f"FLiES working directory: {cl.dir(working_directory)}")
+        self.logger.info(f"FLiES working directory: {colored_logging.dir(working_directory)}")
 
         if SRTM_connection is None:
             try:
@@ -132,7 +132,7 @@ class FLiES(Model):
 
         intermediate_directory = abspath(expanduser(intermediate_directory))
 
-        self.logger.info(f"FLiES intermediate directory: {cl.dir(intermediate_directory)}")
+        self.logger.info(f"FLiES intermediate directory: {colored_logging.dir(intermediate_directory)}")
 
         if ANN_model_filename is None:
             ANN_model_filename = DEFAULT_MODEL_FILENAME
@@ -335,7 +335,7 @@ class FLiES(Model):
             elevation_km: Raster = None,
             SZA: Raster = None,
             KG_climate: Raster = None):
-        self.logger.info(f"processing FLiES tile {cl.place(target)} {cl.val(geometry.shape)} at " + cl.time(
+        self.logger.info(f"processing FLiES tile {colored_logging.place(target)} {colored_logging.val(geometry.shape)} at " + colored_logging.time(
             f"{time_UTC:%Y-%m-%d} UTC"))
 
         if isinstance(time_UTC, str):
@@ -390,8 +390,8 @@ class FLiES(Model):
 
         self.logger.info(
             "started neural network processing " +
-            f"at tile {cl.place(target)} {cl.val(geometry.shape)} " +
-            "at " + cl.time(f"{time_UTC:%Y-%m-%d} UTC")
+            f"at tile {colored_logging.place(target)} {colored_logging.val(geometry.shape)} " +
+            "at " + colored_logging.time(f"{time_UTC:%Y-%m-%d} UTC")
         )
 
         prediction_start_time = process_time()

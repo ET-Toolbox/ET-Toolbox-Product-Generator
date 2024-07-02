@@ -14,7 +14,7 @@ from shapely.geometry import Polygon
 # URL = "https://e4ftl01.cr.usgs.gov/MEASURES/NASADEM_HGT.001/2000.02.11/NASADEM_HGT_n00e127.zip"
 # filename = "/Users/halverso/Downloads/NASADEM_HGT_n00e127.zip"
 # URI = "zip:///Users/halverso/Downloads/NASADEM_HGT_n00e127.zip!/n00e127.hgt"
-import cl
+import colored_logging
 from LPDAAC import LPDAACDataPool
 from rasters import Raster, RasterGeometry, RasterGrid
 from timer import Timer
@@ -46,7 +46,7 @@ class SRTMGranule:
     @property
     def elevation_m(self) -> Raster:
         URI = self.hgt_URI
-        logger.info(f"loading elevation: {cl.URL(URI)}")
+        logger.info(f"loading elevation: {colored_logging.URL(URI)}")
         data = Raster.open(URI)
         data = rasters.where(data == data.nodata, np.nan, data.astype(np.float32))
         data.nodata = np.nan
@@ -74,7 +74,7 @@ class SRTMGranule:
         geometry = self.geometry
         filename = self.filename
         member_name = f"{self.tile.lower()}.swb"
-        logger.info(f"loading swb: {cl.URL(URI)}")
+        logger.info(f"loading swb: {colored_logging.URL(URI)}")
 
         with ZipFile(filename, "r") as zip_file:
             with zip_file.open(member_name, "r") as file:
@@ -114,14 +114,14 @@ class SRTM(LPDAACDataPool):
 
         working_directory = abspath(expanduser(working_directory))
 
-        logger.info(f"SRTM working directory: {cl.dir(working_directory)}")
+        logger.info(f"SRTM working directory: {colored_logging.dir(working_directory)}")
 
         if download_directory is None:
             download_directory = join(working_directory, DEFAULT_DOWNLOAD_DIRECTORY)
 
         download_directory = abspath(expanduser(download_directory))
 
-        logger.info(f"SRTM download directory: {cl.dir(download_directory)}")
+        logger.info(f"SRTM download directory: {colored_logging.dir(download_directory)}")
 
         self.working_directory = working_directory
         self.download_directory = download_directory
@@ -189,7 +189,7 @@ class SRTM(LPDAACDataPool):
 
         directory = self.download_directory
         makedirs(directory, exist_ok=True)
-        logger.info(f"acquiring SRTM tile: {cl.val(tile)} URL: {cl.URL(URL)}")
+        logger.info(f"acquiring SRTM tile: {colored_logging.val(tile)} URL: {colored_logging.URL(URL)}")
         filename = self.download_URL(URL, directory)
         granule = SRTMGranule(filename)
 

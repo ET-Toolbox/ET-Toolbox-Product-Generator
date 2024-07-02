@@ -16,7 +16,7 @@ from requests.adapters import HTTPAdapter
 from requests.auth import HTTPBasicAuth
 from urllib3 import Retry
 
-import cl
+import colored_logging
 import rasters as rt
 from modland import find_MODLAND_tiles
 from VIIRS_grid import *
@@ -153,7 +153,7 @@ def download_LANCE_VIIRS(
                 remove(filename)
 
             if exists(filename):
-                logger.info(f"file already downloaded: {cl.file(filename)}")
+                logger.info(f"file already downloaded: {colored_logging.file(filename)}")
 
                 try:
                     with h5py.File(filename) as file:
@@ -164,7 +164,7 @@ def download_LANCE_VIIRS(
                     logger.warning(f"removing corrupted LANCE file: {filename}")
                     os.remove(filename)
 
-            logger.info(f"downloading URL: {cl.URL(URL)}")
+            logger.info(f"downloading URL: {colored_logging.URL(URL)}")
             partial_filename = filename + ".download"
             command = f'wget -e robots=off -c -nc -np -nH --no-directories --header "{header}" -O "{partial_filename}" "{URL}"'
             logger.info(command)
@@ -182,7 +182,7 @@ def download_LANCE_VIIRS(
             if not exists(filename):
                 raise ConnectionError(f"unable to download URL: {URL}")
 
-            logger.info(f"successfully downloaded file: {cl.file(filename)} ({getsize(filename)})")
+            logger.info(f"successfully downloaded file: {colored_logging.file(filename)} ({getsize(filename)})")
 
             return filename
         except Exception as e:

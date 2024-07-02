@@ -21,7 +21,7 @@ from dateutil import parser
 import rasters as rt
 import numpy as np
 import logging
-import cl
+import colored_logging
 
 logger = logging.getLogger(__name__)
 
@@ -177,10 +177,10 @@ def GFS_download(URL: str, filename: str = None, directory: str = None) -> str:
         filename = join(target_directory, posixpath.basename(URL))
     
     if exists(filename):
-        logger.info(f"file already downloaded: {cl.file(filename)}")
+        logger.info(f"file already downloaded: {colored_logging.file(filename)}")
         return filename
     
-    logger.info(f"downloading URL: {cl.URL(URL)}")
+    logger.info(f"downloading URL: {colored_logging.URL(URL)}")
 
     partial_filename = filename + ".download"
 
@@ -193,7 +193,7 @@ def GFS_download(URL: str, filename: str = None, directory: str = None) -> str:
     if not exists(filename):
         raise ConnectionError(f"unable to download URL: {URL}")
 
-    logger.info(f"downloaded file: {cl.file(filename)}")
+    logger.info(f"downloaded file: {colored_logging.file(filename)}")
     
     return filename
 
@@ -221,7 +221,7 @@ def GFS_interpolate(
     before_after = GFS_before_after_addresses(time_UTC, listing=listing)
     
     before_address = before_after.iloc[0].address
-    logger.info(f"before URL: {cl.URL(before_address)}")
+    logger.info(f"before URL: {colored_logging.URL(before_address)}")
     before_time = parser.parse(str(before_after.iloc[0].forecast_time_UTC))
     before_filename = GFS_download(URL=before_address, directory=directory)
     
@@ -235,7 +235,7 @@ def GFS_interpolate(
     before_image = read_GFS(filename=before_filename, message=message, geometry=geometry, resampling=resampling)
 
     after_address = before_after.iloc[-1].address
-    logger.info(f"after URL: {cl.URL(after_address)}")
+    logger.info(f"after URL: {colored_logging.URL(after_address)}")
     after_time = parser.parse(str(before_after.iloc[-1].forecast_time_UTC))
     after_filename = GFS_download(URL=after_address, directory=directory)
     

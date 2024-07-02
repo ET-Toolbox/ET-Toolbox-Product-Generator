@@ -16,7 +16,7 @@ from dateutil.rrule import rrule, DAILY
 from shapely.geometry import Point, Polygon
 from skimage.transform import resize
 
-import cl
+import colored_logging
 import rasters
 import rasters as rt
 from modland.indices import parsehv, generate_MODLAND_grid
@@ -85,8 +85,8 @@ class VNP09GAGranule(VIIRSGranule):
             DN = np.array(f[dataset_name])
             h, v = self.hv
             grid = generate_MODLAND_grid(h, v, DN.shape[0])
-            logger.info(f"opening VIIRS file: {cl.file(self.filename)}")
-            logger.info(f"loading {cl.val(dataset_name)} at {cl.val(f'{grid.cell_size:0.2f} m')} resolution")
+            logger.info(f"opening VIIRS file: {colored_logging.file(self.filename)}")
+            logger.info(f"loading {colored_logging.val(dataset_name)} at {colored_logging.val(f'{grid.cell_size:0.2f} m')} resolution")
             DN = Raster(DN, geometry=grid)
 
         data = DN * scale_factor
@@ -133,7 +133,7 @@ class VNP09GAGranule(VIIRSGranule):
             product_filename = self.product_filename(f"sensor_zenith_M")
 
         if product_filename is not None and exists(product_filename):
-            logger.info(f"loading VIIRS sensor zenith: {cl.file(product_filename)}")
+            logger.info(f"loading VIIRS sensor zenith: {colored_logging.file(product_filename)}")
             image = Raster.open(product_filename)
         else:
             image = self.dataset(
@@ -148,7 +148,7 @@ class VNP09GAGranule(VIIRSGranule):
             raise ValueError("blank sensor zenith image")
 
         if save_data and not exists(product_filename):
-            logger.info(f"writing VIIRS sensor zenith: {cl.file(product_filename)} {cl.val(image.shape)}")
+            logger.info(f"writing VIIRS sensor zenith: {colored_logging.file(product_filename)} {colored_logging.val(image.shape)}")
             image.to_geotiff(product_filename)
 
             if save_preview:
@@ -171,7 +171,7 @@ class VNP09GAGranule(VIIRSGranule):
             product_filename = self.product_filename(f"sensor_zenith_I")
 
         if product_filename is not None and exists(product_filename):
-            logger.info(f"loading VIIRS sensor zenith: {cl.file(product_filename)}")
+            logger.info(f"loading VIIRS sensor zenith: {colored_logging.file(product_filename)}")
             image = Raster.open(product_filename)
         else:
             h, v = self.hv
@@ -191,7 +191,7 @@ class VNP09GAGranule(VIIRSGranule):
             raise ValueError("blank sensor zenith image")
 
         if save_data and not exists(product_filename):
-            logger.info(f"writing VIIRS sensor zenith: {cl.file(product_filename)} {cl.val(image.shape)}")
+            logger.info(f"writing VIIRS sensor zenith: {colored_logging.file(product_filename)} {colored_logging.val(image.shape)}")
             image.to_geotiff(product_filename)
 
             if save_preview:
@@ -243,7 +243,7 @@ class VNP09GAGranule(VIIRSGranule):
             product_filename = self.product_filename(f"sensor_azimuth_M")
 
         if product_filename is not None and exists(product_filename):
-            logger.info(f"loading VIIRS sensor azimuth: {cl.file(product_filename)}")
+            logger.info(f"loading VIIRS sensor azimuth: {colored_logging.file(product_filename)}")
             image = Raster.open(product_filename)
         else:
             image = self.dataset(
@@ -258,7 +258,7 @@ class VNP09GAGranule(VIIRSGranule):
             raise ValueError("blank sensor azimuth image")
 
         if save_data and not exists(product_filename):
-            logger.info(f"writing VIIRS sensor azimuth: {cl.file(product_filename)} {cl.val(image.shape)}")
+            logger.info(f"writing VIIRS sensor azimuth: {colored_logging.file(product_filename)} {colored_logging.val(image.shape)}")
             image.to_geotiff(product_filename)
 
             if save_preview:
@@ -281,7 +281,7 @@ class VNP09GAGranule(VIIRSGranule):
             product_filename = self.product_filename(f"sensor_azimuth_I")
 
         if product_filename is not None and exists(product_filename):
-            logger.info(f"loading VIIRS sensor azimuth: {cl.file(product_filename)}")
+            logger.info(f"loading VIIRS sensor azimuth: {colored_logging.file(product_filename)}")
             image = Raster.open(product_filename)
         else:
             h, v = self.hv
@@ -301,7 +301,7 @@ class VNP09GAGranule(VIIRSGranule):
             raise ValueError("blank sensor azimuth image")
 
         if save_data and not exists(product_filename):
-            logger.info(f"writing VIIRS sensor azimuth: {cl.file(product_filename)} {cl.val(image.shape)}")
+            logger.info(f"writing VIIRS sensor azimuth: {colored_logging.file(product_filename)} {colored_logging.val(image.shape)}")
             image.to_geotiff(product_filename)
 
             if save_preview:
@@ -353,7 +353,7 @@ class VNP09GAGranule(VIIRSGranule):
             product_filename = self.product_filename(f"solar_zenith_M")
 
         if product_filename is not None and exists(product_filename):
-            logger.info(f"loading VIIRS solar zenith: {cl.file(product_filename)}")
+            logger.info(f"loading VIIRS solar zenith: {colored_logging.file(product_filename)}")
             image = Raster.open(product_filename)
         else:
             image = self.dataset(
@@ -368,7 +368,7 @@ class VNP09GAGranule(VIIRSGranule):
             raise ValueError("blank solar zenith image")
 
         if save_data and not exists(product_filename):
-            logger.info(f"writing VIIRS solar zenith: {cl.file(product_filename)} {cl.val(image.shape)}")
+            logger.info(f"writing VIIRS solar zenith: {colored_logging.file(product_filename)} {colored_logging.val(image.shape)}")
             image.to_geotiff(product_filename)
 
             if save_preview:
@@ -391,7 +391,7 @@ class VNP09GAGranule(VIIRSGranule):
             product_filename = self.product_filename("solar_zenith_I")
 
         if product_filename is not None and exists(product_filename):
-            logger.info(f"loading VIIRS solar zenith: {cl.file(product_filename)}")
+            logger.info(f"loading VIIRS solar zenith: {colored_logging.file(product_filename)}")
             image = Raster.open(product_filename)
         else:
             h, v = self.hv
@@ -411,7 +411,7 @@ class VNP09GAGranule(VIIRSGranule):
             raise ValueError("blank solar zenith image")
 
         if save_data and not exists(product_filename):
-            logger.info(f"writing VIIRS solar zenith: {cl.file(product_filename)} {cl.val(image.shape)}")
+            logger.info(f"writing VIIRS solar zenith: {colored_logging.file(product_filename)} {colored_logging.val(image.shape)}")
 
             image.to_geotiff(product_filename)
 
@@ -464,7 +464,7 @@ class VNP09GAGranule(VIIRSGranule):
             product_filename = self.product_filename("solar_azimuth_M")
 
         if product_filename is not None and exists(product_filename):
-            logger.info(f"loading VIIRS solar azimuth: {cl.file(product_filename)}")
+            logger.info(f"loading VIIRS solar azimuth: {colored_logging.file(product_filename)}")
             image = Raster.open(product_filename)
         else:
             image = self.dataset(
@@ -479,7 +479,7 @@ class VNP09GAGranule(VIIRSGranule):
             raise ValueError("blank solar azimuth image")
 
         if save_data and not exists(product_filename):
-            logger.info(f"writing VIIRS solar azimuth: {cl.file(product_filename)} {cl.val(image.shape)}")
+            logger.info(f"writing VIIRS solar azimuth: {colored_logging.file(product_filename)} {colored_logging.val(image.shape)}")
             image.to_geotiff(product_filename)
 
             if save_preview:
@@ -502,7 +502,7 @@ class VNP09GAGranule(VIIRSGranule):
             product_filename = self.product_filename("solar_azimuth_I")
 
         if product_filename is not None and exists(product_filename):
-            logger.info(f"loading VIIRS solar azimuth: {cl.file(product_filename)}")
+            logger.info(f"loading VIIRS solar azimuth: {colored_logging.file(product_filename)}")
             image = Raster.open(product_filename)
         else:
             h, v = self.hv
@@ -522,7 +522,7 @@ class VNP09GAGranule(VIIRSGranule):
             raise ValueError("blank solar azimuth image")
 
         if save_data and not exists(product_filename):
-            logger.info(f"writing VIIRS solar azimuth: {cl.file(product_filename)} {cl.val(image.shape)}")
+            logger.info(f"writing VIIRS solar azimuth: {colored_logging.file(product_filename)} {colored_logging.val(image.shape)}")
             image.to_geotiff(product_filename)
 
             if save_preview:
@@ -577,7 +577,7 @@ class VNP09GAGranule(VIIRSGranule):
             product_filename = self.product_filename(f"M{band}")
 
         if product_filename is not None and exists(product_filename):
-            logger.info(f"loading VIIRS M{band}: {cl.file(product_filename)}")
+            logger.info(f"loading VIIRS M{band}: {colored_logging.file(product_filename)}")
             image = Raster.open(product_filename)
         else:
             image = self.dataset(
@@ -589,7 +589,7 @@ class VNP09GAGranule(VIIRSGranule):
             )
 
         if save_data and not exists(product_filename):
-            logger.info(f"writing VIIRS M{band}: {cl.file(product_filename)}")
+            logger.info(f"writing VIIRS M{band}: {colored_logging.file(product_filename)}")
             image.to_geotiff(product_filename)
 
             if save_preview:
@@ -613,7 +613,7 @@ class VNP09GAGranule(VIIRSGranule):
             product_filename = self.product_filename(f"I{band}")
 
         if product_filename is not None and exists(product_filename):
-            logger.info(f"loading VIIRS I{band}: {cl.file(product_filename)}")
+            logger.info(f"loading VIIRS I{band}: {colored_logging.file(product_filename)}")
             image = Raster.open(product_filename)
         else:
             image = self.dataset(
@@ -625,7 +625,7 @@ class VNP09GAGranule(VIIRSGranule):
             )
 
         if save_data and not exists(product_filename):
-            logger.info(f"writing VIIRS I{band}: {cl.file(product_filename)}")
+            logger.info(f"writing VIIRS I{band}: {colored_logging.file(product_filename)}")
             image.to_geotiff(product_filename)
 
             if save_preview:
@@ -726,7 +726,7 @@ class VNP09GAGranule(VIIRSGranule):
             product_filename = self.product_filename("NDVI")
 
         if product_filename is not None and exists(product_filename):
-            logger.info(f"loading VIIRS NDVI: {cl.file(product_filename)}")
+            logger.info(f"loading VIIRS NDVI: {colored_logging.file(product_filename)}")
             NDVI = Raster.open(product_filename)
         else:
             red = self.get_red(
@@ -748,7 +748,7 @@ class VNP09GAGranule(VIIRSGranule):
             NDVI = np.clip((NIR - red) / (NIR + red), -1, 1)
 
         if save_data and not exists(product_filename):
-            logger.info(f"writing VIIRS NDVI: {cl.file(product_filename)}")
+            logger.info(f"writing VIIRS NDVI: {colored_logging.file(product_filename)}")
             NDVI.to_geotiff(product_filename)
 
             if save_preview:
@@ -775,7 +775,7 @@ class VNP09GAGranule(VIIRSGranule):
             product_filename = self.product_filename("albedo")
 
         if product_filename is not None and exists(product_filename):
-            logger.info(f"loading VIIRS albedo: {cl.file(product_filename)}")
+            logger.info(f"loading VIIRS albedo: {colored_logging.file(product_filename)}")
             albedo = Raster.open(product_filename)
         else:
             b1 = self.get_M_band(
@@ -874,11 +874,11 @@ class VNP09GAGranule(VIIRSGranule):
             albedo = np.clip(albedo, 0, 1)
 
         if save_data and not exists(product_filename):
-            logger.info(f"writing VIIRS albedo: {cl.file(product_filename)}")
+            logger.info(f"writing VIIRS albedo: {colored_logging.file(product_filename)}")
             albedo.to_geotiff(product_filename)
 
         if geometry is not None:
-            logger.info(f"projecting VIIRS albedo from {cl.val(albedo.geometry.cell_size)} to {cl.val(geometry.cell_size)}")
+            logger.info(f"projecting VIIRS albedo from {colored_logging.val(albedo.geometry.cell_size)} to {colored_logging.val(geometry.cell_size)}")
             albedo = albedo.to_geometry(geometry)
 
         albedo.cmap = ALBEDO_COLORMAP
@@ -1030,7 +1030,7 @@ class VNP09GA(VIIRSDataPool):
         with h5py.File(filename, "r") as f:
             DN = np.array(f[dataset_name])
             grid = generate_MODLAND_grid(h, v, DN.shape[0])
-            logger.info(f"loading {cl.val(dataset_name)} at {cl.val(f'{grid.cell_size} m')} resolution from {cl.file(filename)}")
+            logger.info(f"loading {colored_logging.val(dataset_name)} at {colored_logging.val(f'{grid.cell_size} m')} resolution from {colored_logging.file(filename)}")
             DN = Raster(DN, geometry=grid)
 
         data = DN * scale_factor
@@ -1081,7 +1081,7 @@ class VNP09GA(VIIRSDataPool):
         NDVI.cmap = NDVI_COLORMAP
 
         if filename is not None:
-            logger.info(f"writing NDVI mosaic: {cl.file(filename)}")
+            logger.info(f"writing NDVI mosaic: {colored_logging.file(filename)}")
             NDVI.to_geotiff(filename)
 
         return NDVI
@@ -1109,7 +1109,7 @@ class VNP09GA(VIIRSDataPool):
             granule_albedo = granule.albedo
             source_cell_size = granule_albedo.geometry.cell_size
             dest_cell_size = geometry.cell_size
-            logger.info(f"projecting VIIRS albedo from {cl.val(f'{source_cell_size} m')} to {cl.val(f'{dest_cell_size} m')}")
+            logger.info(f"projecting VIIRS albedo from {colored_logging.val(f'{source_cell_size} m')} to {colored_logging.val(f'{dest_cell_size} m')}")
             projected_albedo = granule_albedo.to_geometry(geometry, resampling=resampling)
 
             if albedo is None:
@@ -1120,7 +1120,7 @@ class VNP09GA(VIIRSDataPool):
         albedo.cmap = ALBEDO_COLORMAP
 
         if filename is not None:
-            logger.info(f"writing albedo mosaic: {cl.file(filename)}")
+            logger.info(f"writing albedo mosaic: {colored_logging.file(filename)}")
             albedo.to_geotiff(filename)
 
         return albedo
@@ -1146,9 +1146,9 @@ class VNP09GA(VIIRSDataPool):
             end = parser.parse(end).date()
 
         if start == end:
-            logger.info(f"processing VIIRS at {cl.place(target)} on {cl.time(start)}")
+            logger.info(f"processing VIIRS at {colored_logging.place(target)} on {colored_logging.time(start)}")
         else:
-            logger.info(f"processing VIIRS at {cl.place(target)} from {cl.time(start)} to {cl.time(end)}"
+            logger.info(f"processing VIIRS at {colored_logging.place(target)} from {colored_logging.time(start)} to {colored_logging.time(end)}"
                              )
 
         if not isinstance(target_geometry, RasterGeometry):
@@ -1172,12 +1172,12 @@ class VNP09GA(VIIRSDataPool):
                 )
 
                 if exists(product_filename):
-                    logger.info(f"VIIRS {cl.val(product)} already exists: {cl.file(product_filename)}")
+                    logger.info(f"VIIRS {colored_logging.val(product)} already exists: {colored_logging.file(product_filename)}")
                 else:
                     logger.info(
-                        f"generating VIIRS {cl.val(product)} mosaic " +
-                        "at " + cl.place(target) +
-                        "on " + cl.time(f"{acquisition_date:%Y-%m-%d}")
+                        f"generating VIIRS {colored_logging.val(product)} mosaic " +
+                        "at " + colored_logging.place(target) +
+                        "on " + colored_logging.time(f"{acquisition_date:%Y-%m-%d}")
                     )
 
                     if product == "NDVI":

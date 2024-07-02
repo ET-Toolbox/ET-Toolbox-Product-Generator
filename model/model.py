@@ -6,7 +6,7 @@ from typing import Union
 import numpy as np
 from rasters import Raster
 
-import cl
+import colored_logging
 
 
 DEFAULT_WORKING_DIRECTORY = "."
@@ -45,14 +45,14 @@ class Model:
 
         static_directory = abspath(expanduser(static_directory))
 
-        logger.info(f"working directory: {cl.dir(working_directory)}")
+        logger.info(f"working directory: {colored_logging.dir(working_directory)}")
 
         if intermediate_directory is None:
             intermediate_directory = join(working_directory, DEFAULT_INTERMEDIATE)
 
         intermediate_directory = abspath(expanduser(intermediate_directory))
 
-        logger.info(f"intermediate directory: {cl.dir(intermediate_directory)}")
+        logger.info(f"intermediate directory: {colored_logging.dir(intermediate_directory)}")
 
         self.working_directory = working_directory
         self.static_directory = static_directory
@@ -107,45 +107,45 @@ class Model:
 
             if len(unique) < 10:
                 logger.info(
-                    "variable " + cl.name(variable) + " on " + cl.time(f"{date_UTC:%Y-%m-%d}") + " at " + cl.place(
+                    "variable " + colored_logging.name(variable) + " on " + colored_logging.time(f"{date_UTC:%Y-%m-%d}") + " at " + colored_logging.place(
                         target))
 
                 for value in unique:
                     count = np.count_nonzero(image == value)
 
                     if value == 0:
-                        logger.info(f"* {cl.colored(value, 'red')}: {cl.colored(count, 'red')}")
+                        logger.info(f"* {colored_logging.colored(value, 'red')}: {colored_logging.colored(count, 'red')}")
                     else:
-                        logger.info(f"* {cl.val(value)}: {cl.val(count)}")
+                        logger.info(f"* {colored_logging.val(value)}: {colored_logging.val(count)}")
             else:
                 minimum = np.nanmin(image)
 
                 if minimum < 0:
-                    minimum_string = cl.colored(f"{minimum:0.3f}", "red")
+                    minimum_string = colored_logging.colored(f"{minimum:0.3f}", "red")
                 else:
-                    minimum_string = cl.val(f"{minimum:0.3f}")
+                    minimum_string = colored_logging.val(f"{minimum:0.3f}")
 
                 maximum = np.nanmax(image)
 
                 if maximum <= 0:
-                    maximum_string = cl.colored(f"{maximum:0.3f}", "red")
+                    maximum_string = colored_logging.colored(f"{maximum:0.3f}", "red")
                 else:
-                    maximum_string = cl.val(f"{maximum:0.3f}")
+                    maximum_string = colored_logging.val(f"{maximum:0.3f}")
 
                 if nan_proportion > 0.5:
-                    nan_proportion_string = cl.colored(f"{(nan_proportion * 100):0.2f}%", "yellow")
+                    nan_proportion_string = colored_logging.colored(f"{(nan_proportion * 100):0.2f}%", "yellow")
                 elif nan_proportion == 1:
-                    nan_proportion_string = cl.colored(f"{(nan_proportion * 100):0.2f}%", "red")
+                    nan_proportion_string = colored_logging.colored(f"{(nan_proportion * 100):0.2f}%", "red")
                 else:
-                    nan_proportion_string = cl.val(f"{(nan_proportion * 100):0.2f}%")
+                    nan_proportion_string = colored_logging.val(f"{(nan_proportion * 100):0.2f}%")
 
-                message = "variable " + cl.name(variable) + \
-                    " on " + cl.time(f"{date_UTC:%Y-%m-%d}") + \
-                    " at " + cl.place(target) + \
+                message = "variable " + colored_logging.name(variable) + \
+                    " on " + colored_logging.time(f"{date_UTC:%Y-%m-%d}") + \
+                    " at " + colored_logging.place(target) + \
                     " min: " + minimum_string + \
-                    " mean: " + cl.val(f"{np.nanmean(image):0.3f}") + \
+                    " mean: " + colored_logging.val(f"{np.nanmean(image):0.3f}") + \
                     " max: " + maximum_string + \
-                    " nan: " + nan_proportion_string + f" ({cl.val(image.nodata)})"
+                    " nan: " + nan_proportion_string + f" ({colored_logging.val(image.nodata)})"
 
                 if np.all(image == 0):
                     message += " all zeros"
@@ -168,7 +168,7 @@ class Model:
         )
 
         if exists(filename):
-            logger.info(f"loading {cl.name(variable_name)} cache: {cl.file(filename)}")
+            logger.info(f"loading {colored_logging.name(variable_name)} cache: {colored_logging.file(filename)}")
             image = Raster.open(filename)
             return image
         else:
@@ -189,7 +189,7 @@ class Model:
             target_name=target
         )
 
-        logger.info(f"writing {cl.name(variable)} intermediate: {cl.file(filename)}")
+        logger.info(f"writing {colored_logging.name(variable)} intermediate: {colored_logging.file(filename)}")
 
         image.to_geotiff(filename, include_preview=True, preview_quality=self.preview_quality)
 

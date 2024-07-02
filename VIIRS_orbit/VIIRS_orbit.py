@@ -27,7 +27,7 @@ import shapely.ops
 from rasters import RasterGeometry
 
 from spacetrack_credentials import get_spacetrack_credentials
-import cl
+import colored_logging
 
 logger = logging.getLogger(__name__)
 

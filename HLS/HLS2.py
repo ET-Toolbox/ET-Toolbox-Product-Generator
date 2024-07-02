@@ -22,7 +22,7 @@ from pystac import Item
 from pystac_client import Client
 from shapely.geometry import Polygon, Point, mapping, shape
 
-import cl
+import colored_logging
 import rasters as rt
 from HLS import HLSGranule, HLSGranuleID, HLSSentinelGranule, CLOUD_CMAP, \
     WATER_CMAP, HLS, HLSLandsatGranule, HLSNotAvailable, HLSLandsatMissing, HLSLandsatNotAvailable, HLSSentinelMissing, \
@@ -157,10 +157,10 @@ class HLS2(HLS):
 
         if ID == "nan":
             self.mark_date_unavailable("Sentinel", tile, date_UTC)
-            raise HLSSentinelNotAvailable(f"Sentinel is not available at tile {cl.place(tile)} on {cl.time(date_UTC)}")
+            raise HLSSentinelNotAvailable(f"Sentinel is not available at tile {colored_logging.place(tile)} on {colored_logging.time(date_UTC)}")
         elif ID == "missing":
             raise HLSSentinelMissing(
-                f"Sentinel is missing on remote server at tile {cl.place(tile)} on {cl.time(date_UTC)}")
+                f"Sentinel is missing on remote server at tile {colored_logging.place(tile)} on {colored_logging.time(date_UTC)}")
         else:
             return ID
 
@@ -173,17 +173,17 @@ class HLS2(HLS):
 
         if ID == "nan":
             self.mark_date_unavailable("Landsat", tile, date_UTC)
-            error_string = f"Landsat is not available at tile {cl.place(tile)} on {cl.time(date_UTC)}"
+            error_string = f"Landsat is not available at tile {colored_logging.place(tile)} on {colored_logging.time(date_UTC)}"
             most_recent_listing = listing[listing.landsat.apply(lambda landsat: landsat not in ("nan", "missing"))]
 
             if len(most_recent_listing) > 0:
                 most_recent = most_recent_listing.iloc[-1].landsat
-                error_string += f" most recent granule: {cl.val(most_recent)}"
+                error_string += f" most recent granule: {colored_logging.val(most_recent)}"
 
             raise HLSLandsatNotAvailable(error_string)
         elif ID == "missing":
             raise HLSLandsatMissing(
-                f"Landsat is missing on remote server at tile {cl.place(tile)} on {cl.time(date_UTC)}")
+                f"Landsat is missing on remote server at tile {colored_logging.place(tile)} on {colored_logging.time(date_UTC)}")
         else:
             return ID
 
@@ -192,7 +192,7 @@ class HLS2(HLS):
             date_UTC = parser.parse(date_UTC).date()
 
         if self.check_unavailable_date("Sentinel", tile, date_UTC):
-            raise HLSSentinelNotAvailable(f"Sentinel is not available at tile {cl.place(tile)} on {cl.time(date_UTC)}")
+            raise HLSSentinelNotAvailable(f"Sentinel is not available at tile {colored_logging.place(tile)} on {colored_logging.time(date_UTC)}")
 
         date_directory = self.date_directory(date_UTC=date_UTC)
         pattern = join(date_directory, f"HLS.S30.T{tile[:5]}.{date_UTC:%Y%j}*")
@@ -200,7 +200,7 @@ class HLS2(HLS):
 
         if len(candidates) > 0:
             granule_directory = candidates[-1]
-            logger.info(f"found HLS2 Sentinel directory: {cl.file(granule_directory)}")
+            logger.info(f"found HLS2 Sentinel directory: {colored_logging.file(granule_directory)}")
             return granule_directory
 
         granule_directory = join(date_directory, self.sentinel_ID(tile=tile, date_UTC=date_UTC))
@@ -212,7 +212,7 @@ class HLS2(HLS):
             date_UTC = parser.parse(date_UTC).date()
 
         if self.check_unavailable_date("Landsat", tile, date_UTC):
-            raise HLSLandsatNotAvailable(f"Landsat is not available at tile {cl.place(tile)} on {cl.time(date_UTC)}")
+            raise HLSLandsatNotAvailable(f"Landsat is not available at tile {colored_logging.place(tile)} on {colored_logging.time(date_UTC)}")
 
         date_directory = self.date_directory(date_UTC=date_UTC)
         pattern = join(date_directory, f"HLS.L30.T{tile[:5]}.{date_UTC:%Y%j}*")
@@ -220,7 +220,7 @@ class HLS2(HLS):
 
         if len(candidates) > 0:
             granule_directory = candidates[-1]
-            logger.info(f"found HLS2 Landsat directory: {cl.file(granule_directory)}")
+            logger.info(f"found HLS2 Landsat directory: {colored_logging.file(granule_directory)}")
             return granule_directory
 
         granule_directory = join(date_directory, self.landsat_ID(tile=tile, date_UTC=date_UTC))
@@ -235,9 +235,9 @@ class HLS2(HLS):
         if isinstance(date_UTC, str):
             date_UTC = parser.parse(date_UTC).date()
 
-        logger.info(f"searching for Sentinel tile {cl.name(tile)} on {cl.time(date_UTC)}")
+        logger.info(f"searching for Sentinel tile {colored_logging.name(tile)} on {colored_logging.time(date_UTC)}")
         directory = self.sentinel_directory(tile=tile, date_UTC=date_UTC)
-        logger.info(f"retrieving Sentinel tile {cl.name(tile)} on {cl.time(date_UTC)}: {directory}")
+        logger.info(f"retrieving Sentinel tile {colored_logging.name(tile)} on {colored_logging.time(date_UTC)}: {directory}")
         ID = self.sentinel_ID(tile=tile, date_UTC=date_UTC)
         band_URL_df = self.bands(ID=ID, bands=bands)
 
@@ -253,9 +253,9 @@ class HLS2(HLS):
         if isinstance(date_UTC, str):
             date_UTC = parser.parse(date_UTC).date()
 
-        logger.info(f"searching for Landsat tile {cl.name(tile)} on {cl.time(date_UTC)}")
+        logger.info(f"searching for Landsat tile {colored_logging.name(tile)} on {colored_logging.time(date_UTC)}")
         directory = self.landsat_directory(tile=tile, date_UTC=date_UTC)
-        logger.info(f"retrieving Landsat tile {cl.name(tile)} on {cl.time(date_UTC)}: {directory}")
+        logger.info(f"retrieving Landsat tile {colored_logging.name(tile)} on {colored_logging.time(date_UTC)}: {directory}")
         ID = self.landsat_ID(tile=tile, date_UTC=date_UTC)
         band_URL_df = self.bands(ID=ID, bands=bands)
 
@@ -295,7 +295,7 @@ class HLS2(HLS):
             if return_filename:
                 return product_filename
             else:
-                self.logger.info(f"loading HLS2 NDVI: {cl.file(product_filename)}")
+                self.logger.info(f"loading HLS2 NDVI: {colored_logging.file(product_filename)}")
                 return Raster.open(product_filename, geometry=target_geometry)
 
         try:
@@ -333,11 +333,11 @@ class HLS2(HLS):
             NDVI = NDVI.to_geometry(geometry, resampling="cubic")
 
         if (save_data or return_filename) and not exists(product_filename):
-            self.logger.info(f"saving HLS2 NDVI: {cl.file(product_filename)}")
+            self.logger.info(f"saving HLS2 NDVI: {colored_logging.file(product_filename)}")
             NDVI.to_COG(product_filename)
 
             if save_preview:
-                self.logger.info(f"saving HLS2 NDVI preview: {cl.file(preview_filename)}")
+                self.logger.info(f"saving HLS2 NDVI preview: {colored_logging.file(preview_filename)}")
                 NDVI.to_geojpeg(preview_filename)
 
         NDVI = NDVI.to_geometry(target_geometry)
@@ -391,7 +391,7 @@ class HLS2(HLS):
             if return_filename:
                 return product_filename
             else:
-                self.logger.info(f"loading HLS2 albedo: {cl.file(product_filename)}")
+                self.logger.info(f"loading HLS2 albedo: {colored_logging.file(product_filename)}")
                 return Raster.open(product_filename, geometry=target_geometry)
 
         try:
@@ -430,11 +430,11 @@ class HLS2(HLS):
             albedo = albedo.to_geometry(geometry, resampling="cubic")
 
         if (save_data and return_filename) and not exists(product_filename):
-            self.logger.info(f"saving HLS2 albedo: {cl.file(product_filename)}")
+            self.logger.info(f"saving HLS2 albedo: {colored_logging.file(product_filename)}")
             albedo.to_COG(product_filename)
 
             if save_preview:
-                self.logger.info(f"saving HLS2 albedo preview: {cl.file(preview_filename)}")
+                self.logger.info(f"saving HLS2 albedo preview: {colored_logging.file(preview_filename)}")
                 albedo.to_geojpeg(preview_filename)
 
         albedo = albedo.to_geometry(target_geometry)
@@ -453,10 +453,10 @@ class HLS2(HLS):
                     os.remove(filename)
 
                 if exists(filename):
-                    self.logger.info(f"file already downloaded: {cl.file(filename)}")
+                    self.logger.info(f"file already downloaded: {colored_logging.file(filename)}")
                     return filename
 
-                self.logger.info(f"downloading: {cl.URL(URL)} -> {cl.file(filename)}")
+                self.logger.info(f"downloading: {colored_logging.URL(URL)} -> {colored_logging.file(filename)}")
                 directory = dirname(filename)
                 makedirs(directory, exist_ok=True)
                 partial_filename = f"{filename}.download"
@@ -464,7 +464,7 @@ class HLS2(HLS):
                 # FIXME remove hard-coded credentials
                 timer = Timer()
                 system(command)
-                self.logger.info(f"completed download in {cl.time(timer)} seconds: " + cl.file(filename))
+                self.logger.info(f"completed download in {colored_logging.time(timer)} seconds: " + colored_logging.file(filename))
 
                 if not exists(partial_filename):
                     raise HLSDownloadFailed(f"unable to download URL: {URL}")
@@ -521,10 +521,10 @@ class HLS2CMRSTAC(HLS2):
         self._username = username
         self._password = password
 
-        logger.info(f"HLS 2.0 CMR STAC URL: {cl.URL(remote)}")
-        logger.info(f"HLS 2.0 working directory: {cl.dir(working_directory)}")
-        logger.info(f"HLS 2.0 download directory: {cl.dir(download_directory)}")
-        logger.info(f"HLS 2.0 products directory: {cl.dir(products_directory)}")
+        logger.info(f"HLS 2.0 CMR STAC URL: {colored_logging.URL(remote)}")
+        logger.info(f"HLS 2.0 working directory: {colored_logging.dir(working_directory)}")
+        logger.info(f"HLS 2.0 download directory: {colored_logging.dir(download_directory)}")
+        logger.info(f"HLS 2.0 products directory: {colored_logging.dir(products_directory)}")
 
         super(HLS2CMRSTAC, self).__init__(
             working_directory=working_directory,
@@ -597,7 +597,7 @@ class HLS2CMRSTAC(HLS2):
 
         timer = Timer()
         self.logger.info(
-            f"started listing available HLS2 granules at tile {cl.place(tile)} from {cl.time(start_UTC)} to {cl.time(end_UTC)}")
+            f"started listing available HLS2 granules at tile {colored_logging.place(tile)} from {colored_logging.time(start_UTC)} to {colored_logging.time(end_UTC)}")
 
         if isinstance(start_UTC, str):
             start_UTC = parser.parse(start_UTC).date()
@@ -630,7 +630,7 @@ class HLS2CMRSTAC(HLS2):
 
                 if previous_pass in sentinel_dates and date_UTC not in sentinel_dates:
                     if str(date_UTC) >= str(start_UTC) and str(date_UTC) <= str(end_UTC):
-                        logger.info(f"expecting Sentinel overpass on {cl.time(date_UTC)} based on {cl.val(SENTINEL_REPEAT_DAYS)} days repeat from known previous overpass {cl.time(previous_pass)}")
+                        logger.info(f"expecting Sentinel overpass on {colored_logging.time(date_UTC)} based on {colored_logging.val(SENTINEL_REPEAT_DAYS)} days repeat from known previous overpass {colored_logging.time(previous_pass)}")
                     
                     sentinel_dates.add(date_UTC)
 
@@ -643,7 +643,7 @@ class HLS2CMRSTAC(HLS2):
 
                 if previous_pass in landsat_dates and date_UTC not in landsat_dates:
                     if str(date_UTC) >= str(start_UTC) and str(date_UTC) <= str(end_UTC):
-                        logger.info(f"expecting Landsat overpass on {cl.time(date_UTC)} based on {cl.val(LANDSAT_REPEAT_DAYS)} days repeat from known previous overpass {cl.time(previous_pass)}")
+                        logger.info(f"expecting Landsat overpass on {colored_logging.time(date_UTC)} based on {colored_logging.val(LANDSAT_REPEAT_DAYS)} days repeat from known previous overpass {colored_logging.time(previous_pass)}")
                     
                     landsat_dates.add(date_UTC)
 
@@ -681,7 +681,7 @@ class HLS2CMRSTAC(HLS2):
         listing = listing[listing.date_UTC.apply(lambda date_UTC: str(date_UTC) >= str(start_UTC))]
 
         self.logger.info(
-            f"finished listing available HLS2 granules at tile {cl.place(tile)} from {cl.time(start_UTC)} to {cl.time(end_UTC)} ({timer})")
+            f"finished listing available HLS2 granules at tile {colored_logging.place(tile)} from {colored_logging.time(start_UTC)} to {colored_logging.time(end_UTC)} ({timer})")
 
         return listing
 
@@ -1074,23 +1074,23 @@ class HLS2CMR(HLS2):
         if remote is None:
             remote = self.URL
 
-        logger.info(f"HLS 2.0 CMR URL: {cl.URL(remote)}")
+        logger.info(f"HLS 2.0 CMR URL: {colored_logging.URL(remote)}")
 
         if working_directory is None:
             working_directory = abspath(".")
 
         working_directory = expanduser(working_directory)
-        logger.info(f"HLS 2.0 working directory: {cl.dir(working_directory)}")
+        logger.info(f"HLS 2.0 working directory: {colored_logging.dir(working_directory)}")
 
         if download_directory is None:
             download_directory = join(working_directory, DOWNLOAD_DIRECTORY)
 
-        logger.info(f"HLS 2.0 download directory: {cl.dir(download_directory)}")
+        logger.info(f"HLS 2.0 download directory: {colored_logging.dir(download_directory)}")
 
         if products_directory is None:
             products_directory = join(working_directory, PRODUCTS_DIRECTORY)
 
-        logger.info(f"HLS 2.0 products directory: {cl.dir(products_directory)}")
+        logger.info(f"HLS 2.0 products directory: {colored_logging.dir(products_directory)}")
 
         if username is None or password is None:
             credentials = get_ERS_credentials(filename=ERS_credentials_filename)
@@ -1248,7 +1248,7 @@ class HLS2CMR(HLS2):
             return listing_subset
 
         self.logger.info(
-            f"started listing available HLS2 granules at tile {cl.place(tile)} from {cl.time(start_UTC)} to {cl.time(end_UTC)}")
+            f"started listing available HLS2 granules at tile {colored_logging.place(tile)} from {colored_logging.time(start_UTC)} to {colored_logging.time(end_UTC)}")
 
         giveup_date = datetime.utcnow().date() - timedelta(days=GIVEUP_DAYS)
         search_start = start_UTC - timedelta(days=max(SENTINEL_REPEAT_DAYS, LANDSAT_REPEAT_DAYS))
@@ -1325,7 +1325,7 @@ class HLS2CMR(HLS2):
         listing = listing[["date_UTC", "tile", "sentinel", "landsat"]]
 
         self.logger.info(
-            f"finished listing available HLS2 granules at tile {cl.place(tile)} from {cl.time(start_UTC)} to {cl.time(end_UTC)} ({timer})")
+            f"finished listing available HLS2 granules at tile {colored_logging.place(tile)} from {colored_logging.time(start_UTC)} to {colored_logging.time(end_UTC)} ({timer})")
 
         self._listing = pd.concat([self._listing, listing]).drop_duplicates()
 
@@ -1353,10 +1353,10 @@ class HLS2CMR(HLS2):
 
         if ID == "nan":
             self.mark_date_unavailable("Sentinel", tile, date_UTC)
-            raise HLSSentinelNotAvailable(f"Sentinel is not available at tile {cl.place(tile)} on {cl.time(date_UTC)}")
+            raise HLSSentinelNotAvailable(f"Sentinel is not available at tile {colored_logging.place(tile)} on {colored_logging.time(date_UTC)}")
         elif ID == "missing":
             raise HLSSentinelMissing(
-                f"Sentinel is missing on remote server at tile {cl.place(tile)} on {cl.time(date_UTC)}")
+                f"Sentinel is missing on remote server at tile {colored_logging.place(tile)} on {colored_logging.time(date_UTC)}")
         else:
             return ID
 
@@ -1369,16 +1369,16 @@ class HLS2CMR(HLS2):
 
         if ID == "nan":
             self.mark_date_unavailable("Landsat", tile, date_UTC)
-            error_string = f"Landsat is not available at tile {cl.place(tile)} on {cl.time(date_UTC)}"
+            error_string = f"Landsat is not available at tile {colored_logging.place(tile)} on {colored_logging.time(date_UTC)}"
             most_recent_listing = listing[listing.landsat.apply(lambda landsat: landsat not in ("nan", "missing"))]
 
             if len(most_recent_listing) > 0:
                 most_recent = most_recent_listing.iloc[-1].landsat
-                error_string += f" most recent granule: {cl.val(most_recent)}"
+                error_string += f" most recent granule: {colored_logging.val(most_recent)}"
 
             raise HLSLandsatNotAvailable(error_string)
         elif ID == "missing":
             raise HLSLandsatMissing(
-                f"Landsat is missing on remote server at tile {cl.place(tile)} on {cl.time(date_UTC)}")
+                f"Landsat is missing on remote server at tile {colored_logging.place(tile)} on {colored_logging.time(date_UTC)}")
         else:
             return ID
