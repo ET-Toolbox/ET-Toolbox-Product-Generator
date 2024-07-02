@@ -3,7 +3,7 @@ Forest Light Environmental Simulator (FLiES)
 Artificial Neural Network Implementation
 for the Breathing Earth Systems Simulator (BESS)
 """
-
+from typing import Dict
 import logging
 from collections import namedtuple
 from datetime import datetime, date
@@ -12,11 +12,12 @@ from typing import Union, Callable, List
 
 import numpy as np
 from dateutil import parser
-from matplotlib.colors import LinearSegmentedColormap
 from scipy.stats import zscore
 
 import cl
 import rasters as rt
+
+from ERS_credentials import get_ERS_credentials
 from FLiES.FLiES import FLiES
 from GEDI import GEDICanopyHeight
 from geos5fp import GEOS5FP
@@ -54,15 +55,6 @@ DEFAULT_OUTPUT_VARIABLES = [
     "LE_canopy"
 ]
 
-# GPP_COLORMAP = LinearSegmentedColormap.from_list(
-#     name="GPP",
-#     colors=[
-#         "#000000",
-#         "#325e32"
-#     ]
-# )
-
-
 class GEDINotAvailable(IOError):
     pass
 
@@ -91,6 +83,7 @@ class BESS(FLiES):
             preview_quality: int = DEFAULT_PREVIEW_QUALITY,
             ANN_model: Callable = None,
             ANN_model_filename: str = None,
+            ERS_credentials: Dict[str, str] = None,
             resampling: str = DEFAULT_RESAMPLING,
             passes: int = DEFAULT_PASSES,
             initialize_Tf_with_ST: bool = True,
@@ -151,7 +144,16 @@ class BESS(FLiES):
 
             try:
                 self.logger.info("preparing MODIS clumping index dataset: " + cl.dir(CI_directory))
-                ORNL_connection = MODISCI(directory=CI_directory)
+
+                if ERS_credentials is None:
+                    ERS_credentials = get_ERS_credentials()
+
+                ORNL_connection = MODISCI(
+                    directory=CI_directory,
+                    username=ERS_credentials["username"],
+                    password=ERS_credentials["password"]
+                )
+
                 filename = ORNL_connection.download()
                 self.logger.info("MODIS clumping index ready: " + cl.file(filename))
             except Exception as e:
