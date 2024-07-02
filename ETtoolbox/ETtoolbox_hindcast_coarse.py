@@ -5,7 +5,7 @@ from os.path import join, abspath, dirname, exists
 from typing import List, Callable, Union
 
 import cl
-from GEDI import GEDICanopyHeight
+from gedi_canopy_height import GEDICanopyHeight
 from geos5fp import GEOS5FP
 from LANCE_GEOS5FP_NRT import LANCE_GEOS5FP_NRT, LANCENotAvailableError, GEOS5FPNotAvailableError
 from modisci import MODISCI

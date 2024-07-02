@@ -8,7 +8,7 @@ import numpy as np
 from dateutil import parser
 
 import cl
-from GEDI import GEDICanopyHeight
+from gedi_canopy_height import GEDICanopyHeight
 from geos5fp import GEOS5FP
 from LandsatL2C2 import LandsatL2C2
 from modisci import MODISCI

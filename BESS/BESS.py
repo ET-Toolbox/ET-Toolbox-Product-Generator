@@ -19,7 +19,7 @@ import rasters as rt
 
 from ERS_credentials import get_ERS_credentials
 from FLiES.FLiES import FLiES
-from GEDI import GEDICanopyHeight
+from gedi_canopy_height import GEDICanopyHeight
 from geos5fp import GEOS5FP
 from modisci import MODISCI
 from SRTM import SRTM
@@ -129,12 +129,12 @@ class BESS(FLiES):
                 GEDI_download = join(static_directory, DEFAULT_GEDI_DOWNLOAD)
 
             try:
-                self.logger.info("preparing GEDI canopy height dataset: " + cl.dir(GEDI_download))
+                self.logger.info("preparing gedi_canopy_height canopy height dataset: " + cl.dir(GEDI_download))
                 GEDI_connection = GEDICanopyHeight(source_directory=GEDI_download)
                 GEDI_filename = GEDI_connection.VRT
-                self.logger.info("GEDI VRT ready: " + cl.file(GEDI_filename))
+                self.logger.info("gedi_canopy_height VRT ready: " + cl.file(GEDI_filename))
             except Exception as e:
-                raise GEDINotAvailable(f"unable to prepare GEDI: {GEDI_download}")
+                raise GEDINotAvailable(f"unable to prepare gedi_canopy_height: {GEDI_download}")
 
         self.GEDI_connection = GEDI_connection
 

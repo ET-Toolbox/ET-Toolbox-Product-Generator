@@ -9,7 +9,7 @@ from dateutil import parser
 
 import cl
 import rasters as rt
-from GEDI import GEDICanopyHeight
+from gedi_canopy_height import GEDICanopyHeight
 from geos5fp import GEOS5FP
 from HLS.HLS2 import HLS2CMR
 from LandsatL2C2 import LandsatL2C2
