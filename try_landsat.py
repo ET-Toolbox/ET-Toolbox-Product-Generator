@@ -1,5 +1,5 @@
-from LandsatL2C2 import LandsatL2C2
-from sentinel import sentinel_tile_grid
+from ETtoolbox.LandsatL2C2 import LandsatL2C2
+from ETtoolbox.sentinel import sentinel_tile_grid
 
 tile = "11SPS"
 geometry = sentinel_tile_grid.grid(tile, 30)

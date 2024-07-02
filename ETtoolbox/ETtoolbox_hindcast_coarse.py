@@ -7,13 +7,13 @@ from typing import List, Callable, Union
 import colored_logging
 from gedi_canopy_height import GEDICanopyHeight
 from geos5fp import GEOS5FP
-from LANCE_GEOS5FP_NRT import LANCE_GEOS5FP_NRT, LANCENotAvailableError, GEOS5FPNotAvailableError
+from ETtoolbox.LANCE_GEOS5FP_NRT import LANCE_GEOS5FP_NRT, LANCENotAvailableError, GEOS5FPNotAvailableError
 from modisci import MODISCI
-from PTJPLSM import PTJPLSM, DEFAULT_PREVIEW_QUALITY, DEFAULT_RESAMPLING
-from SRTM import SRTM
+from ETtoolbox.PTJPLSM import PTJPLSM, DEFAULT_PREVIEW_QUALITY, DEFAULT_RESAMPLING
+from ETtoolbox.SRTM import SRTM
 from soil_grids import SoilGrids
 from rasters import Raster, RasterGrid
-from sentinel import sentinel_tile_grid
+from ETtoolbox.sentinel import sentinel_tile_grid
 
 logger = logging.getLogger(__name__)
 
