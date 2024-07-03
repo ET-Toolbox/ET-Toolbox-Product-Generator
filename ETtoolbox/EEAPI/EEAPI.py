@@ -10,7 +10,7 @@ import tarfile
 from datetime import datetime, date
 from glob import glob
 from os import makedirs, system
-from os.path import join, dirname, expanduser, splitext, exists
+from os.path import join, dirname, expanduser, splitext, exists, abspath
 from shutil import move
 from time import perf_counter
 from typing import List
