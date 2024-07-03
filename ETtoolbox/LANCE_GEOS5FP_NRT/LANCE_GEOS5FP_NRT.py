@@ -2,6 +2,8 @@ from glob import glob
 from os.path import splitext
 from typing import Dict, Callable
 import boto3
+import rasters
+
 from gedi_canopy_height import GEDICanopyHeight
 from geos5fp import GEOS5FP
 from ETtoolbox.LANCE import *
