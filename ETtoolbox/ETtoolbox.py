@@ -5,27 +5,27 @@ from typing import List, Callable, Union
 
 import numpy as np
 
-import cl
+import colored_logging
 import rasters as rt
 from gedi_canopy_height import GEDICanopyHeight
 from geos5fp import GEOS5FP
-from GFS import forecast_Ta_C, forecast_RH, get_GFS_listing, forecast_SWin
-from HLS.HLS2 import HLS2CMR
-from LANCE import retrieve_VNP43MA4N, retrieve_VNP43IA4N, retrieve_VNP21NRT_emissivity, available_LANCE_dates
-from LANCE_GEOS5FP_NRT import LANCE_GEOS5FP_NRT, LANCENotAvailableError, GEOS5FPNotAvailableError, retrieve_VNP21NRT_ST, \
+from ETtoolbox.GFS import forecast_Ta_C, forecast_RH, get_GFS_listing, forecast_SWin
+from ETtoolbox.HLS.HLS2 import HLS2CMR
+from ETtoolbox.LANCE import retrieve_VNP43MA4N, retrieve_VNP43IA4N, retrieve_VNP21NRT_emissivity, available_LANCE_dates
+from ETtoolbox.LANCE_GEOS5FP_NRT import LANCE_GEOS5FP_NRT, LANCENotAvailableError, GEOS5FPNotAvailableError, retrieve_VNP21NRT_ST, \
     check_LANCE_already_processed, DEFAULT_LANCE_OUTPUT_DIRECTORY, load_LANCE
-from LANCE_GFS_forecast import LANCE_GFS_forecast
-from LandsatL2C2 import LandsatL2C2
+from ETtoolbox.LANCE_GFS_forecast import LANCE_GFS_forecast
+from ETtoolbox.LandsatL2C2 import LandsatL2C2
 from modisci import MODISCI
-from PTJPLSM import PTJPLSM, DEFAULT_PREVIEW_QUALITY, DEFAULT_RESAMPLING
-from SRTM import SRTM
+from ETtoolbox.PTJPLSM import PTJPLSM, DEFAULT_PREVIEW_QUALITY, DEFAULT_RESAMPLING
+from ETtoolbox.SRTM import SRTM
 from soil_grids import SoilGrids
-from VIIRS_orbit.VIIRS_orbit import solar_to_UTC
-from daterange import date_range
+from ETtoolbox.VIIRS_orbit.VIIRS_orbit import solar_to_UTC
+from ETtoolbox.daterange import date_range
 from geos5fp.downscaling import bias_correct, downscale_soil_moisture, downscale_air_temperature, \
     downscale_vapor_pressure_deficit, downscale_relative_humidity
 from rasters import Raster, RasterGrid
-from sentinel import sentinel_tile_grid
+from ETtoolbox.sentinel import sentinel_tile_grid
 
 logger = logging.getLogger(__name__)
 
@@ -80,45 +80,45 @@ def check_distribution(
 
     if len(unique) < 10:
         logger.info(
-            "variable " + cl.name(variable) + " on " + cl.time(f"{date_UTC:%Y-%m-%d}") + " at " + cl.place(
+            "variable " + colored_logging.name(variable) + " on " + colored_logging.time(f"{date_UTC:%Y-%m-%d}") + " at " + colored_logging.place(
                 target))
 
         for value in unique:
             count = np.count_nonzero(image == value)
 
             if value == 0:
-                logger.info(f"* {cl.colored(value, 'red')}: {cl.colored(count, 'red')}")
+                logger.info(f"* {colored_logging.colored(value, 'red')}: {colored_logging.colored(count, 'red')}")
             else:
-                logger.info(f"* {cl.val(value)}: {cl.val(count)}")
+                logger.info(f"* {colored_logging.val(value)}: {colored_logging.val(count)}")
     else:
         minimum = np.nanmin(image)
 
         if minimum < 0:
-            minimum_string = cl.colored(f"{minimum:0.3f}", "red")
+            minimum_string = colored_logging.colored(f"{minimum:0.3f}", "red")
         else:
-            minimum_string = cl.val(f"{minimum:0.3f}")
+            minimum_string = colored_logging.val(f"{minimum:0.3f}")
 
         maximum = np.nanmax(image)
 
         if maximum <= 0:
-            maximum_string = cl.colored(f"{maximum:0.3f}", "red")
+            maximum_string = colored_logging.colored(f"{maximum:0.3f}", "red")
         else:
-            maximum_string = cl.val(f"{maximum:0.3f}")
+            maximum_string = colored_logging.val(f"{maximum:0.3f}")
 
         if nan_proportion > 0.5:
-            nan_proportion_string = cl.colored(f"{(nan_proportion * 100):0.2f}%", "yellow")
+            nan_proportion_string = colored_logging.colored(f"{(nan_proportion * 100):0.2f}%", "yellow")
         elif nan_proportion == 1:
-            nan_proportion_string = cl.colored(f"{(nan_proportion * 100):0.2f}%", "red")
+            nan_proportion_string = colored_logging.colored(f"{(nan_proportion * 100):0.2f}%", "red")
         else:
-            nan_proportion_string = cl.val(f"{(nan_proportion * 100):0.2f}%")
+            nan_proportion_string = colored_logging.val(f"{(nan_proportion * 100):0.2f}%")
 
-        message = "variable " + cl.name(variable) + \
-                  " on " + cl.time(f"{date_UTC:%Y-%m-%d}") + \
-                  " at " + cl.place(target) + \
+        message = "variable " + colored_logging.name(variable) + \
+                  " on " + colored_logging.time(f"{date_UTC:%Y-%m-%d}") + \
+                  " at " + colored_logging.place(target) + \
                   " min: " + minimum_string + \
-                  " mean: " + cl.val(f"{np.nanmean(image):0.3f}") + \
+                  " mean: " + colored_logging.val(f"{np.nanmean(image):0.3f}") + \
                   " max: " + maximum_string + \
-                  " nan: " + nan_proportion_string + f" ({cl.val(image.nodata)})"
+                  " nan: " + nan_proportion_string + f" ({colored_logging.val(image.nodata)})"
 
         if np.all(image == 0):
             message += " all zeros"
@@ -186,7 +186,7 @@ def ET_toolbox_hindcast_forecast_tile(
         present_date = datetime.utcnow().date()
 
     logger.info(
-        f"generating ET Toolbox hindcast and forecast at tile {cl.place(tile)} centered on present date: {cl.time(present_date)}")
+        f"generating ET Toolbox hindcast and forecast at tile {colored_logging.place(tile)} centered on present date: {colored_logging.time(present_date)}")
 
     if working_directory is None:
         working_directory = "."
@@ -218,25 +218,25 @@ def ET_toolbox_hindcast_forecast_tile(
         GFS_download_directory = join(working_directory, GFS_DIRECTORY)
 
     if HLS_geometry is None:
-        logger.info(f"HLS cell size: {cl.val(HLS_cell_size)}m")
+        logger.info(f"HLS cell size: {colored_logging.val(HLS_cell_size)}m")
         HLS_geometry = sentinel_tile_grid.grid(tile, cell_size=HLS_cell_size)
 
     HLS_polygon_latlon = HLS_geometry.boundary_latlon.geometry
 
     if I_geometry is None:
-        logger.info(f"I-band cell size: {cl.val(I_cell_size)}m")
+        logger.info(f"I-band cell size: {colored_logging.val(I_cell_size)}m")
         I_geometry = sentinel_tile_grid.grid(tile, cell_size=I_cell_size)
 
     if M_geometry is None:
-        logger.info(f"I-band cell size: {cl.val(M_cell_size)}m")
+        logger.info(f"I-band cell size: {colored_logging.val(M_cell_size)}m")
         M_geometry = sentinel_tile_grid.grid(tile, cell_size=M_cell_size)
 
     if GEOS5FP_geometry is None:
-        logger.info(f"GEOS-5 FP cell size: {cl.val(GEOS5FP_cell_size)}m")
+        logger.info(f"GEOS-5 FP cell size: {colored_logging.val(GEOS5FP_cell_size)}m")
         GEOS5FP_geometry = sentinel_tile_grid.grid(tile, cell_size=GEOS5FP_cell_size)
 
     if GFS_geometry is None:
-        logger.info(f"GFS cell size: {cl.val(GFS_cell_size)}m")
+        logger.info(f"GFS cell size: {colored_logging.val(GFS_cell_size)}m")
         GFS_geometry = sentinel_tile_grid.grid(tile, cell_size=GFS_cell_size)
 
     if target_variables is None:
@@ -274,17 +274,17 @@ def ET_toolbox_hindcast_forecast_tile(
     LANCE_dates = available_LANCE_dates("VNP43MA4N", archive="5000")
     earliest_LANCE_date = LANCE_dates[0]
     latest_LANCE_date = LANCE_dates[-1]
-    logger.info(f"LANCE is available from {cl.time(earliest_LANCE_date)} to {cl.time(latest_LANCE_date)}")
+    logger.info(f"LANCE is available from {colored_logging.time(earliest_LANCE_date)} to {colored_logging.time(latest_LANCE_date)}")
 
     LANCE_dates_processed = set()
     LANCE_not_processed = True
 
     for relative_days in range(-7, 0):
         target_date = present_date + timedelta(days=relative_days)
-        logger.info(f"LANCE GEOS-5 FP target date: {cl.time(target_date)} ({cl.time(relative_days)} days)")
+        logger.info(f"LANCE GEOS-5 FP target date: {colored_logging.time(target_date)} ({colored_logging.time(relative_days)} days)")
 
         time_solar = datetime(target_date.year, target_date.month, target_date.day, 13, 30)
-        logger.info(f"LANCE target time solar: {cl.time(time_solar)}")
+        logger.info(f"LANCE target time solar: {colored_logging.time(time_solar)}")
         time_UTC = solar_to_UTC(time_solar, HLS_geometry.centroid.latlon.x)
 
         if target_date < earliest_LANCE_date:
@@ -306,7 +306,7 @@ def ET_toolbox_hindcast_forecast_tile(
         )
 
         if LANCE_already_processed:
-            logger.info(f"LANCE GEOS-5 FP already processed at tile {cl.place(tile)} for date {target_date}")
+            logger.info(f"LANCE GEOS-5 FP already processed at tile {colored_logging.place(tile)} for date {target_date}")
             LANCE_dates_processed |= {target_date}
             continue
         else:
@@ -315,7 +315,7 @@ def ET_toolbox_hindcast_forecast_tile(
     HLS_start = earliest_LANCE_date - timedelta(days=HLS_initialization_days)
     HLS_end = earliest_LANCE_date - timedelta(days=1)
 
-    logger.info(f"forming HLS NDVI composite from {cl.time(HLS_start)} to {cl.time(HLS_end)}")
+    logger.info(f"forming HLS NDVI composite from {colored_logging.time(HLS_start)} to {colored_logging.time(HLS_end)}")
 
     missing_dates = []
     NDVI_images = []
@@ -369,10 +369,10 @@ def ET_toolbox_hindcast_forecast_tile(
 
     for relative_days in range(-7, 0):
         target_date = present_date + timedelta(days=relative_days)
-        logger.info(f"LANCE GEOS-5 FP target date: {cl.time(target_date)} ({cl.time(relative_days)} days)")
+        logger.info(f"LANCE GEOS-5 FP target date: {colored_logging.time(target_date)} ({colored_logging.time(relative_days)} days)")
 
         time_solar = datetime(target_date.year, target_date.month, target_date.day, 13, 30)
-        logger.info(f"LANCE target time solar: {cl.time(time_solar)}")
+        logger.info(f"LANCE target time solar: {colored_logging.time(time_solar)}")
         time_UTC = solar_to_UTC(time_solar, HLS_geometry.centroid.latlon.x)
 
         if target_date < earliest_LANCE_date:
@@ -395,7 +395,7 @@ def ET_toolbox_hindcast_forecast_tile(
             )
 
             if LANCE_already_processed:
-                logger.info(f"LANCE GEOS-5 FP already processed at tile {cl.place(tile)} for date {target_date}")
+                logger.info(f"LANCE GEOS-5 FP already processed at tile {colored_logging.place(tile)} for date {target_date}")
                 continue
 
             try:
@@ -413,7 +413,7 @@ def ET_toolbox_hindcast_forecast_tile(
             landsat_ST_C_prior = landsat_ST_C
 
             logger.info(
-                f"retrieving LANCE VNP21 ST for tile {cl.place(tile)} on date {cl.time(target_date)} at {cl.val(M_cell_size)}m resolution")
+                f"retrieving LANCE VNP21 ST for tile {colored_logging.place(tile)} on date {colored_logging.time(target_date)} at {colored_logging.val(M_cell_size)}m resolution")
             ST_K_M = retrieve_VNP21NRT_ST(
                 geometry=M_geometry,
                 date_solar=target_date,
@@ -434,7 +434,7 @@ def ET_toolbox_hindcast_forecast_tile(
             NDVI_HLS_prior = NDVI_HLS
 
             logger.info(
-                f"retrieving LANCE VIIRS M-band NDVI for tile {cl.place(tile)} on date {cl.time(target_date)} at {cl.val(M_cell_size)}m resolution")
+                f"retrieving LANCE VIIRS M-band NDVI for tile {colored_logging.place(tile)} on date {colored_logging.time(target_date)} at {colored_logging.val(M_cell_size)}m resolution")
             NDVI_M = retrieve_VNP43MA4N(
                 geometry=M_geometry,
                 date_UTC=target_date,
@@ -448,7 +448,7 @@ def ET_toolbox_hindcast_forecast_tile(
             NDVI_M = rt.where(water_M, np.nan, NDVI_M)
 
             logger.info(
-                f"retrieving LANCE VIIRS I-band NDVI for tile {cl.place(tile)} on date {cl.time(target_date)} at {cl.val(I_cell_size)}m resolution")
+                f"retrieving LANCE VIIRS I-band NDVI for tile {colored_logging.place(tile)} on date {colored_logging.time(target_date)} at {colored_logging.val(I_cell_size)}m resolution")
             NDVI_I = retrieve_VNP43IA4N(
                 geometry=I_geometry,
                 date_UTC=target_date,
@@ -462,7 +462,7 @@ def ET_toolbox_hindcast_forecast_tile(
             NDVI_I = rt.where(water_I, np.nan, NDVI_I)
 
             logger.info(
-                f"down-scaling I-band NDVI to HLS composite for tile {cl.place(tile)} on date {cl.time(target_date)} from {cl.val(I_cell_size)}m to {cl.val(HLS_cell_size)}m resolution")
+                f"down-scaling I-band NDVI to HLS composite for tile {colored_logging.place(tile)} on date {colored_logging.time(target_date)} from {colored_logging.val(I_cell_size)}m to {colored_logging.val(HLS_cell_size)}m resolution")
             NDVI = bias_correct(
                 coarse_image=NDVI_I,
                 fine_image=NDVI_HLS
@@ -475,7 +475,7 @@ def ET_toolbox_hindcast_forecast_tile(
             check_distribution(NDVI, "NDVI", target_date, tile)
 
             logger.info(
-                f"retrieving LANCE VNP21 emissivity for tile {cl.place(tile)} on date {cl.time(target_date)} at {cl.val(M_cell_size)}m resolution")
+                f"retrieving LANCE VNP21 emissivity for tile {colored_logging.place(tile)} on date {colored_logging.time(target_date)} at {colored_logging.val(M_cell_size)}m resolution")
             emissivity_M = retrieve_VNP21NRT_emissivity(
                 geometry=M_geometry,
                 date_solar=target_date,
@@ -489,7 +489,7 @@ def ET_toolbox_hindcast_forecast_tile(
             emissivity_estimate = 1.0094 + 0.047 * np.log(rt.clip(NDVI, 0.01, 1))
 
             logger.info(
-                f"down-scaling VNP21 emissivity to HLS composite for tile {cl.place(tile)} on date {cl.time(target_date)} from {cl.val(M_cell_size)}m to {cl.val(HLS_cell_size)}m resolution")
+                f"down-scaling VNP21 emissivity to HLS composite for tile {colored_logging.place(tile)} on date {colored_logging.time(target_date)} from {colored_logging.val(M_cell_size)}m to {colored_logging.val(HLS_cell_size)}m resolution")
             emissivity = bias_correct(
                 coarse_image=emissivity_M,
                 fine_image=emissivity_estimate
@@ -508,7 +508,7 @@ def ET_toolbox_hindcast_forecast_tile(
             albedo_HLS_prior = albedo_HLS
 
             logger.info(
-                f"retrieving LANCE VIIRS M-band albedo for tile {cl.place(tile)} on date {cl.time(target_date)} at {cl.val(M_cell_size)}m resolution")
+                f"retrieving LANCE VIIRS M-band albedo for tile {colored_logging.place(tile)} on date {colored_logging.time(target_date)} at {colored_logging.val(M_cell_size)}m resolution")
             albedo_M = retrieve_VNP43MA4N(
                 geometry=M_geometry,
                 date_UTC=target_date,
@@ -521,7 +521,7 @@ def ET_toolbox_hindcast_forecast_tile(
             albedo_M = rt.where(np.isnan(albedo_M), albedo_M_smooth, albedo_M)
 
             logger.info(
-                f"down-scaling M-band albedo to HLS composite for tile {cl.place(tile)} on date {cl.time(target_date)} from {cl.val(M_cell_size)}m to {cl.val(HLS_cell_size)}m resolution")
+                f"down-scaling M-band albedo to HLS composite for tile {colored_logging.place(tile)} on date {colored_logging.time(target_date)} from {colored_logging.val(M_cell_size)}m to {colored_logging.val(HLS_cell_size)}m resolution")
             albedo = bias_correct(
                 coarse_image=albedo_M,
                 fine_image=albedo_HLS
@@ -534,7 +534,7 @@ def ET_toolbox_hindcast_forecast_tile(
             # most_recent["albedo"] = albedo
 
             logger.info(
-                f"down-scaling VNP21 ST to Landsat 8/9 for tile {cl.place(tile)} on date {cl.time(target_date)} from {cl.val(M_cell_size)}m to {cl.val(HLS_cell_size)}m resolution")
+                f"down-scaling VNP21 ST to Landsat 8/9 for tile {colored_logging.place(tile)} on date {colored_logging.time(target_date)} from {colored_logging.val(M_cell_size)}m to {colored_logging.val(HLS_cell_size)}m resolution")
 
             ST_C = bias_correct(
                 coarse_image=ST_C_M,
@@ -551,7 +551,7 @@ def ET_toolbox_hindcast_forecast_tile(
 
             if downscale_moisture:
                 logger.info(
-                    f"down-scaling GEOS-5 FP soil moisture to HLS composite for tile {cl.place(tile)} on date {cl.time(target_date)} from {cl.val(GEOS5FP_cell_size)}m to {cl.val(HLS_cell_size)}m resolution")
+                    f"down-scaling GEOS-5 FP soil moisture to HLS composite for tile {colored_logging.place(tile)} on date {colored_logging.time(target_date)} from {colored_logging.val(GEOS5FP_cell_size)}m to {colored_logging.val(HLS_cell_size)}m resolution")
 
                 SM_coarse_GEOS5FP = GEOS5FP_connection.SFMC(time_UTC=time_UTC, geometry=GEOS5FP_geometry,
                                                             resampling="cubic")
@@ -569,7 +569,7 @@ def ET_toolbox_hindcast_forecast_tile(
                 )
             else:
                 logger.info(
-                    f"down-sampling GEOS-5 FP soil moisture for tile {cl.place(tile)} on date {cl.time(target_date)} from {cl.val(GEOS5FP_cell_size)}m to {cl.val(HLS_cell_size)}m resolution")
+                    f"down-sampling GEOS-5 FP soil moisture for tile {colored_logging.place(tile)} on date {colored_logging.time(target_date)} from {colored_logging.val(GEOS5FP_cell_size)}m to {colored_logging.val(HLS_cell_size)}m resolution")
                 SM = GEOS5FP_connection.SFMC(time_UTC=time_UTC, geometry=HLS_geometry, resampling="cubic")
 
             check_distribution(SM, "SM", target_date, tile)
@@ -578,7 +578,7 @@ def ET_toolbox_hindcast_forecast_tile(
 
             if downscale_air:
                 logger.info(
-                    f"down-scaling GEOS-5 FP air temperature to HLS composite for tile {cl.place(tile)} on date {cl.time(target_date)} from {cl.val(GEOS5FP_cell_size)}m to {cl.val(HLS_cell_size)}m resolution")
+                    f"down-scaling GEOS-5 FP air temperature to HLS composite for tile {colored_logging.place(tile)} on date {colored_logging.time(target_date)} from {colored_logging.val(GEOS5FP_cell_size)}m to {colored_logging.val(HLS_cell_size)}m resolution")
                 Ta_K_coarse = GEOS5FP_connection.Ta_K(time_UTC=time_UTC, geometry=GEOS5FP_geometry, resampling="cubic")
                 Ta_K_smooth = GEOS5FP_connection.Ta_K(time_UTC=time_UTC, geometry=HLS_geometry, resampling="cubic")
                 Ta_K = downscale_air_temperature(
@@ -592,7 +592,7 @@ def ET_toolbox_hindcast_forecast_tile(
                 Ta_K = rt.where(np.isnan(Ta_K), Ta_K_smooth, Ta_K)
             else:
                 logger.info(
-                    f"down-sampling GEOS-5 FP air temperature for tile {cl.place(tile)} on date {cl.time(target_date)} from {cl.val(GEOS5FP_cell_size)}m to {cl.val(HLS_cell_size)}m resolution")
+                    f"down-sampling GEOS-5 FP air temperature for tile {colored_logging.place(tile)} on date {colored_logging.time(target_date)} from {colored_logging.val(GEOS5FP_cell_size)}m to {colored_logging.val(HLS_cell_size)}m resolution")
                 Ta_K = GEOS5FP_connection.Ta_K(time_UTC=time_UTC, geometry=HLS_geometry, resampling="cubic")
 
             Ta_C = Ta_K - 273.15
@@ -602,7 +602,7 @@ def ET_toolbox_hindcast_forecast_tile(
 
             if downscale_humidity:
                 logger.info(
-                    f"down-scaling GEOS-5 FP humidity to HLS composite for tile {cl.place(tile)} on date {cl.time(target_date)} from {cl.val(GEOS5FP_cell_size)}m to {cl.val(HLS_cell_size)}m resolution")
+                    f"down-scaling GEOS-5 FP humidity to HLS composite for tile {colored_logging.place(tile)} on date {colored_logging.time(target_date)} from {colored_logging.val(GEOS5FP_cell_size)}m to {colored_logging.val(HLS_cell_size)}m resolution")
 
                 VPD_Pa_coarse = GEOS5FP_connection.VPD_Pa(time_UTC=time_UTC, geometry=GEOS5FP_geometry,
                                                           resampling="cubic")
@@ -637,7 +637,7 @@ def ET_toolbox_hindcast_forecast_tile(
                 RH = rt.where(np.isnan(RH), RH_smooth, RH)
             else:
                 logger.info(
-                    f"down-sampling GEOS-5 FP relative humidity for tile {cl.place(tile)} on date {cl.time(target_date)} from {cl.val(GEOS5FP_cell_size)}m to {cl.val(HLS_cell_size)}m resolution")
+                    f"down-sampling GEOS-5 FP relative humidity for tile {colored_logging.place(tile)} on date {colored_logging.time(target_date)} from {colored_logging.val(GEOS5FP_cell_size)}m to {colored_logging.val(HLS_cell_size)}m resolution")
                 RH = GEOS5FP_connection.RH(time_UTC=time_UTC, geometry=HLS_geometry, resampling="cubic")
 
             check_distribution(RH, "RH", target_date, tile)
@@ -698,7 +698,7 @@ def ET_toolbox_hindcast_forecast_tile(
             missing_dates.append(target_date)
             continue
 
-    logger.info("missing LANCE GEOS-5 FP dates: " + ", ".join(cl.time(d) for d in missing_dates))
+    logger.info("missing LANCE GEOS-5 FP dates: " + ", ".join(colored_logging.time(d) for d in missing_dates))
 
     forecast_dates = missing_dates + [present_date + timedelta(days=d) for d in range(8)]
 
@@ -707,10 +707,10 @@ def ET_toolbox_hindcast_forecast_tile(
 
     for target_date in forecast_dates:
         relative_days = target_date - present_date
-        logger.info(f"GFS LANCE target date: {cl.time(target_date)} ({cl.time(relative_days)} days)")
+        logger.info(f"GFS LANCE target date: {colored_logging.time(target_date)} ({colored_logging.time(relative_days)} days)")
 
         time_solar = datetime(target_date.year, target_date.month, target_date.day, 13, 30)
-        logger.info(f"LANCE target time solar: {cl.time(time_solar)}")
+        logger.info(f"LANCE target time solar: {colored_logging.time(time_solar)}")
         time_UTC = solar_to_UTC(time_solar, HLS_geometry.centroid.latlon.x)
 
         if target_date < earliest_LANCE_date:
@@ -720,17 +720,17 @@ def ET_toolbox_hindcast_forecast_tile(
 
         if target_date <= latest_LANCE_date:
             logger.warning(
-                f"target date {cl.time(target_date)} is within LANCE date range from {cl.time(earliest_LANCE_date)} to {cl.time(latest_LANCE_date)}")
+                f"target date {colored_logging.time(target_date)} is within LANCE date range from {colored_logging.time(earliest_LANCE_date)} to {colored_logging.time(latest_LANCE_date)}")
             LANCE_processing_date = target_date
         else:
             LANCE_processing_date = latest_LANCE_date
-            logger.info(f"processing LANCE on latest date available: {cl.time(LANCE_processing_date)}")
+            logger.info(f"processing LANCE on latest date available: {colored_logging.time(LANCE_processing_date)}")
 
         LANCE_processing_datetime_solar = datetime(LANCE_processing_date.year, LANCE_processing_date.month,
                                                    LANCE_processing_date.day, 13, 30)
-        logger.info(f"LANCE processing date/time solar: {cl.time(LANCE_processing_datetime_solar)}")
+        logger.info(f"LANCE processing date/time solar: {colored_logging.time(LANCE_processing_datetime_solar)}")
         LANCE_processing_datetime_UTC = solar_to_UTC(LANCE_processing_datetime_solar, HLS_geometry.centroid.latlon.x)
-        logger.info(f"LANCE processing date/time UTC: {cl.time(LANCE_processing_datetime_UTC)}")
+        logger.info(f"LANCE processing date/time UTC: {colored_logging.time(LANCE_processing_datetime_UTC)}")
 
         most_recent = load_LANCE(
             LANCE_output_directory=LANCE_output_directory,
@@ -745,7 +745,7 @@ def ET_toolbox_hindcast_forecast_tile(
         SM = most_recent["SM"]
 
         logger.info(
-            f"down-scaling GFS solar radiation to HLS composite for tile {cl.place(tile)} on date {cl.time(target_date)} from {cl.val(GFS_cell_size)}m to {cl.val(HLS_cell_size)}m resolution")
+            f"down-scaling GFS solar radiation to HLS composite for tile {colored_logging.place(tile)} on date {colored_logging.time(target_date)} from {colored_logging.val(GFS_cell_size)}m to {colored_logging.val(HLS_cell_size)}m resolution")
 
         SWin_prior = most_recent["SWin"]
         SWin_GFS = forecast_SWin(time_UTC=time_UTC, geometry=GFS_geometry, directory=GFS_download_directory, listing=GFS_listing)
@@ -774,7 +774,7 @@ def ET_toolbox_hindcast_forecast_tile(
         )
 
         logger.info(
-            f"down-scaling GFS air temperature to HLS composite for tile {cl.place(tile)} on date {cl.time(target_date)} from {cl.val(GFS_cell_size)}m to {cl.val(HLS_cell_size)}m resolution")
+            f"down-scaling GFS air temperature to HLS composite for tile {colored_logging.place(tile)} on date {colored_logging.time(target_date)} from {colored_logging.val(GFS_cell_size)}m to {colored_logging.val(HLS_cell_size)}m resolution")
 
         Ta_C_prior = most_recent["Ta"]
         Ta_C_GFS = forecast_Ta_C(time_UTC=time_UTC, geometry=GFS_geometry, directory=GFS_download_directory, listing=GFS_listing)
@@ -794,7 +794,7 @@ def ET_toolbox_hindcast_forecast_tile(
         )
 
         logger.info(
-            f"down-scaling GFS humidity to HLS composite for tile {cl.place(tile)} on date {cl.time(target_date)} from {cl.val(GFS_cell_size)}m to {cl.val(HLS_cell_size)}m resolution")
+            f"down-scaling GFS humidity to HLS composite for tile {colored_logging.place(tile)} on date {colored_logging.time(target_date)} from {colored_logging.val(GFS_cell_size)}m to {colored_logging.val(HLS_cell_size)}m resolution")
 
         RH_prior = most_recent["RH"]
         RH_GFS = forecast_RH(time_UTC=time_UTC, geometry=GFS_geometry, directory=GFS_download_directory, listing=GFS_listing)

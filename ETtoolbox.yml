@@ -61,4 +61,6 @@ dependencies:
       - git+https://github.com/JPL-Evapotranspiration-Algorithms/koppengeiger.git@main
       - git+https://github.com/JPL-Evapotranspiration-Algorithms/soil_grids.git@main
       - git+https://github.com/JPL-Evapotranspiration-Algorithms/geos5fp.git@main
+      - git+https://github.com/JPL-Evapotranspiration-Algorithms/modisci.git@main
       - git+https://github.com/JPL-Evapotranspiration-Algorithms/gedi_canopy_height.git@main
+      - git+https://github.com/JPL-Evapotranspiration-Algorithms/colored_logging.git@main
