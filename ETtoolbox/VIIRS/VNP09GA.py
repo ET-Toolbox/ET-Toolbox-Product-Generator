@@ -18,9 +18,9 @@ from skimage.transform import resize
 import colored_logging
 import rasters
 import rasters as rt
-from modland.indices import parsehv, generate_MODLAND_grid
+from modland.indices import parsehv, generate_modland_grid
 from rasters import Raster, RasterGrid, RasterGeometry
-from .VIIRSDataPool import VIIRSDataPool, parse_VIIRS_tile, find_MODLAND_tiles, VIIRSGranule
+from .VIIRSDataPool import VIIRSDataPool, parse_VIIRS_tile, find_modland_tiles, VIIRSGranule
 
 NDVI_COLORMAP = LinearSegmentedColormap.from_list(
     name="NDVI",
@@ -63,7 +63,7 @@ class VNP09GAGranule(VIIRSGranule):
         else:
             shape = cloud_mask.shape
 
-        geometry = generate_MODLAND_grid(h, v, shape[0])
+        geometry = generate_modland_grid(h, v, shape[0])
         cloud_mask = Raster(cloud_mask, geometry=geometry)
 
         return cloud_mask
@@ -83,7 +83,7 @@ class VNP09GAGranule(VIIRSGranule):
         with h5py.File(filename, "r") as f:
             DN = np.array(f[dataset_name])
             h, v = self.hv
-            grid = generate_MODLAND_grid(h, v, DN.shape[0])
+            grid = generate_modland_grid(h, v, DN.shape[0])
             logger.info(f"opening VIIRS file: {colored_logging.file(self.filename)}")
             logger.info(f"loading {colored_logging.val(dataset_name)} at {colored_logging.val(f'{grid.cell_size:0.2f} m')} resolution")
             DN = Raster(DN, geometry=grid)
@@ -103,11 +103,11 @@ class VNP09GAGranule(VIIRSGranule):
 
     @property
     def geometry_M(self) -> RasterGrid:
-        return generate_MODLAND_grid(*self.hv, 1200)
+        return generate_modland_grid(*self.hv, 1200)
 
     @property
     def geometry_I(self) -> RasterGrid:
-        return generate_MODLAND_grid(*self.hv, 2400)
+        return generate_modland_grid(*self.hv, 2400)
 
     def geometry(self, band: str) -> RasterGrid:
         try:
@@ -174,7 +174,7 @@ class VNP09GAGranule(VIIRSGranule):
             image = Raster.open(product_filename)
         else:
             h, v = self.hv
-            grid_I = generate_MODLAND_grid(h, v, 2400)
+            grid_I = generate_modland_grid(h, v, 2400)
 
             image = self.dataset(
                 self.filename,
@@ -284,7 +284,7 @@ class VNP09GAGranule(VIIRSGranule):
             image = Raster.open(product_filename)
         else:
             h, v = self.hv
-            grid_I = generate_MODLAND_grid(h, v, 2400)
+            grid_I = generate_modland_grid(h, v, 2400)
 
             image = self.dataset(
                 self.filename,
@@ -394,7 +394,7 @@ class VNP09GAGranule(VIIRSGranule):
             image = Raster.open(product_filename)
         else:
             h, v = self.hv
-            grid_I = generate_MODLAND_grid(h, v, 2400)
+            grid_I = generate_modland_grid(h, v, 2400)
 
             image = self.dataset(
                 self.filename,
@@ -505,7 +505,7 @@ class VNP09GAGranule(VIIRSGranule):
             image = Raster.open(product_filename)
         else:
             h, v = self.hv
-            grid_I = generate_MODLAND_grid(h, v, 2400)
+            grid_I = generate_modland_grid(h, v, 2400)
 
             image = self.dataset(
                 self.filename,
@@ -1009,7 +1009,7 @@ class VNP09GA(VIIRSDataPool):
         if target_shape is not None:
             cloud_mask = resize(cloud_mask, target_shape, order=0).astype(bool)
 
-        geometry = generate_MODLAND_grid(h, v, target_shape[0])
+        geometry = generate_modland_grid(h, v, target_shape[0])
         cloud_mask = Raster(cloud_mask, geometry=geometry)
 
         return cloud_mask
@@ -1028,7 +1028,7 @@ class VNP09GA(VIIRSDataPool):
 
         with h5py.File(filename, "r") as f:
             DN = np.array(f[dataset_name])
-            grid = generate_MODLAND_grid(h, v, DN.shape[0])
+            grid = generate_modland_grid(h, v, DN.shape[0])
             logger.info(f"loading {colored_logging.val(dataset_name)} at {colored_logging.val(f'{grid.cell_size} m')} resolution from {colored_logging.file(filename)}")
             DN = Raster(DN, geometry=grid)
 
@@ -1057,7 +1057,7 @@ class VNP09GA(VIIRSDataPool):
         if resampling is None:
             resampling = self.resampling
 
-        tiles = sorted(find_MODLAND_tiles(geometry.boundary_latlon))
+        tiles = sorted(find_modland_tiles(geometry.boundary_latlon))
 
         if len(tiles) == 0:
             raise ValueError("no VIIRS tiles found covering target geometry")
@@ -1100,7 +1100,7 @@ class VNP09GA(VIIRSDataPool):
         if resampling is None:
             resampling = self.resampling
 
-        tiles = sorted(find_MODLAND_tiles(geometry.boundary_latlon))
+        tiles = sorted(find_modland_tiles(geometry.boundary_latlon))
         albedo = None
 
         for tile in tiles:

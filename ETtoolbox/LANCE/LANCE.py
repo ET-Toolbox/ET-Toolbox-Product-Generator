@@ -17,8 +17,7 @@ from urllib3 import Retry
 
 import colored_logging
 import rasters as rt
-from modland import find_MODLAND_tiles
-from ETtoolbox.VIIRS_grid import *
+from modland import find_modland_tiles, generate_modland_grid, parsehv
 from ETtoolbox.VIIRS_orbit import *
 
 DEFAULT_REMOTE = "https://nrt4.modaps.eosdis.nasa.gov/api/v2/content/archives/allData"
@@ -401,7 +400,7 @@ def read_VNP43IA4N_DN(filename: str, variable: str) -> rt.Raster:
         logger.exception(e)
         raise IOError(f"unable to load dataset {dataset_name} from file {filename}")
 
-    geometry = generate_MODLAND_grid(*parsehv(tile), data.shape[0])
+    geometry = generate_modland_grid(*parsehv(tile), data.shape[0])
     image = rt.Raster(data, geometry=geometry)
 
     return image
@@ -490,7 +489,7 @@ def retrieve_VNP43IA4N(
     if isinstance(date_UTC, str):
         date_UTC = parser.parse(date_UTC).date()
 
-    tiles = find_MODLAND_tiles(geometry.corner_polygon_latlon.geometry)
+    tiles = find_modland_tiles(geometry.corner_polygon_latlon.geometry)
     composite_image = rt.Raster(np.full(geometry.shape, np.nan), geometry=geometry)
 
     listing = list_VNP43IA4N_URLs(date_UTC=date_UTC, tiles=tiles)
@@ -546,7 +545,7 @@ def read_VNP43MA4N_DN(filename: str, variable: str) -> rt.Raster:
         logger.exception(e)
         raise IOError(f"unable to load dataset {dataset_name} from file {filename}")
 
-    geometry = generate_MODLAND_grid(*parsehv(tile), data.shape[0])
+    geometry = generate_modland_grid(*parsehv(tile), data.shape[0])
     image = rt.Raster(data, geometry=geometry)
 
     return image
@@ -661,7 +660,7 @@ def retrieve_VNP43MA4N(
     if isinstance(date_UTC, str):
         date_UTC = parser.parse(date_UTC).date()
 
-    tiles = find_MODLAND_tiles(geometry.corner_polygon_latlon.geometry)
+    tiles = find_modland_tiles(geometry.corner_polygon_latlon.geometry)
     composite_image = rt.Raster(np.full(geometry.shape, np.nan), geometry=geometry)
 
     listing = list_VNP43MA4N_URLs(date_UTC=date_UTC, tiles=tiles)
