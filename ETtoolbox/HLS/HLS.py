@@ -11,19 +11,18 @@ from os.path import exists, dirname, abspath, expanduser, join, getsize
 from shutil import move
 from typing import List, Union
 
+import colored_logging
 import numpy as np
 import pandas as pd
 import rasterio
+import rasters as rt
 import requests
 from bs4 import BeautifulSoup
 from dateutil import parser
 from matplotlib.colors import LinearSegmentedColormap
-
-import colored_logging
-import rasters as rt
-from ETtoolbox.daterange import date_range
 from rasters import Raster, MultiRaster, SpatialGeometry, RasterGeometry
-from ETtoolbox.sentinel import SentinelTileGrid
+
+from ETtoolbox.daterange import date_range
 from ETtoolbox.timer import Timer
 
 with open(join(abspath(dirname(__file__)), "version.txt")) as f:

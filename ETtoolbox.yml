@@ -58,6 +58,7 @@ dependencies:
       - pycksum
       - pygrib
       - rasters>=1.0.5
+      - sentinel-tiles
       - sentinelsat
       - solar-apparent-time
       - spacetrack
