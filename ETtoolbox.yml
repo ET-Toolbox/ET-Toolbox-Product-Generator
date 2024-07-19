@@ -50,6 +50,7 @@ dependencies:
   - xtensor-python
   - wget
   - pip:
+      - colored-logging
       - mgrs
       - pybind11_cmake
       - pycksum
@@ -63,4 +64,3 @@ dependencies:
       - git+https://github.com/JPL-Evapotranspiration-Algorithms/geos5fp.git@main
       - git+https://github.com/JPL-Evapotranspiration-Algorithms/modisci.git@main
       - git+https://github.com/JPL-Evapotranspiration-Algorithms/gedi_canopy_height.git@main
-      - git+https://github.com/JPL-Evapotranspiration-Algorithms/colored_logging.git@main
