@@ -60,6 +60,7 @@ dependencies:
       - sentinelsat
       - solar-apparent-time
       - spacetrack
+      - sun-angles
       - git+https://github.com/JPL-Evapotranspiration-Algorithms/koppengeiger.git@main
       - git+https://github.com/JPL-Evapotranspiration-Algorithms/soil_grids.git@main
       - git+https://github.com/JPL-Evapotranspiration-Algorithms/geos5fp.git@main

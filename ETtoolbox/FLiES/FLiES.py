@@ -17,8 +17,7 @@ from dateutil import parser
 from scipy.stats import zscore
 
 import colored_logging
-from ETtoolbox.FLiES.daylight_hours import day_angle_rad_from_doy, solar_dec_deg_from_day_angle_rad
-from ETtoolbox.FLiES.solar_zenith_angle import sza_deg_from_lat_dec_hour
+from sun_angles import day_angle_rad_from_DOY, solar_dec_deg_from_day_angle_rad, SZA_deg_from_lat_dec_hour
 from ETtoolbox.model.model import Model
 
 with warnings.catch_warnings():
@@ -197,11 +196,11 @@ class FLiES(Model):
 
         latitude = geometry.lat
         # print("lat: {}".format(np.nanmean(latitude)))
-        day_angle_rad = day_angle_rad_from_doy(day_of_year)
+        day_angle_rad = day_angle_rad_from_DOY(day_of_year)
         # print("day angle: {}".format(np.nanmean(day_angle_rad)))
         solar_dec_deg = solar_dec_deg_from_day_angle_rad(day_angle_rad)
         # print("solar declination: {}".format(np.nanmean(solar_dec_deg)))
-        SZA_deg = sza_deg_from_lat_dec_hour(latitude, solar_dec_deg, hour_of_day)
+        SZA_deg = SZA_deg_from_lat_dec_hour(latitude, solar_dec_deg, hour_of_day)
         # print("SZA: {}".format(np.nanmean(SZA_deg)))
 
         SZA = Raster(SZA_deg, geometry=geometry)
