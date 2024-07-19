@@ -51,6 +51,7 @@ dependencies:
   - pip:
       - colored-logging
       - jupyter
+      - koppengeiger
       - mgrs
       - modland
       - pybind11_cmake
@@ -62,7 +63,6 @@ dependencies:
       - spacetrack
       - sun-angles
       - typing-extensions
-      - git+https://github.com/JPL-Evapotranspiration-Algorithms/koppengeiger.git@main
       - git+https://github.com/JPL-Evapotranspiration-Algorithms/soil_grids.git@main
       - git+https://github.com/JPL-Evapotranspiration-Algorithms/geos5fp.git@main
       - git+https://github.com/JPL-Evapotranspiration-Algorithms/modisci.git@main
