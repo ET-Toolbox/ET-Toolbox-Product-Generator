@@ -52,6 +52,7 @@ dependencies:
   - pip:
       - colored-logging
       - mgrs
+      - modland
       - pybind11_cmake
       - pycksum
       - pygrib
@@ -59,7 +60,6 @@ dependencies:
       - sentinelsat
       - solar-apparent-time
       - spacetrack
-      - git+https://github.com/JPL-Evapotranspiration-Algorithms/modland.git@main
       - git+https://github.com/JPL-Evapotranspiration-Algorithms/koppengeiger.git@main
       - git+https://github.com/JPL-Evapotranspiration-Algorithms/soil_grids.git@main
       - git+https://github.com/JPL-Evapotranspiration-Algorithms/geos5fp.git@main
