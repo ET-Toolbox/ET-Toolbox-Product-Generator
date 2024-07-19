@@ -9,11 +9,11 @@ from numpy import tan, cos, sin, pi, arccos, where, radians, degrees
 __author__ = 'Gregory Halverson'
 
 
-def day_angle_rad_from_doy(doy):
+def day_angle_rad_from_DOY(DOY):
     """
     This function calculates day angle in radians from day of year between 1 and 365.
     """
-    return (2 * pi * (doy - 1)) / 365
+    return (2 * pi * (DOY - 1)) / 365
 
 
 def solar_dec_deg_from_day_angle_rad(day_angle_rad):
@@ -25,12 +25,12 @@ def solar_dec_deg_from_day_angle_rad(day_angle_rad):
         3 * day_angle_rad)) * (180 / pi)
 
 
-def sha_deg_from_doy_lat(doy, latitude):
+def SHA_deg_from_DOY_lat(DOY, latitude):
     """
     This function calculates sunrise hour angle in degrees from latitude in degrees and day of year between 1 and 365. 
     """
     # calculate day angle in radians
-    day_angle_rad = day_angle_rad_from_doy(doy)
+    day_angle_rad = day_angle_rad_from_DOY(DOY)
 
     # calculate solar declination in degrees
     solar_dec_deg = solar_dec_deg_from_day_angle_rad(day_angle_rad)
@@ -60,15 +60,15 @@ def sha_deg_from_doy_lat(doy, latitude):
     return sunrise_deg
 
 
-def sunrise_from_sha(sha_deg):
+def sunrise_from_SHA(SHA_deg):
     """
     This function calculates sunrise hour from sunrise hour angle in degrees. 
     """
-    return 12.0 - (sha_deg / 15.0)
+    return 12.0 - (SHA_deg / 15.0)
 
 
-def daylight_from_sha(sha_deg):
+def daylight_from_SHA(SHA_deg):
     """
     This function calculates daylight hours from sunrise hour angle in degrees.
     """
-    return (2.0 / 15.0) * sha_deg
+    return (2.0 / 15.0) * SHA_deg
