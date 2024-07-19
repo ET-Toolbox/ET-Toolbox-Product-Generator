@@ -21,9 +21,9 @@ from ETtoolbox.VIIRS.VNP21A1D import VNP21A1D
 from ETtoolbox.VIIRS import VNP43MA4
 from ETtoolbox.VIIRS_GEOS5FP import VIIRS_GEOS5FP, check_VIIRS_GEOS5FP_already_processed, VIIRS_DOWNLOAD_DIRECTORY, \
     VIIRS_PRODUCTS_DIRECTORY
-from ETtoolbox.VIIRS_orbit.VIIRS_orbit import solar_to_UTC
 from ETtoolbox.daterange import date_range
 from rasters import Raster, RasterGrid
+from solar_apparent_time import UTC_to_solar, solar_to_UTC
 from ETtoolbox.sentinel import sentinel_tile_grid
 
 logger = logging.getLogger(__name__)

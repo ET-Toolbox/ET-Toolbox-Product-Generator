@@ -11,6 +11,7 @@ import colored_logging
 import rasters as rt
 from gedi_canopy_height import GEDICanopyHeight
 from geos5fp import GEOS5FP
+from solar_apparent_time import solar_to_UTC
 from ETtoolbox.HLS.HLS2 import HLS2CMR
 from ETtoolbox.LandsatL2C2 import LandsatL2C2
 from modisci import MODISCI
@@ -22,7 +23,6 @@ from ETtoolbox.VIIRS.VNP21A1D import VNP21A1D
 from ETtoolbox.VIIRS import VNP43MA4
 from ETtoolbox.VIIRS_GEOS5FP import VIIRS_GEOS5FP, check_VIIRS_GEOS5FP_already_processed, VIIRS_DOWNLOAD_DIRECTORY, \
     VIIRS_PRODUCTS_DIRECTORY, VIIRS_GEOS5FP_OUTPUT_DIRECTORY
-from ETtoolbox.VIIRS_orbit.VIIRS_orbit import solar_to_UTC
 from ETtoolbox.daterange import date_range
 from geos5fp.downscaling import bias_correct, downscale_soil_moisture, downscale_air_temperature, \
     downscale_vapor_pressure_deficit, downscale_relative_humidity

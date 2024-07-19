@@ -17,6 +17,7 @@ from dateutil import parser
 import logging
 import shapely.ops
 from rasters import RasterGeometry
+from solar_apparent_time import UTC_to_solar, solar_to_UTC
 
 from ETtoolbox.spacetrack_credentials import get_spacetrack_credentials
 
@@ -104,12 +105,6 @@ def center_aeqd_proj4(center_coord: Point) -> str:
         center_coord.y,
         center_coord.x
     )
-
-def UTC_to_solar(time_UTC: datetime, lon: float) -> datetime:
-    return time_UTC + timedelta(hours=(np.radians(lon) / np.pi * 12))
-
-def solar_to_UTC(time_solar: datetime, lon: float) -> datetime:
-    return time_solar - timedelta(hours=(np.radians(lon) / np.pi * 12))
 
 def is_day(datetime_UTC: datetime, point_latlon: Point) -> bool:
     solar_time = datetime_UTC + timedelta(hours=(np.radians(point_latlon.x) / np.pi * 12))

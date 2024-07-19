@@ -57,6 +57,7 @@ dependencies:
       - pygrib
       - rasters>=1.0.5
       - sentinelsat
+      - solar-apparent-time
       - spacetrack
       - git+https://github.com/JPL-Evapotranspiration-Algorithms/modland.git@main
       - git+https://github.com/JPL-Evapotranspiration-Algorithms/koppengeiger.git@main

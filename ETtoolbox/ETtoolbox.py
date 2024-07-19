@@ -20,7 +20,7 @@ from modisci import MODISCI
 from ETtoolbox.PTJPLSM import PTJPLSM, DEFAULT_PREVIEW_QUALITY, DEFAULT_RESAMPLING
 from ETtoolbox.SRTM import SRTM
 from soil_grids import SoilGrids
-from ETtoolbox.VIIRS_orbit.VIIRS_orbit import solar_to_UTC
+from solar_apparent_time import solar_to_UTC
 from ETtoolbox.daterange import date_range
 from geos5fp.downscaling import bias_correct, downscale_soil_moisture, downscale_air_temperature, \
     downscale_vapor_pressure_deficit, downscale_relative_humidity

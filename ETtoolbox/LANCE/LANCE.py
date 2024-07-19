@@ -18,6 +18,7 @@ from urllib3 import Retry
 import colored_logging
 import rasters as rt
 from modland import find_modland_tiles, generate_modland_grid, parsehv
+from solar_apparent_time import UTC_to_solar
 from ETtoolbox.VIIRS_orbit import *
 
 DEFAULT_REMOTE = "https://nrt4.modaps.eosdis.nasa.gov/api/v2/content/archives/allData"

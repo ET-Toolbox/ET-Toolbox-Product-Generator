@@ -33,6 +33,7 @@ from geos5fp import GEOS5FP
 from ETtoolbox.SRTM import SRTM
 from koppengeiger import load_koppen_geiger
 from rasters import Raster, RasterGeometry
+from solar_apparent_time import UTC_to_solar
 
 __author__ = "Gregory Halverson, Robert Freepartner"
 
@@ -153,9 +154,6 @@ class FLiES(Model):
 
         self.ANN_model = ANN_model
         self.dynamic_atype_ctype = dynamic_atype_ctype
-
-    def UTC_to_solar(self, time_UTC: datetime, lon: float) -> datetime:
-        return time_UTC + timedelta(hours=(np.radians(lon) / np.pi * 12))
 
     def UTC_offset_hours(self, geometry: RasterGeometry) -> Raster:
         return Raster(np.radians(geometry.lon) / np.pi * 12, geometry=geometry)

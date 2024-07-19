@@ -15,6 +15,7 @@ from glob import glob
 import numpy as np
 import rasters as rt
 import colored_logging
+from solar_apparent_time import UTC_to_solar, solar_to_UTC
 
 DEFAULT_Landsat_DOWNLOAD_DIRECTORY = "Landsat_download"
 DEFAULT_Landsat_OUTPUT_DIRECTORY = "Landsat_output"
@@ -29,12 +30,6 @@ class LandsatNotAvailableError(Exception):
 
 class GEOS5FPNotAvailableError(Exception):
     pass
-
-def UTC_to_solar(time_UTC: datetime, lon: float) -> datetime:
-    return time_UTC + timedelta(hours=(np.radians(lon) / np.pi * 12))
-
-def solar_to_UTC(time_solar: datetime, lon: float) -> datetime:
-    return time_solar - timedelta(hours=(np.radians(lon) / np.pi * 12))
 
 def generate_Landsat_output_directory(
         Landsat_output_directory: str, 
