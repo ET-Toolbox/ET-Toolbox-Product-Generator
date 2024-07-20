@@ -50,6 +50,7 @@ dependencies:
   - wget
   - pip:
       - colored-logging
+      - geos5fp
       - jupyter
       - koppengeiger
       - mgrs
@@ -65,6 +66,5 @@ dependencies:
       - spacetrack
       - sun-angles
       - typing-extensions
-      - git+https://github.com/JPL-Evapotranspiration-Algorithms/geos5fp.git@main
       - git+https://github.com/JPL-Evapotranspiration-Algorithms/modisci.git@main
       - git+https://github.com/JPL-Evapotranspiration-Algorithms/gedi_canopy_height.git@main
