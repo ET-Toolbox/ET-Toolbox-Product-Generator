@@ -18,7 +18,7 @@ import warnings
 import rasters as rt
 from ETtoolbox.FLiES import FLiES
 from geos5fp import GEOS5FP
-from MCD12.MCD12C1 import MCD12C1 # FIXME
+from ETtoolbox.MCD12 import MCD12C1
 from ETtoolbox.SRTM import SRTM
 from ETtoolbox.model.model import DEFAULT_PREVIEW_QUALITY, DEFAULT_RESAMPLING
 from rasters import Raster, RasterGrid, RasterGeometry
