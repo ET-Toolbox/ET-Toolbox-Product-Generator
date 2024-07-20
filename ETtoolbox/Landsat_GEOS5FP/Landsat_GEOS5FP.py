@@ -10,7 +10,7 @@ from gedi_canopy_height import GEDICanopyHeight
 from geos5fp import GEOS5FP
 from modisci import MODISCI
 from ETtoolbox.SRTM import SRTM
-from soil_grids import SoilGrids
+from soil_capacity_wilting import SoilGrids
 from glob import glob
 import numpy as np
 import rasters as rt

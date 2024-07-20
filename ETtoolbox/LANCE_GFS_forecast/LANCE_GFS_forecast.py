@@ -9,7 +9,7 @@ from modisci import MODISCI
 from ETtoolbox.PTJPL import PTJPL
 from ETtoolbox.PTJPLSM import PTJPLSM, GEOS5FPNotAvailableError
 from ETtoolbox.SRTM import SRTM
-from soil_grids import SoilGrids
+from soil_capacity_wilting import SoilGrids
 from geos5fp.downscaling import downscale_air_temperature, downscale_soil_moisture, bias_correct
 from sentinel_tiles import sentinel_tiles
 

@@ -12,7 +12,7 @@ from ETtoolbox.LANCE_GFS_forecast import LANCE_GFS_forecast
 from modisci import MODISCI
 from ETtoolbox.PTJPLSM import PTJPLSM, DEFAULT_PREVIEW_QUALITY, DEFAULT_RESAMPLING
 from ETtoolbox.SRTM import SRTM
-from soil_grids import SoilGrids
+from soil_capacity_wilting import SoilGrids
 from rasters import Raster, RasterGrid
 from sentinel_tiles import sentinel_tiles
 

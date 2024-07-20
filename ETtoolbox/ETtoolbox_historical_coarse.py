@@ -12,7 +12,7 @@ from geos5fp import GEOS5FP
 from modisci import MODISCI
 from rasters import Raster, RasterGrid
 from sentinel_tiles import sentinel_tiles
-from soil_grids import SoilGrids
+from soil_capacity_wilting import SoilGrids
 from solar_apparent_time import solar_to_UTC
 
 from ETtoolbox.LandsatL2C2 import LandsatL2C2

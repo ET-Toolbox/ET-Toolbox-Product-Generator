@@ -22,7 +22,7 @@ from modisci import MODISCI
 from ETtoolbox.SRTM import SRTM
 
 from ETtoolbox.PTJPL import PTJPL
-from soil_grids import SoilGrids
+from soil_capacity_wilting import SoilGrids
 
 from rasters import Raster, RasterGeometry
 

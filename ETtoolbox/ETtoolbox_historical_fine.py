@@ -17,7 +17,7 @@ from ETtoolbox.LandsatL2C2 import LandsatL2C2
 from modisci import MODISCI
 from ETtoolbox.PTJPLSM import PTJPLSM, DEFAULT_PREVIEW_QUALITY, DEFAULT_RESAMPLING
 from ETtoolbox.SRTM import SRTM
-from soil_grids import SoilGrids
+from soil_capacity_wilting import SoilGrids
 from ETtoolbox.VIIRS.VNP09GA import VNP09GA
 from ETtoolbox.VIIRS.VNP21A1D import VNP21A1D
 from ETtoolbox.VIIRS import VNP43MA4
