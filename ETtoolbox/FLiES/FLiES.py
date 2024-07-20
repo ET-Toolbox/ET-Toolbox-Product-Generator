@@ -6,18 +6,18 @@ for the Breathing Earth Systems Simulator (BESS)
 
 import logging
 import warnings
-from datetime import datetime, timedelta
+from datetime import datetime
 from os.path import join, abspath, dirname, expanduser
 from time import process_time
 from typing import Callable
 
+import colored_logging
 import numpy as np
 import pandas as pd
 from dateutil import parser
 from scipy.stats import zscore
-
-import colored_logging
 from sun_angles import day_angle_rad_from_DOY, solar_dec_deg_from_day_angle_rad, SZA_deg_from_lat_dec_hour
+
 from ETtoolbox.model.model import Model
 
 with warnings.catch_warnings():
@@ -32,7 +32,7 @@ from geos5fp import GEOS5FP
 from ETtoolbox.SRTM import SRTM
 from koppengeiger import load_koppen_geiger
 from rasters import Raster, RasterGeometry
-from solar_apparent_time import UTC_to_solar
+from solar_apparent_time import UTC_offset_hours_for_area, solar_day_of_year_for_area, solar_hour_of_day_for_area
 
 __author__ = "Gregory Halverson, Robert Freepartner"
 
@@ -154,13 +154,10 @@ class FLiES(Model):
         self.ANN_model = ANN_model
         self.dynamic_atype_ctype = dynamic_atype_ctype
 
-    def UTC_offset_hours(self, geometry: RasterGeometry) -> Raster:
-        return Raster(np.radians(geometry.lon) / np.pi * 12, geometry=geometry)
-
     def day_of_year(self, time_UTC: datetime, geometry: RasterGeometry) -> Raster:
         doy_UTC = time_UTC.timetuple().tm_yday
         hour_UTC = time_UTC.hour + time_UTC.minute / 60 + time_UTC.second / 3600
-        UTC_offset_hours = self.UTC_offset_hours(geometry=geometry)
+        UTC_offset_hours = UTC_offset_hours_for_area(geometry=geometry)
         hour_of_day = hour_UTC + UTC_offset_hours
         doy = doy_UTC
         doy = rt.where(hour_of_day < 0, doy - 1, doy)
@@ -170,7 +167,7 @@ class FLiES(Model):
 
     def hour_of_day(self, time_UTC: datetime, geometry: RasterGeometry) -> Raster:
         hour_UTC = time_UTC.hour + time_UTC.minute / 60 + time_UTC.second / 3600
-        UTC_offset_hours = self.UTC_offset_hours(geometry=geometry)
+        UTC_offset_hours = UTC_offset_hours_for_area(geometry=geometry)
         hour_of_day = hour_UTC + UTC_offset_hours
         hour_of_day = rt.where(hour_of_day < 0, hour_of_day + 24, hour_of_day)
         hour_of_day = rt.where(hour_of_day > 24, hour_of_day - 24, hour_of_day)
@@ -339,8 +336,8 @@ class FLiES(Model):
             time_UTC = parser.parse(time_UTC)
 
         date_UTC = time_UTC.date()
-        hour_of_day = self.hour_of_day(time_UTC=time_UTC, geometry=geometry)
-        day_of_year = self.day_of_year(time_UTC=time_UTC, geometry=geometry)
+        hour_of_day = solar_hour_of_day_for_area(time_UTC=time_UTC, geometry=geometry)
+        day_of_year = solar_day_of_year_for_area(time_UTC=time_UTC, geometry=geometry)
 
         if elevation_km is None:
             elevation_km = self.elevation_km(geometry)

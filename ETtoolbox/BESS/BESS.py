@@ -24,6 +24,7 @@ from geos5fp import GEOS5FP
 from modisci import MODISCI
 from ETtoolbox.SRTM import SRTM
 from rasters import Raster, RasterGeometry, RasterGrid
+from solar_apparent_time import day_of_year
 
 __author__ = "Gregory Halverson, Robert Freepartner"
 
@@ -1614,7 +1615,7 @@ class BESS(FLiES):
         date_UTC = time_UTC.date()
         hour_of_day = self.hour_of_day(time_UTC=time_UTC, geometry=geometry)
         self.diagnostic(hour_of_day, "hour_of_day", date_UTC, target)
-        day_of_year = self.day_of_year(time_UTC=time_UTC, geometry=geometry)
+        doy = day_of_year(time_UTC=time_UTC, geometry=geometry)
         self.diagnostic(ST_K, "ST_K", date_UTC, target)
         self.diagnostic(NDVI, "NDVI", date_UTC, target)
         self.diagnostic(albedo, "albedo", date_UTC, target)
@@ -1630,7 +1631,7 @@ class BESS(FLiES):
         self.diagnostic(elevation_km, "elevation_km", date_UTC, target)
 
         if SZA is None:
-            SZA = self.SZA(day_of_year=day_of_year, hour_of_day=hour_of_day, geometry=geometry)
+            SZA = self.SZA(day_of_year=doy, hour_of_day=hour_of_day, geometry=geometry)
 
         self.diagnostic(SZA, "SZA", date_UTC, target)
 
@@ -1721,7 +1722,7 @@ class BESS(FLiES):
         MET = self.meteorology(
             date_UTC=date_UTC,
             target=target,
-            day_of_year=day_of_year,
+            day_of_year=doy,
             hour_of_day=hour_of_day,
             latitude=geometry.lat,
             elevation_m=elevation_km * 1000,
