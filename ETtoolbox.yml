@@ -50,10 +50,12 @@ dependencies:
   - wget
   - pip:
       - colored-logging
+      - gedi-canopy-height
       - geos5fp
       - jupyter
       - koppengeiger
       - mgrs
+      - modisci
       - modland
       - pybind11_cmake
       - pycksum
@@ -66,5 +68,3 @@ dependencies:
       - spacetrack
       - sun-angles
       - typing-extensions
-      - git+https://github.com/JPL-Evapotranspiration-Algorithms/modisci.git@main
-      - git+https://github.com/JPL-Evapotranspiration-Algorithms/gedi_canopy_height.git@main
