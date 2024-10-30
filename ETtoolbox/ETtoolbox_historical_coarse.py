@@ -4,27 +4,26 @@ from datetime import datetime, timedelta, date
 from os.path import join
 from typing import List, Callable, Union
 
+import colored_logging
 import numpy as np
 from dateutil import parser
-
-
-import colored_logging
 from gedi_canopy_height import GEDICanopyHeight
 from geos5fp import GEOS5FP
-from ETtoolbox.LandsatL2C2 import LandsatL2C2
 from modisci import MODISCI
+from rasters import Raster, RasterGrid
+from sentinel_tiles import sentinel_tiles
+from soil_capacity_wilting import SoilGrids
+from solar_apparent_time import solar_to_UTC
+
+from ETtoolbox.LandsatL2C2 import LandsatL2C2
 from ETtoolbox.PTJPLSM import PTJPLSM, DEFAULT_PREVIEW_QUALITY, DEFAULT_RESAMPLING
 from ETtoolbox.SRTM import SRTM
-from soil_grids import SoilGrids
+from ETtoolbox.VIIRS import VNP43MA4
 from ETtoolbox.VIIRS.VNP09GA import VNP09GA
 from ETtoolbox.VIIRS.VNP21A1D import VNP21A1D
-from ETtoolbox.VIIRS import VNP43MA4
 from ETtoolbox.VIIRS_GEOS5FP import VIIRS_GEOS5FP, check_VIIRS_GEOS5FP_already_processed, VIIRS_DOWNLOAD_DIRECTORY, \
     VIIRS_PRODUCTS_DIRECTORY
-from ETtoolbox.VIIRS_orbit.VIIRS_orbit import solar_to_UTC
 from ETtoolbox.daterange import date_range
-from rasters import Raster, RasterGrid
-from ETtoolbox.sentinel import sentinel_tile_grid
 
 logger = logging.getLogger(__name__)
 
@@ -233,11 +232,11 @@ def ET_toolbox_historical_coarse_tile(
 
     if M_geometry is None:
         logger.info(f"I-band cell size: {colored_logging.val(M_cell_size)}m")
-        M_geometry = sentinel_tile_grid.grid(tile, cell_size=M_cell_size)
+        M_geometry = sentinel_tiles.grid(tile, cell_size=M_cell_size)
 
     if GEOS5FP_geometry is None:
         logger.info(f"GEOS-5 FP cell size: {colored_logging.val(GEOS5FP_cell_size)}m")
-        GEOS5FP_geometry = sentinel_tile_grid.grid(tile, cell_size=GEOS5FP_cell_size)
+        GEOS5FP_geometry = sentinel_tiles.grid(tile, cell_size=GEOS5FP_cell_size)
 
     if target_variables is None:
         target_variables = TARGET_VARIABLES

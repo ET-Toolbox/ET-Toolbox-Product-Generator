@@ -9,9 +9,9 @@ from modisci import MODISCI
 from ETtoolbox.PTJPL import PTJPL
 from ETtoolbox.PTJPLSM import PTJPLSM, GEOS5FPNotAvailableError
 from ETtoolbox.SRTM import SRTM
-from soil_grids import SoilGrids
+from soil_capacity_wilting import SoilGrids
 from geos5fp.downscaling import downscale_air_temperature, downscale_soil_moisture, bias_correct
-from ETtoolbox.sentinel import sentinel_tile_grid
+from sentinel_tiles import sentinel_tiles
 
 DEFAULT_GFS_DOWNLOAD_DIRECTORY = "GFS_download_directory"
 DEFAULT_GFS_OUTPUT_DIRECTORY = "GFS_output"
@@ -405,7 +405,7 @@ def LANCE_GFS_forecast(
     logger.info(f"running PT-JPL-SM ET model forecast at {colored_logging.time(time_UTC)}")
 
     if coarse_geometry is None:
-        coarse_geometry = sentinel_tile_grid.grid(coarse_cell_size)
+        coarse_geometry = sentinel_tiles.grid(coarse_cell_size)
 
     if Ta_C is None:
         logger.info(f"retrieving GFS {colored_logging.name('Ta')} forecast at {colored_logging.time(time_UTC)}")

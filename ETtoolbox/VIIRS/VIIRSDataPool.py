@@ -16,8 +16,8 @@ from shapely.geometry import Point, Polygon
 import colored_logging
 import rasters as rt
 from ETtoolbox.LPDAAC import LPDAACDataPool
-from modland import find_MODLAND_tiles
-from modland.indices import generate_MODLAND_grid, parsehv
+from modland import find_modland_tiles
+from modland.indices import generate_modland_grid, parsehv
 from ETtoolbox.daterange import date_range
 from rasters import RasterGrid, Raster
 
@@ -125,7 +125,7 @@ class VIIRSGranule:
 
         with h5py.File(filename, "r") as f:
             DN = np.array(f[dataset_name])
-            grid = generate_MODLAND_grid(h, v, DN.shape[0])
+            grid = generate_modland_grid(h, v, DN.shape[0])
 
             logger.info("opening VIIRS file: " + colored_logging.file(self.filename))
 
@@ -228,7 +228,7 @@ class VIIRSDataPool(LPDAACDataPool):
             *args,
             **kwargs) -> pd.DataFrame:
         if tiles is None and target_geometry is not None:
-            tiles = find_MODLAND_tiles(target_geometry)
+            tiles = find_modland_tiles(target_geometry)
 
         if isinstance(tiles, str):
             tiles = [tiles]

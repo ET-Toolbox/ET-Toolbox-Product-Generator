@@ -18,10 +18,11 @@ import warnings
 import rasters as rt
 from ETtoolbox.FLiES import FLiES
 from geos5fp import GEOS5FP
-from MCD12.MCD12C1 import MCD12C1
+from ETtoolbox.MCD12 import MCD12C1
 from ETtoolbox.SRTM import SRTM
 from ETtoolbox.model.model import DEFAULT_PREVIEW_QUALITY, DEFAULT_RESAMPLING
 from rasters import Raster, RasterGrid, RasterGeometry
+from solar_apparent_time import solar_day_of_year_for_area, solar_hour_of_day_for_area
 
 __author__ = 'Kaniska Mallick, Adam Purdy, Gregory Halverson'
 
@@ -684,8 +685,8 @@ class MOD16(FLiES):
         warnings.filterwarnings('ignore')
 
         # calculate time
-        hour_of_day = self.hour_of_day(time_UTC=time_UTC, geometry=geometry)
-        day_of_year = self.day_of_year(time_UTC=time_UTC, geometry=geometry)
+        hour_of_day = solar_hour_of_day_for_area(time_UTC=time_UTC, geometry=geometry)
+        day_of_year = solar_day_of_year_for_area(time_UTC=time_UTC, geometry=geometry)
         SHA = self.SHA_deg_from_doy_lat(day_of_year, geometry.lat)
         sunrise_hour = self.sunrise_from_sha(SHA)
         daylight_hours = self.daylight_from_sha(SHA)

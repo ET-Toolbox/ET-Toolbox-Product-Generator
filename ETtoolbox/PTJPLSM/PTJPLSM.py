@@ -22,9 +22,11 @@ from modisci import MODISCI
 from ETtoolbox.SRTM import SRTM
 
 from ETtoolbox.PTJPL import PTJPL
-from soil_grids import SoilGrids
+from soil_capacity_wilting import SoilGrids
 
 from rasters import Raster, RasterGeometry
+
+from solar_apparent_time import solar_day_of_year_for_area, solar_hour_of_day_for_area
 
 DEFAULT_WORKING_DIRECTORY = "."
 DEFAULT_GEOS5FP_DOWNLOAD = "GEOS5FP_download_directory"
@@ -192,8 +194,8 @@ class PTJPLSM(PTJPL):
         results = {}
 
         # calculate time
-        hour_of_day = self.hour_of_day(time_UTC=time_UTC, geometry=geometry)
-        day_of_year = self.day_of_year(time_UTC=time_UTC, geometry=geometry)
+        hour_of_day = solar_hour_of_day_for_area(time_UTC=time_UTC, geometry=geometry)
+        day_of_year = solar_day_of_year_for_area(time_UTC=time_UTC, geometry=geometry)
         SHA = self.SHA_deg_from_doy_lat(day_of_year, geometry.lat)
         sunrise_hour = self.sunrise_from_sha(SHA)
         daylight_hours = self.daylight_from_sha(SHA)

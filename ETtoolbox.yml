@@ -22,7 +22,6 @@ dependencies:
   - netcdf4
   - nose
   - pybind11
-  - jupyter
   - keras
   - matplotlib
   - netcdf4
@@ -50,17 +49,22 @@ dependencies:
   - xtensor-python
   - wget
   - pip:
+      - colored-logging
+      - gedi-canopy-height
+      - geos5fp
+      - jupyter
+      - koppengeiger
       - mgrs
+      - modisci
+      - modland
       - pybind11_cmake
       - pycksum
       - pygrib
       - rasters>=1.0.5
+      - sentinel-tiles
       - sentinelsat
+      - soil-capacity-wilting
+      - solar-apparent-time
       - spacetrack
-      - git+https://github.com/JPL-Evapotranspiration-Algorithms/modland.git@main
-      - git+https://github.com/JPL-Evapotranspiration-Algorithms/koppengeiger.git@main
-      - git+https://github.com/JPL-Evapotranspiration-Algorithms/soil_grids.git@main
-      - git+https://github.com/JPL-Evapotranspiration-Algorithms/geos5fp.git@main
-      - git+https://github.com/JPL-Evapotranspiration-Algorithms/modisci.git@main
-      - git+https://github.com/JPL-Evapotranspiration-Algorithms/gedi_canopy_height.git@main
-      - git+https://github.com/JPL-Evapotranspiration-Algorithms/colored_logging.git@main
+      - sun-angles
+      - typing-extensions

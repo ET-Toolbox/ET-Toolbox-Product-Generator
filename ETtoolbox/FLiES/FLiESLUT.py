@@ -29,6 +29,8 @@ from ETtoolbox.SRTM import SRTM
 import numpy as np
 import rasters as rt
 
+from solar_apparent_time import solar_day_of_year_for_area, solar_hour_of_day_for_area
+
 from .FLiES import FLiES
 
 __author__ = "Gregory Halverson, Robert Freepartner"
@@ -327,8 +329,8 @@ class FLiESLUT(FLiES):
             time_UTC = parser.parse(time_UTC)
 
         date_UTC = time_UTC.date()
-        hour_of_day = self.hour_of_day(time_UTC=time_UTC, geometry=geometry)
-        day_of_year = self.day_of_year(time_UTC=time_UTC, geometry=geometry)
+        hour_of_day = solar_hour_of_day_for_area(time_UTC=time_UTC, geometry=geometry)
+        day_of_year = solar_day_of_year_for_area(time_UTC=time_UTC, geometry=geometry)
 
         if cloud_mask is None:
             cloud_mask = np.full(geometry.shape, 0)

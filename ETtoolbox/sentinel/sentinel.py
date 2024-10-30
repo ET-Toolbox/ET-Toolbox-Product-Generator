@@ -40,6 +40,7 @@ from six import string_types
 import colored_logging
 import rasters
 from rasters import RasterGrid, Raster, RasterGeometry, CRS
+from solar_apparent_time import UTC_to_solar
 
 # from transform.UTM import UTM_proj4_from_latlon, UTM_proj4_from_zone
 
@@ -134,10 +135,6 @@ def resize_affine(affine: Affine, cell_size: float) -> Affine:
     new_affine = Affine(cell_size, affine.b, affine.c, affine.d, -cell_size, affine.f)
 
     return new_affine
-
-
-def UTC_to_solar(time_UTC, lon):
-    return time_UTC + timedelta(hours=(np.radians(lon) / np.pi * 12))
 
 
 class SentinelGranule:
