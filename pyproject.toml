@@ -59,6 +59,7 @@ dependencies = [
     "sentinelsat",
     "six",
     "shapely",
+    "solar-apparent-time",
     "spacetrack",
     "termcolor",
     "tensorflow",

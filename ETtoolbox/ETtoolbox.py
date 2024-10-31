@@ -10,7 +10,7 @@ import rasters as rt
 from gedi_canopy_height import GEDICanopyHeight
 from geos5fp import GEOS5FP
 from ETtoolbox.GFS import forecast_Ta_C, forecast_RH, get_GFS_listing, forecast_SWin
-from ETtoolbox.HLS.HLS2 import HLS2CMR
+from harmonized_landsat_sentinel import HLS2Connection
 from ETtoolbox.LANCE import retrieve_VNP43MA4N, retrieve_VNP43IA4N, retrieve_VNP21NRT_emissivity, available_LANCE_dates
 from ETtoolbox.LANCE_GEOS5FP_NRT import LANCE_GEOS5FP_NRT, LANCENotAvailableError, GEOS5FPNotAvailableError, retrieve_VNP21NRT_ST, \
     check_LANCE_already_processed, DEFAULT_LANCE_OUTPUT_DIRECTORY, load_LANCE
@@ -257,7 +257,7 @@ def ET_toolbox_hindcast_forecast_tile(
             offline_ok=True
         )
 
-    HLS = HLS2CMR(
+    HLS = HLS2Connection(
         working_directory=working_directory,
         download_directory=HLS_download,
         target_resolution=int(HLS_cell_size)

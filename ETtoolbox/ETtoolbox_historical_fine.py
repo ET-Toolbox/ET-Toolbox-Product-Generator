@@ -12,7 +12,7 @@ import rasters as rt
 from gedi_canopy_height import GEDICanopyHeight
 from geos5fp import GEOS5FP
 from solar_apparent_time import solar_to_UTC
-from ETtoolbox.HLS.HLS2 import HLS2CMR
+from harmonized_landsat_sentinel import HLS2Connection
 from ETtoolbox.LandsatL2C2 import LandsatL2C2
 from modisci import MODISCI
 from ETtoolbox.PTJPLSM import PTJPLSM, DEFAULT_PREVIEW_QUALITY, DEFAULT_RESAMPLING
@@ -270,7 +270,7 @@ def ET_toolbox_historical_fine_tile(
             offline_ok=True
         )
 
-    HLS = HLS2CMR(
+    HLS = HLS2Connection(
         working_directory=working_directory,
         download_directory=HLS_download,
         target_resolution=int(HLS_cell_size)
