@@ -1,0 +1,102 @@
+[build-system]
+requires = ["setuptools>=60", "setuptools-scm>=8.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ETtoolbox"
+version = "1.0.0"
+description = "Evapotranspiration Product Generator for the USBR-JPL Second Generation ET Toolbox"
+readme = "README.md"
+authors = [
+    { name = "Gregory H. Halverson", email = "gregory.h.halverson@jpl.nasa.gov" },
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "pandas",
+    "pillow",
+    "geopandas",
+    "h5py",
+    "matplotlib",
+    "msgpack",
+    "msgpack_numpy",
+    "numpy",
+    "pyproj",
+    "rasterio>1.0.0",
+    "shapely",
+    "scikit-image",
+    "affine",
+    "astropy",
+    "pykdtree",
+    "pyresample",
+    "pytest",
+    "scipy",
+    "six",
+    "beautifulsoup4",
+    "boto3",
+    "descartes",
+    "ephem",
+    "gdal>3.1",
+    "imageio",
+    "imageio-ffmpeg",
+    "jdcal",
+    "jupyter",
+    "keras",
+    "netcdf4",
+    "nose",
+    "pybind11",
+    "pygeos",
+    "pygrib",
+    "pysolar",
+    "pystac-client",
+    "python-dateutil",
+    "requests",
+    "tensorflow",
+    "termcolor",
+    "untangle",
+    "urllib3",
+    "xmltodict",
+    "wget",
+    "mgrs",
+    "pybind11_cmake",
+    "pycksum",
+    "rasters>=1.0.5",
+    "sentinelsat",
+    "spacetrack",
+    "modland",
+    "koppengeiger",
+    "soil-capacity-wilting",
+    "geos5fp",
+    "modisci",
+    "gedi_canopy_height",
+    "colored_logging",
+]
+requires-python = ">=3.11"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=6.0",
+    "pytest-cov",
+]
+
+[tool.setuptools.package-data]
+ETtoolbox = ["*.txt"]
+
+[project.urls]
+Homepage = "https://github.com/ET-Toolbox/ET-Toolbox-Product-Generator"
+
+[project.scripts]
+LANCE-VIIRS-Dates = "ETtoolbox.available_lance_dates:main"
+ET-Toolbox-Credentials = "ETtoolbox.check_credentials:main"
+ET-Toolbox-Tile = "ETtoolbox.ETtoolbox_tile:main"
+ET-Toolbox-Rio-Grande = "ETtoolbox.ETtoolbox_riogrande:main"
+ET-Toolbox-Historical-Fine = "ETtoolbox.ETtoolbox_historical_fine:main"
+ET-Toolbox-Historical-Coarse = "ETtoolbox.ETtoolbox_historical_coarse:main"
+ET-Toolbox-Hindcast-Coarse = "ETtoolbox.ETtoolbox_hindcast_coarse:main"
+New-Mexico-VIIRS-Server = "new_mexico.new_mexico:main"
+
+[tool.setuptools.packages.find]
+include = ["ETtoolbox"]
+exclude = ["calval", "testing"]
