@@ -66,5 +66,15 @@ dependencies:
       - soil-capacity-wilting
       - solar-apparent-time
       - spacetrack
+<<<<<<< HEAD
+      - modland
+      - koppengeiger
+      - soil-capacity-wilting
+      - geos5fp
+      - modisci
+      - gedi_canopy_height
+      - colored_logging
+=======
       - sun-angles
       - typing-extensions
+>>>>>>> 7da82d2be31fb9fcce2f9c185afdd5f3e0e9282d
