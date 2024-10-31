@@ -2,6 +2,8 @@ from glob import glob
 from os.path import splitext
 from typing import Dict, Callable
 import boto3
+import rasters
+
 from gedi_canopy_height import GEDICanopyHeight
 from geos5fp import GEOS5FP
 from ETtoolbox.LANCE import *
@@ -10,7 +12,7 @@ from modisci import MODISCI
 from ETtoolbox.PTJPL import PTJPL
 from ETtoolbox.PTJPLSM import PTJPLSM
 from ETtoolbox.SRTM import SRTM
-from soil_grids import SoilGrids
+from soil_capacity_wilting import SoilGrids
 from geos5fp.downscaling import downscale_air_temperature, downscale_soil_moisture, downscale_vapor_pressure_deficit, \
     downscale_relative_humidity, bias_correct
 

@@ -19,13 +19,13 @@ from ETtoolbox.LandsatL2C2 import LandsatL2C2
 from modisci import MODISCI
 from ETtoolbox.PTJPLSM import PTJPLSM, DEFAULT_PREVIEW_QUALITY, DEFAULT_RESAMPLING
 from ETtoolbox.SRTM import SRTM
-from soil_grids import SoilGrids
-from ETtoolbox.VIIRS_orbit.VIIRS_orbit import solar_to_UTC
+from soil_capacity_wilting import SoilGrids
+from solar_apparent_time import solar_to_UTC
 from ETtoolbox.daterange import date_range
 from geos5fp.downscaling import bias_correct, downscale_soil_moisture, downscale_air_temperature, \
     downscale_vapor_pressure_deficit, downscale_relative_humidity
 from rasters import Raster, RasterGrid
-from ETtoolbox.sentinel import sentinel_tile_grid
+from sentinel_tiles import sentinel_tiles
 
 logger = logging.getLogger(__name__)
 
@@ -219,25 +219,25 @@ def ET_toolbox_hindcast_forecast_tile(
 
     if HLS_geometry is None:
         logger.info(f"HLS cell size: {colored_logging.val(HLS_cell_size)}m")
-        HLS_geometry = sentinel_tile_grid.grid(tile, cell_size=HLS_cell_size)
+        HLS_geometry = sentinel_tiles.grid(tile, cell_size=HLS_cell_size)
 
     HLS_polygon_latlon = HLS_geometry.boundary_latlon.geometry
 
     if I_geometry is None:
         logger.info(f"I-band cell size: {colored_logging.val(I_cell_size)}m")
-        I_geometry = sentinel_tile_grid.grid(tile, cell_size=I_cell_size)
+        I_geometry = sentinel_tiles.grid(tile, cell_size=I_cell_size)
 
     if M_geometry is None:
         logger.info(f"I-band cell size: {colored_logging.val(M_cell_size)}m")
-        M_geometry = sentinel_tile_grid.grid(tile, cell_size=M_cell_size)
+        M_geometry = sentinel_tiles.grid(tile, cell_size=M_cell_size)
 
     if GEOS5FP_geometry is None:
         logger.info(f"GEOS-5 FP cell size: {colored_logging.val(GEOS5FP_cell_size)}m")
-        GEOS5FP_geometry = sentinel_tile_grid.grid(tile, cell_size=GEOS5FP_cell_size)
+        GEOS5FP_geometry = sentinel_tiles.grid(tile, cell_size=GEOS5FP_cell_size)
 
     if GFS_geometry is None:
         logger.info(f"GFS cell size: {colored_logging.val(GFS_cell_size)}m")
-        GFS_geometry = sentinel_tile_grid.grid(tile, cell_size=GFS_cell_size)
+        GFS_geometry = sentinel_tiles.grid(tile, cell_size=GFS_cell_size)
 
     if target_variables is None:
         target_variables = TARGET_VARIABLES

@@ -14,7 +14,7 @@ import numpy as np
 from dateutil import parser
 from scipy.stats import zscore
 
-import colored_logging
+import colored_logging as cl
 import rasters as rt
 
 from ETtoolbox.ERS_credentials import get_ERS_credentials
@@ -24,6 +24,7 @@ from geos5fp import GEOS5FP
 from modisci import MODISCI
 from ETtoolbox.SRTM import SRTM
 from rasters import Raster, RasterGeometry, RasterGrid
+from solar_apparent_time import day_of_year
 
 __author__ = "Gregory Halverson, Robert Freepartner"
 
@@ -129,10 +130,11 @@ class BESS(FLiES):
                 GEDI_download = join(static_directory, DEFAULT_GEDI_DOWNLOAD)
 
             try:
-                self.logger.info("preparing gedi_canopy_height canopy height dataset: " + colored_logging.dir(GEDI_download))
+                self.logger.info("preparing gedi_canopy_height canopy height dataset: " + cl.dir(GEDI_download))
                 GEDI_connection = GEDICanopyHeight(source_directory=GEDI_download)
                 GEDI_filename = GEDI_connection.VRT
-                self.logger.info("gedi_canopy_height VRT ready: " + colored_logging.file(GEDI_filename))
+                self.logger.info("gedi_canopy_height VRT ready: " + cl.file(GEDI_filename))
+
             except Exception as e:
                 raise GEDINotAvailable(f"unable to prepare gedi_canopy_height: {GEDI_download}")
 
@@ -143,7 +145,7 @@ class BESS(FLiES):
                 CI_directory = join(static_directory, DEFAULT_CI_DOWNLOAD)
 
             try:
-                self.logger.info("preparing MODIS clumping index dataset: " + colored_logging.dir(CI_directory))
+                self.logger.info("preparing MODIS clumping index dataset: " + cl.dir(CI_directory))
 
                 if ERS_credentials is None:
                     ERS_credentials = get_ERS_credentials()
@@ -155,7 +157,7 @@ class BESS(FLiES):
                 )
 
                 filename = ORNL_connection.download()
-                self.logger.info("MODIS clumping index ready: " + colored_logging.file(filename))
+                self.logger.info("MODIS clumping index ready: " + cl.file(filename))
             except Exception as e:
                 raise CINotAvailable(f"unable to prepare clumping index: {CI_directory}")
 
@@ -1613,7 +1615,7 @@ class BESS(FLiES):
         date_UTC = time_UTC.date()
         hour_of_day = self.hour_of_day(time_UTC=time_UTC, geometry=geometry)
         self.diagnostic(hour_of_day, "hour_of_day", date_UTC, target)
-        day_of_year = self.day_of_year(time_UTC=time_UTC, geometry=geometry)
+        doy = day_of_year(time_UTC=time_UTC, geometry=geometry)
         self.diagnostic(ST_K, "ST_K", date_UTC, target)
         self.diagnostic(NDVI, "NDVI", date_UTC, target)
         self.diagnostic(albedo, "albedo", date_UTC, target)
@@ -1629,7 +1631,7 @@ class BESS(FLiES):
         self.diagnostic(elevation_km, "elevation_km", date_UTC, target)
 
         if SZA is None:
-            SZA = self.SZA(day_of_year=day_of_year, hour_of_day=hour_of_day, geometry=geometry)
+            SZA = self.SZA(day_of_year=doy, hour_of_day=hour_of_day, geometry=geometry)
 
         self.diagnostic(SZA, "SZA", date_UTC, target)
 
@@ -1720,7 +1722,7 @@ class BESS(FLiES):
         MET = self.meteorology(
             date_UTC=date_UTC,
             target=target,
-            day_of_year=day_of_year,
+            day_of_year=doy,
             hour_of_day=hour_of_day,
             latitude=geometry.lat,
             elevation_m=elevation_km * 1000,

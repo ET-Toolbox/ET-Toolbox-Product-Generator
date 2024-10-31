@@ -22,7 +22,6 @@ dependencies:
   - netcdf4
   - nose
   - pybind11
-  - jupyter
   - keras
   - matplotlib
   - netcdf4
@@ -50,13 +49,24 @@ dependencies:
   - xtensor-python
   - wget
   - pip:
+      - colored-logging
+      - gedi-canopy-height
+      - geos5fp
+      - jupyter
+      - koppengeiger
       - mgrs
+      - modisci
+      - modland
       - pybind11_cmake
       - pycksum
       - pygrib
       - rasters>=1.0.5
+      - sentinel-tiles
       - sentinelsat
+      - soil-capacity-wilting
+      - solar-apparent-time
       - spacetrack
+<<<<<<< HEAD
       - modland
       - koppengeiger
       - soil-capacity-wilting
@@ -64,3 +74,7 @@ dependencies:
       - modisci
       - gedi_canopy_height
       - colored_logging
+=======
+      - sun-angles
+      - typing-extensions
+>>>>>>> 7da82d2be31fb9fcce2f9c185afdd5f3e0e9282d

@@ -4,6 +4,7 @@ from datetime import datetime, timedelta, date
 from os.path import join, abspath, dirname, exists
 from typing import List, Callable, Union
 
+
 import colored_logging
 from gedi_canopy_height import GEDICanopyHeight
 from geos5fp import GEOS5FP
@@ -11,9 +12,9 @@ from ETtoolbox.LANCE_GEOS5FP_NRT import LANCE_GEOS5FP_NRT, LANCENotAvailableErro
 from modisci import MODISCI
 from ETtoolbox.PTJPLSM import PTJPLSM, DEFAULT_PREVIEW_QUALITY, DEFAULT_RESAMPLING
 from ETtoolbox.SRTM import SRTM
-from soil_grids import SoilGrids
+from soil_capacity_wilting import SoilGrids
 from rasters import Raster, RasterGrid
-from ETtoolbox.sentinel import sentinel_tile_grid
+from sentinel_tiles import sentinel_tiles
 
 logger = logging.getLogger(__name__)
 
@@ -85,7 +86,7 @@ def ET_toolbox_hindcast_coarse_tile(
         f"generating ET Toolbox hindcast and forecast at tile {colored_logging.place(tile)} centered on present date: {colored_logging.time(present_date)}")
 
     if geometry is None:
-        geometry = sentinel_tile_grid.grid(tile, cell_size=meso_cell_size)
+        geometry = sentinel_tiles.grid(tile, cell_size=meso_cell_size)
 
     if target_variables is None:
         target_variables = DEFAULT_TARGET_VARIABLES
