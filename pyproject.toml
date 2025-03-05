@@ -22,6 +22,8 @@ dependencies = [
     "colored_logging",
     "descartes",
     "ephem",
+    "FLiESANN",
+    "FLiESLUT",
     "gdal>3.1",
     "geopandas",
     "geos5fp",

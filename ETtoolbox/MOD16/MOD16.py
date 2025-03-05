@@ -16,7 +16,7 @@ import pandas as pd
 from numpy import where, nan, exp, array, isnan, logical_and, clip, float32
 import warnings
 import rasters as rt
-from ETtoolbox.FLiES import FLiES
+from FLiESANN import FLiESANN
 from geos5fp import GEOS5FP
 from ETtoolbox.MCD12 import MCD12C1
 from ETtoolbox.SRTM import SRTM
