@@ -72,8 +72,12 @@ requires-python = ">=3.10"
 
 [project.optional-dependencies]
 dev = [
+    "build",
     "pytest>=6.0",
     "pytest-cov",
+    "jupyter",
+    "pytest",
+    "twine"
 ]
 
 [tool.setuptools.package-data]
