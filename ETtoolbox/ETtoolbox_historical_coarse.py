@@ -8,8 +8,8 @@ import colored_logging
 import numpy as np
 from dateutil import parser
 from gedi_canopy_height import GEDICanopyHeight
-from geos5fp import GEOS5FP
-from modisci import MODISCI
+from GEOS5FP import GEOS5FP
+from MODISCI import MODISCI
 from rasters import Raster, RasterGrid
 from sentinel_tiles import sentinel_tiles
 from soil_capacity_wilting import SoilGrids

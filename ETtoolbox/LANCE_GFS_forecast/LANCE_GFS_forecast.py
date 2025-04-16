@@ -2,10 +2,10 @@ from glob import glob
 from typing import Dict, Callable
 
 from gedi_canopy_height import GEDICanopyHeight
-from geos5fp import GEOS5FP
+from GEOS5FP import GEOS5FP
 from ETtoolbox.GFS import *
 from ETtoolbox.LANCE import *
-from modisci import MODISCI
+from MODISCI import MODISCI
 from ETtoolbox.PTJPL import PTJPL
 from ETtoolbox.PTJPLSM import PTJPLSM, GEOS5FPNotAvailableError
 from ETtoolbox.SRTM import SRTM

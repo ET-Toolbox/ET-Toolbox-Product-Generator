@@ -7,8 +7,8 @@ import logging
 from dateutil import parser
 from typing import Dict, Callable
 from gedi_canopy_height import GEDICanopyHeight
-from geos5fp import GEOS5FP
-from modisci import MODISCI
+from GEOS5FP import GEOS5FP
+from MODISCI import MODISCI
 from ETtoolbox.SRTM import SRTM
 from soil_capacity_wilting import SoilGrids
 from glob import glob

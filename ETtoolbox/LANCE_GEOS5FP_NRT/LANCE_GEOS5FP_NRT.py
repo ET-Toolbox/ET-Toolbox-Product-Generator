@@ -1,14 +1,14 @@
 from glob import glob
 from os.path import splitext
 from typing import Dict, Callable
-import boto3
+# import boto3
 import rasters
 
 from gedi_canopy_height import GEDICanopyHeight
-from geos5fp import GEOS5FP
+from GEOS5FP import GEOS5FP
 from ETtoolbox.LANCE import *
 from ETtoolbox.LANCE import LANCENotAvailableError
-from modisci import MODISCI
+from MODISCI import MODISCI
 from ETtoolbox.PTJPL import PTJPL
 from ETtoolbox.PTJPLSM import PTJPLSM
 from ETtoolbox.SRTM import SRTM
@@ -226,11 +226,11 @@ def LANCE_GEOS5FP_NRT(
 
     logger.info(f"LANCE output directory: {colored_logging.dir(LANCE_output_directory)}")
 
-    if output_bucket_name is not None:
-        logger.info(f"output S3 bucket: {output_bucket_name}")
-        session = boto3.Session()
-        s3 = session.resource("s3")
-        output_bucket = s3.Bucket(output_bucket_name)
+    # if output_bucket_name is not None:
+    #     logger.info(f"output S3 bucket: {output_bucket_name}")
+    #     session = boto3.Session()
+    #     s3 = session.resource("s3")
+    #     output_bucket = s3.Bucket(output_bucket_name)
 
     LANCE_already_processed = check_LANCE_already_processed(
         LANCE_output_directory=LANCE_output_directory,

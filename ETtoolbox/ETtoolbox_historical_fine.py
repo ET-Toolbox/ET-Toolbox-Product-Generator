@@ -10,11 +10,11 @@ from dateutil import parser
 import colored_logging
 import rasters as rt
 from gedi_canopy_height import GEDICanopyHeight
-from geos5fp import GEOS5FP
+from GEOS5FP import GEOS5FP
 from solar_apparent_time import solar_to_UTC
 from harmonized_landsat_sentinel import HLS2Connection
 from ETtoolbox.LandsatL2C2 import LandsatL2C2
-from modisci import MODISCI
+from MODISCI import MODISCI
 from ETtoolbox.PTJPLSM import PTJPLSM, DEFAULT_PREVIEW_QUALITY, DEFAULT_RESAMPLING
 from ETtoolbox.SRTM import SRTM
 from soil_capacity_wilting import SoilGrids

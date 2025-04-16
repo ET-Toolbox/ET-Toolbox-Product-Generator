@@ -16,8 +16,8 @@ from ETtoolbox.BESS import BESS, DEFAULT_DOWNSCALE_AIR, DEFAULT_DOWNSCALE_HUMIDI
 
 from gedi_canopy_height import GEDICanopyHeight
 
-from geos5fp import GEOS5FP
-from modisci import MODISCI
+from GEOS5FP import GEOS5FP
+from MODISCI import MODISCI
 from ETtoolbox.SRTM import SRTM
 
 from rasters import Raster, RasterGeometry, RasterGrid

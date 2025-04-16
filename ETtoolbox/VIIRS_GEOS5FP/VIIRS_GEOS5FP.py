@@ -2,10 +2,12 @@ from glob import glob
 from os.path import splitext
 from typing import Dict, Callable
 
+from rasters import RasterGrid
+
 from gedi_canopy_height import GEDICanopyHeight
-from geos5fp import GEOS5FP
+from GEOS5FP import GEOS5FP
 from ETtoolbox.LANCE import *
-from modisci import MODISCI
+from MODISCI import MODISCI
 from ETtoolbox.PTJPL import PTJPL
 from ETtoolbox.PTJPLSM import PTJPLSM
 from ETtoolbox.SRTM import SRTM
