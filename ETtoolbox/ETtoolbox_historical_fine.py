@@ -24,7 +24,7 @@ from ETtoolbox.VIIRS import VNP43MA4
 from ETtoolbox.VIIRS_GEOS5FP import VIIRS_GEOS5FP, check_VIIRS_GEOS5FP_already_processed, VIIRS_DOWNLOAD_DIRECTORY, \
     VIIRS_PRODUCTS_DIRECTORY, VIIRS_GEOS5FP_OUTPUT_DIRECTORY
 from ETtoolbox.daterange import date_range
-from geos5fp.downscaling import bias_correct, downscale_soil_moisture, downscale_air_temperature, \
+from GEOS5FP.downscaling import bias_correct, downscale_soil_moisture, downscale_air_temperature, \
     downscale_vapor_pressure_deficit, downscale_relative_humidity
 from rasters import Raster, RasterGrid
 from sentinel_tiles import sentinel_tiles

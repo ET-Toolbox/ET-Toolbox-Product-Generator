@@ -3,7 +3,7 @@ from os.path import splitext
 from typing import Dict, Callable
 # import boto3
 import rasters
-
+from rasters import RasterGrid
 from gedi_canopy_height import GEDICanopyHeight
 from GEOS5FP import GEOS5FP
 from ETtoolbox.LANCE import *
@@ -13,7 +13,7 @@ from ETtoolbox.PTJPL import PTJPL
 from ETtoolbox.PTJPLSM import PTJPLSM
 from ETtoolbox.SRTM import SRTM
 from soil_capacity_wilting import SoilGrids
-from geos5fp.downscaling import downscale_air_temperature, downscale_soil_moisture, downscale_vapor_pressure_deficit, \
+from GEOS5FP.downscaling import downscale_air_temperature, downscale_soil_moisture, downscale_vapor_pressure_deficit, \
     downscale_relative_humidity, bias_correct
 
 from ETtoolbox.LANCE import ARCHIVE

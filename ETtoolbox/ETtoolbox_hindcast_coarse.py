@@ -94,8 +94,7 @@ def ET_toolbox_hindcast_coarse_tile(
     if GEOS5FP_connection is None:
         GEOS5FP_connection = GEOS5FP(
             working_directory=working_directory,
-            download_directory=GEOS5FP_download,
-            products_directory=GEOS5FP_products
+            download_directory=GEOS5FP_download
         )
 
     bundled_spacetrack_credentials_filename = join(abspath(dirname(__file__)), "spacetrack_credentials.txt")
