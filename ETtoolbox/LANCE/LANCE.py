@@ -112,7 +112,8 @@ def available_LANCE_dates(product: str, archive: str, remote=DEFAULT_REMOTE) -> 
     year = datetime.utcnow().year
     URL = posixpath.join(remote, archive, product, f"{year:04d}")
     listing = HTTP_listing(URL)
-    dates = sorted([datetime.strptime(f"{year:04d}{posixpath.basename(item)}", "%Y%j").date() for item in listing])
+
+    dates = sorted([datetime.strptime(f"{year:04d}{posixpath.basename(posixpath.dirname(item))}", "%Y%j").date() for item in listing])
 
     if len(dates) == 0:
         raise LANCENotAvailableError(f"no dates for LANCE products found at URL: {URL}")
