@@ -1,5 +1,5 @@
 from ETtoolbox.LandsatL2C2 import LandsatL2C2
-from ETtoolbox.PTJPLSM import PTJPLSM
+from PTJPLSM import PTJPLSM
 from datetime import datetime, date, timedelta
 from typing import Union, List
 from os.path import join, abspath, expanduser, splitext, exists, basename

@@ -17,7 +17,7 @@ from ETtoolbox.LANCE_GEOS5FP_NRT import LANCE_GEOS5FP_NRT, LANCENotAvailableErro
 from ETtoolbox.LANCE_GFS_forecast import LANCE_GFS_forecast
 from ETtoolbox.LandsatL2C2 import LandsatL2C2
 from MODISCI import MODISCI
-from ETtoolbox.PTJPLSM import PTJPLSM, DEFAULT_PREVIEW_QUALITY, DEFAULT_RESAMPLING
+from PTJPLSM import PTJPLSM
 from ETtoolbox.SRTM import SRTM
 from soil_capacity_wilting import SoilGrids
 from solar_apparent_time import solar_to_UTC
@@ -32,6 +32,8 @@ logger = logging.getLogger(__name__)
 ET_MODEL_NAME = "PTJPLSM"
 SWIN_MODEL_NAME = "GEOS5FP"
 RN_MODEL_NAME = "Verma"
+
+DEFAULT_RESAMPLING = "cubic"
 
 DOWNSCALE_AIR = True
 DOWNSCALE_HUMIDITY = True
@@ -159,7 +161,6 @@ def ET_toolbox_hindcast_forecast_tile(
         soil_grids_connection: SoilGrids = None,
         soil_grids_download: str = None,
         intermediate_directory: str = None,
-        preview_quality: int = DEFAULT_PREVIEW_QUALITY,
         ANN_model: Callable = None,
         ANN_model_filename: str = None,
         resampling: str = DEFAULT_RESAMPLING,

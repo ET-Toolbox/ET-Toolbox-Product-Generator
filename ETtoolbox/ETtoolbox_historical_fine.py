@@ -15,7 +15,7 @@ from solar_apparent_time import solar_to_UTC
 from harmonized_landsat_sentinel import HLS2Connection
 from ETtoolbox.LandsatL2C2 import LandsatL2C2
 from MODISCI import MODISCI
-from ETtoolbox.PTJPLSM import PTJPLSM, DEFAULT_PREVIEW_QUALITY, DEFAULT_RESAMPLING
+from PTJPLSM import PTJPLSM
 from ETtoolbox.SRTM import SRTM
 from soil_capacity_wilting import SoilGrids
 from ETtoolbox.VIIRS.VNP09GA import VNP09GA

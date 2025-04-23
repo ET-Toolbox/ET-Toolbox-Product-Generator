@@ -6,8 +6,8 @@ from GEOS5FP import GEOS5FP
 from ETtoolbox.GFS import *
 from ETtoolbox.LANCE import *
 from MODISCI import MODISCI
-from ETtoolbox.PTJPL import PTJPL
-from ETtoolbox.PTJPLSM import PTJPLSM, GEOS5FPNotAvailableError
+from PTJPL import PTJPL
+from PTJPLSM import PTJPLSM
 from ETtoolbox.SRTM import SRTM
 from soil_capacity_wilting import SoilGrids
 from GEOS5FP.downscaling import downscale_air_temperature, downscale_soil_moisture, bias_correct
@@ -170,6 +170,8 @@ def LANCE_GFS_forecast(
         preview_quality: int = DEFAULT_PREVIEW_QUALITY,
         ANN_model: Callable = None,
         ANN_model_filename: str = None,
+        spacetrack_credentials_filename: str = None,
+        ERS_credentials_filename: str = None,
         resampling: str = DEFAULT_RESAMPLING,
         downscale_air: bool = DEFAULT_DOWNSCALE_AIR,
         downscale_humidity: bool = DEFAULT_DOWNSCALE_HUMIDITY,
@@ -292,8 +294,16 @@ def LANCE_GFS_forecast(
     if ST_C is None:
         logger.info(
             f"retrieving {colored_logging.name('VNP21_NRT')} {colored_logging.name('ST_C')} from LANCE on {colored_logging.time(LANCE_processing_date)} for GFS forecast on {colored_logging.time(target_date)}")
-        ST_C = retrieve_VNP21NRT_ST(geometry=geometry, date_solar=LANCE_processing_date,
-                                    directory=LANCE_download_directory, resampling="cubic") - 273.15
+        
+        ST_C = retrieve_VNP21NRT_ST(
+            geometry=geometry, 
+            date_solar=LANCE_processing_date,
+            directory=LANCE_download_directory, 
+            resampling="cubic",
+            spacetrack_credentials_filename=spacetrack_credentials_filename,
+            ERS_credentials_filename=ERS_credentials_filename
+        ) - 273.15
+        
         ST_C_smooth = GEOS5FP_connection.Ts_K(time_UTC=time_UTC, geometry=geometry, resampling="cubic") - 273.15
         ST_C = rt.where(np.isnan(ST_C), ST_C_smooth, ST_C)
 
