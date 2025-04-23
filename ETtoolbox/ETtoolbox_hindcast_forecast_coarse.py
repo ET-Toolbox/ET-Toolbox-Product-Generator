@@ -6,10 +6,10 @@ from os.path import join
 
 import colored_logging
 from gedi_canopy_height import GEDICanopyHeight
-from geos5fp import GEOS5FP
+from GEOS5FP import GEOS5FP
 from ETtoolbox.LANCE_GEOS5FP_NRT import LANCE_GEOS5FP_NRT, LANCENotAvailableError, GEOS5FPNotAvailableError
 from ETtoolbox.LANCE_GFS_forecast import LANCE_GFS_forecast
-from modisci import MODISCI
+from MODISCI import MODISCI
 from ETtoolbox.PTJPLSM import PTJPLSM, DEFAULT_PREVIEW_QUALITY, DEFAULT_RESAMPLING
 from ETtoolbox.SRTM import SRTM
 from soil_capacity_wilting import SoilGrids

@@ -1,100 +1,59 @@
-.ONESHELL:
-SHELL=bash
-VERSION := $(shell cat ETtoolbox/version.txt)
-
-default:
-	make install
-
-version:
-	$(info ETtoolbox Collection 2 pipeline version ${VERSION})
-
-mamba:
-ifeq ($(word 1,$(shell mamba --version)),mamba)
-	@echo "mamba already installed"
-else
-	-conda deactivate; conda install -y -c conda-forge "mamba>=0.23"
-endif
-
-create-blank-env:
-	$(info creating blank ETtoolbox environment)
-	-conda run -n base mamba create -n ETtoolbox
-
-update-env-mamba:
-	mamba env update -n ETtoolbox -f ETtoolbox.yml
-
-environment:
-	make mamba
-	-conda deactivate; pip install pybind11_cmake
-	make create-blank-env
-	make update-env-mamba
-
-refresh-env:
-	make remove
-	make environment
-
-clean-python:
-	$(info cleaning python)
-	find . -type f -name '*.pyc' -delete
-	find . -type d -name '__pycache__' -delete
+PACKAGE_NAME = ETtoolbox
+ENVIRONMENT_NAME = $(PACKAGE_NAME)
+DOCKER_IMAGE_NAME = $(shell echo $(PACKAGE_NAME) | tr '[:upper:]' '[:lower:]')
 
 clean:
-	$(info cleaning build)
-	-rm -rvf build
-	-rm -rvf dist
-	-rm -rvf *.egg-info
-	-rm -rvf CMakeFiles
-	-rm CMakeCache.txt
-	-find . -type d -name __pycache__ -exec rm -r {} +
+	rm -rf *.o *.out *.log
+	rm -rf build/
+	rm -rf dist/
+	rm -rf *.egg-info
+	rm -rf .pytest_cache
+	find . -type d -name "__pycache__" -exec rm -rf {} +
 
+test:
+	pytest
 
-uninstall:
-	$(info uninstalling ETtoolbox package)
-	-conda run -n ETtoolbox pip uninstall ETtoolbox -y
+build:
+	python -m build
 
-unit-tests:
-	$(info running unit tests)
-	conda run -n ETtoolbox nosetests -v -w tests
+twine-upload:
+	twine upload dist/*
 
-unit-tests-docker:
-	nosetests -v -w tests
-
-setuptools:
-	-conda run -n ETtoolbox python setup.py install
-
-install-package:
-	$(info installing ETtoolbox package)
-	-make setuptools
+dist:
 	make clean
-	make unit-tests
-
-install-package-docker:
-	python setup.py install
-	make clean
-	make unit-tests-docker
+	make build
+	make twine-upload
 
 install:
-	make environment
-	make clean
+	pip install -e .[dev]
+
+uninstall:
+	pip uninstall $(PACKAGE_NAME)
+
+reinstall:
 	make uninstall
-	make install-package
-
-install-docker:
-	make clean
-	cp ERS_credentials.txt ERS_credentials
-	cp spacetrack_credentials.txt spacetrack_credentials
-	make install-package-docker
-
-remove:
-	# conda run -n base conda env remove -n ETtoolbox
-	mamba env remove -n ETtoolbox
-
-reinstall-hard:
-	make remove
 	make install
 
-reinstall-soft:
-	make uninstall
-	make install-package
+environment:
+	mamba create -y -n $(ENVIRONMENT_NAME) -c conda-forge python=3.10
+
+remove-environment:
+	mamba env remove -y -n $(ENVIRONMENT_NAME)
+
+colima-start:
+	colima start -m 16 -a x86_64 -d 100 
 
 docker-build:
-	docker build -t ettoolbox .
+	docker build -t $(DOCKER_IMAGE_NAME):latest .
+
+docker-build-environment:
+	docker build --target environment -t $(DOCKER_IMAGE_NAME):latest .
+
+docker-build-installation:
+	docker build --target installation -t $(DOCKER_IMAGE_NAME):latest .
+
+docker-interactive:
+	docker run -it $(DOCKER_IMAGE_NAME) fish 
+
+docker-remove:
+	docker rmi -f $(DOCKER_IMAGE_NAME)

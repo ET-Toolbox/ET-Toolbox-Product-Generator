@@ -10,7 +10,7 @@ def get_ERS_credentials(filename: str = FILENAME) -> Dict[str, str]:
 
     credentials = get_credentials(
         filename=filename,
-        displayed=["username", "header"],
+        displayed=["username"],
         hidden=["password"],
         prompt="credentials for EROS Registration System https://ers.cr.usgs.gov/register"
     )

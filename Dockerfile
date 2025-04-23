@@ -16,7 +16,7 @@ RUN mamba install -y python-dateutil
 RUN mamba install -y wget
 RUN mamba install -y xtensor xtensor-python
 RUN mamba install -y "gdal>3.1" "rasterio>1.0.0" "setuptools!=58" "shapely<2.0.0" "tensorflow!=2.11.0"
-RUN pip install astropy beautifulsoup4 cmake descartes ephem geopandas h5py imageio imageio-ffmpeg jupyter keras matplotlib mgrs netcdf4 nose pip pycksum pygeos pyhdf pyresample pysolar pystac-client requests scikit-image sentinelsat spacetrack termcolor untangle urllib3 xmltodict
+RUN pip install astropy beautifulsoup4 cmake descartes ephem geopandas h5py imageio imageio-ffmpeg jupyter keras matplotlib mgrs netcdf4 nose pip pycksum pyhdf pyresample pysolar pystac-client requests scikit-image sentinelsat spacetrack termcolor untangle urllib3 xmltodict
 
 # install app
 RUN mkdir /ET-Toolbox-Product-Generator

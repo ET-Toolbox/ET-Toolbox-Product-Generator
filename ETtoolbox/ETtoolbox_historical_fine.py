@@ -10,11 +10,11 @@ from dateutil import parser
 import colored_logging
 import rasters as rt
 from gedi_canopy_height import GEDICanopyHeight
-from geos5fp import GEOS5FP
+from GEOS5FP import GEOS5FP
 from solar_apparent_time import solar_to_UTC
 from harmonized_landsat_sentinel import HLS2Connection
 from ETtoolbox.LandsatL2C2 import LandsatL2C2
-from modisci import MODISCI
+from MODISCI import MODISCI
 from ETtoolbox.PTJPLSM import PTJPLSM, DEFAULT_PREVIEW_QUALITY, DEFAULT_RESAMPLING
 from ETtoolbox.SRTM import SRTM
 from soil_capacity_wilting import SoilGrids
@@ -24,7 +24,7 @@ from ETtoolbox.VIIRS import VNP43MA4
 from ETtoolbox.VIIRS_GEOS5FP import VIIRS_GEOS5FP, check_VIIRS_GEOS5FP_already_processed, VIIRS_DOWNLOAD_DIRECTORY, \
     VIIRS_PRODUCTS_DIRECTORY, VIIRS_GEOS5FP_OUTPUT_DIRECTORY
 from ETtoolbox.daterange import date_range
-from geos5fp.downscaling import bias_correct, downscale_soil_moisture, downscale_air_temperature, \
+from GEOS5FP.downscaling import bias_correct, downscale_soil_moisture, downscale_air_temperature, \
     downscale_vapor_pressure_deficit, downscale_relative_humidity
 from rasters import Raster, RasterGrid
 from sentinel_tiles import sentinel_tiles
