@@ -15,6 +15,7 @@ from requests.adapters import HTTPAdapter
 from requests.auth import HTTPBasicAuth
 from urllib3 import Retry
 
+from ETtoolbox.ERS_credentials.ERS_credentials import get_ERS_credentials
 import colored_logging
 import rasters as rt
 from modland import find_modland_tiles, generate_modland_grid, parsehv
@@ -128,10 +129,13 @@ def get_LANCE_download_directory(directory: str, product: str, date_UTC: Union[d
 def download_LANCE_VIIRS(
         URL: str,
         directory: str,
-        API_key: str,
+        ERS_credentials_filename: str,
         retries: int = 3,
         wait_seconds: int = 30) -> str:
-    header = f"Authorization: Bearer {API_key}"
+    credentials = get_ERS_credentials(filename=ERS_credentials_filename)
+    ERS_token = credentials["token"]
+
+    header = f"Authorization: Bearer {ERS_token}"
     product = posixpath.basename(URL).split(".")[0]
     date_UTC = datetime.strptime(posixpath.basename(URL).split(".")[1][1:], "%Y%j").date()
 
@@ -308,7 +312,8 @@ def retrieve_VNP21NRT(
         variable: str = None,
         resampling: str = None,
         directory: str = None,
-        spacetrack_credentials_filename: str = None) -> rt.Raster:
+        spacetrack_credentials_filename: str = None,
+        ERS_credentials_filename: str = None) -> rt.Raster:
     if variable is None:
         variable = "LST"
 
@@ -325,7 +330,7 @@ def retrieve_VNP21NRT(
 
     for i, (swath_datetime_UTC, swath_datetime_solar, swath_name, swath_geometry) in swaths.iterrows():
         URL = generate_VNP21NRT_URL(swath_datetime_UTC)
-        filename = download_LANCE_VIIRS(URL=URL, directory=directory)
+        filename = download_LANCE_VIIRS(URL=URL, directory=directory, ERS_credentials_filename=ERS_credentials_filename)
         image = read_VNP21NRT_layer(filename=filename, variable=variable, geometry=geometry)
         composite_image = composite_image.fill(image)
 
@@ -337,13 +342,15 @@ def retrieve_VNP21NRT_ST(
         date_solar: date = None,
         resampling: str = None,
         directory: str = None,
-        spacetrack_credentials_filename: str = None) -> rt.Raster:
+        spacetrack_credentials_filename: str = None,
+        ERS_credentials_filename: str = None) -> rt.Raster:
     return retrieve_VNP21NRT(
         geometry=geometry,
         date_solar=date_solar,
         variable="LST",
         directory=directory,
-        spacetrack_credentials_filename=spacetrack_credentials_filename
+        spacetrack_credentials_filename=spacetrack_credentials_filename,
+        ERS_credentials_filename=ERS_credentials_filename
     )
 
 def retrieve_VNP21NRT_emissivity(
@@ -498,7 +505,7 @@ def retrieve_VNP43IA4N(
 
     for i, (tile, URL) in listing.iterrows():
         logger.info(f"processing VNP43IA4 tile: {tile} URL: {URL}")
-        filename = download_LANCE_VIIRS(URL=URL, directory=directory)
+        filename = download_LANCE_VIIRS(URL=URL, directory=directory, ERS_token=API_key)
         image = read_VNP43IA4N_variable(filename=filename, variable=variable, geometry=geometry, resampling=resampling)
         composite_image = composite_image.fill(image)
 
@@ -669,7 +676,7 @@ def retrieve_VNP43MA4N(
 
     for i, (tile, URL) in listing.iterrows():
         logger.info(f"processing VNP43MA4 tile: {tile} URL: {URL}")
-        filename = download_LANCE_VIIRS(URL=URL, directory=directory)
+        filename = download_LANCE_VIIRS(URL=URL, directory=directory, ERS_token=API_key)
         image = read_VNP43MA4N_variable(filename=filename, variable=variable, geometry=geometry, resampling=resampling)
         composite_image = composite_image.fill(image)
 

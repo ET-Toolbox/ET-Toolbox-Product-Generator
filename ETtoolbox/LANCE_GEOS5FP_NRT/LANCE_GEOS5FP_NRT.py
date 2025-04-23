@@ -1,7 +1,6 @@
 from glob import glob
 from os.path import splitext
 from typing import Dict, Callable
-# import boto3
 import rasters
 from rasters import RasterGrid
 from gedi_canopy_height import GEDICanopyHeight
@@ -9,8 +8,8 @@ from GEOS5FP import GEOS5FP
 from ETtoolbox.LANCE import *
 from ETtoolbox.LANCE import LANCENotAvailableError
 from MODISCI import MODISCI
-from ETtoolbox.PTJPL import PTJPL
-from ETtoolbox.PTJPLSM import PTJPLSM
+from PTJPL import PTJPL
+from PTJPLSM import PTJPLSM
 from ETtoolbox.SRTM import SRTM
 from soil_capacity_wilting import SoilGrids
 from GEOS5FP.downscaling import downscale_air_temperature, downscale_soil_moisture, downscale_vapor_pressure_deficit, \
@@ -171,6 +170,7 @@ def LANCE_GEOS5FP_NRT(
         soil_grids_download: str = None,
         intermediate_directory: str = None,
         spacetrack_credentials_filename: str = None,
+        ERS_credentials_filename: str = None,
         preview_quality: int = DEFAULT_PREVIEW_QUALITY,
         ANN_model: Callable = None,
         ANN_model_filename: str = None,
@@ -225,12 +225,6 @@ def LANCE_GEOS5FP_NRT(
         LANCE_output_directory = join(working_directory, DEFAULT_LANCE_OUTPUT_DIRECTORY)
 
     logger.info(f"LANCE output directory: {colored_logging.dir(LANCE_output_directory)}")
-
-    # if output_bucket_name is not None:
-    #     logger.info(f"output S3 bucket: {output_bucket_name}")
-    #     session = boto3.Session()
-    #     s3 = session.resource("s3")
-    #     output_bucket = s3.Bucket(output_bucket_name)
 
     LANCE_already_processed = check_LANCE_already_processed(
         LANCE_output_directory=LANCE_output_directory,
@@ -293,7 +287,8 @@ def LANCE_GEOS5FP_NRT(
             date_solar=LANCE_processing_date,
             directory=LANCE_download_directory,
             resampling="cubic",
-            spacetrack_credentials_filename=spacetrack_credentials_filename
+            spacetrack_credentials_filename=spacetrack_credentials_filename,
+            ERS_credentials_filename=ERS_credentials_filename
         )
 
         ST_C = ST_K - 273.15

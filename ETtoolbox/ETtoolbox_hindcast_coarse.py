@@ -1,7 +1,7 @@
 import logging
 import sys
 from datetime import datetime, timedelta, date
-from os.path import join, abspath, dirname, exists
+from os.path import join, abspath, dirname, exists, expanduser
 from typing import List, Callable, Union
 
 
@@ -10,13 +10,15 @@ from gedi_canopy_height import GEDICanopyHeight
 from GEOS5FP import GEOS5FP
 from ETtoolbox.LANCE_GEOS5FP_NRT import LANCE_GEOS5FP_NRT, LANCENotAvailableError, GEOS5FPNotAvailableError
 from MODISCI import MODISCI
-from ETtoolbox.PTJPLSM import PTJPLSM, DEFAULT_PREVIEW_QUALITY, DEFAULT_RESAMPLING
+from PTJPLSM import PTJPLSM
 from ETtoolbox.SRTM import SRTM
 from soil_capacity_wilting import SoilGrids
 from rasters import Raster, RasterGrid
 from sentinel_tiles import sentinel_tiles
 
 logger = logging.getLogger(__name__)
+
+DEFAULT_RESAMPLING = "cubic"
 
 DEFAULT_MODEL_NAME = "PTJPLSM"
 DEFAULT_DOWNSCALE_AIR = True
@@ -64,7 +66,6 @@ def ET_toolbox_hindcast_coarse_tile(
         soil_grids_connection: SoilGrids = None,
         soil_grids_download: str = None,
         intermediate_directory: str = None,
-        preview_quality: int = DEFAULT_PREVIEW_QUALITY,
         ANN_model: Callable = None,
         ANN_model_filename: str = None,
         spacetrack_credentials_filename: str = None,
@@ -97,15 +98,15 @@ def ET_toolbox_hindcast_coarse_tile(
             download_directory=GEOS5FP_download
         )
 
-    bundled_spacetrack_credentials_filename = join(abspath(dirname(__file__)), "spacetrack_credentials.txt")
+    default_spacetrack_credentials_filename = join(expanduser("~"), ".spacetrack_credentials")
 
-    if spacetrack_credentials_filename is None and exists(bundled_spacetrack_credentials_filename):
-        spacetrack_credentials_filename = bundled_spacetrack_credentials_filename
+    if spacetrack_credentials_filename is None and exists(default_spacetrack_credentials_filename):
+        spacetrack_credentials_filename = default_spacetrack_credentials_filename
 
-    bundled_ERS_credentials_filename = join(abspath(dirname(__file__)), "ERS_credentials.txt")
+    default_ERS_credentials_filename = join(expanduser("~"), ".ERS_credentials")
 
-    if ERS_credentials_filename is None and exists(bundled_ERS_credentials_filename):
-        ERS_credentials_filename = bundled_ERS_credentials_filename
+    if ERS_credentials_filename is None and exists(default_ERS_credentials_filename):
+        ERS_credentials_filename = default_ERS_credentials_filename
 
     if SRTM_connection is None:
         # FIXME fix handling of credentials here
@@ -147,7 +148,6 @@ def ET_toolbox_hindcast_coarse_tile(
                 LANCE_output_directory=output_directory,
                 output_bucket_name=output_bucket_name,
                 intermediate_directory=intermediate_directory,
-                preview_quality=preview_quality,
                 ANN_model=ANN_model,
                 ANN_model_filename=ANN_model_filename,
                 model=model,

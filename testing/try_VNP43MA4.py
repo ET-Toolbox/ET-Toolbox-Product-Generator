@@ -1,5 +1,5 @@
 from ETtoolbox.VIIRS import VNP43MA4
-from ETtoolbox.sentinel import sentinel_tiles
+from sentinel_tiles import sentinel_tiles
 
 date_UTC = "2022-07-01"
 geometry = sentinel_tiles.grid("11SPS", cell_size=1000)

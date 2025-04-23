@@ -16,7 +16,7 @@ from soil_capacity_wilting import SoilGrids
 from solar_apparent_time import solar_to_UTC
 
 from ETtoolbox.LandsatL2C2 import LandsatL2C2
-from ETtoolbox.PTJPLSM import PTJPLSM, DEFAULT_PREVIEW_QUALITY, DEFAULT_RESAMPLING
+from PTJPLSM import PTJPLSM
 from ETtoolbox.SRTM import SRTM
 from ETtoolbox.VIIRS import VNP43MA4
 from ETtoolbox.VIIRS.VNP09GA import VNP09GA
