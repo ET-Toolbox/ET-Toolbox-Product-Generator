@@ -18,12 +18,14 @@ dependencies = [
     "affine",
     "astropy",
     "beautifulsoup4",
-    "colored-logging",
+    "boto3",
+    "colored_logging",
     "descartes",
     "ephem",
+    "gdal>3.1",
     "geopandas",
-    "GEOS5FP",
-    "gedi-canopy-height",
+    "geos5fp",
+    "gedi_canopy_height",
     "harmonized-landsat-sentinel",
     "h5py",
     "imageio",
@@ -38,6 +40,8 @@ dependencies = [
     "modland",
     "nose",
     "numpy",
+    "pybind11",
+    "pybind11_cmake",
     "pycksum",
     "pygrib",
     "pykdtree",
@@ -51,6 +55,7 @@ dependencies = [
     "scikit-image",
     "scipy",
     "sentinelsat",
+    "sentinel-tiles",
     "six",
     "shapely",
     "soil-capacity-wilting",
@@ -68,8 +73,12 @@ requires-python = ">=3.10"
 
 [project.optional-dependencies]
 dev = [
+    "build",
     "pytest>=6.0",
     "pytest-cov",
+    "jupyter",
+    "pytest",
+    "twine"
 ]
 
 [tool.setuptools.package-data]
