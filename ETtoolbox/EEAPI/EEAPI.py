@@ -24,7 +24,6 @@ from dateutil import parser
 from shapely.geometry import Point, Polygon, shape
 
 import colored_logging
-from ETtoolbox.ERS_credentials import get_ERS_credentials
 from rasters import RasterGrid
 from time import sleep
 

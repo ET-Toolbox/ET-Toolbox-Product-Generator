@@ -7,9 +7,9 @@ from typing import List, Callable, Union
 
 import colored_logging
 from gedi_canopy_height import GEDICanopyHeight
-from geos5fp import GEOS5FP
+from GEOS5FP import GEOS5FP
 from ETtoolbox.LANCE_GEOS5FP_NRT import LANCE_GEOS5FP_NRT, LANCENotAvailableError, GEOS5FPNotAvailableError
-from modisci import MODISCI
+from MODISCI import MODISCI
 from ETtoolbox.PTJPLSM import PTJPLSM, DEFAULT_PREVIEW_QUALITY, DEFAULT_RESAMPLING
 from ETtoolbox.SRTM import SRTM
 from soil_capacity_wilting import SoilGrids
@@ -94,8 +94,7 @@ def ET_toolbox_hindcast_coarse_tile(
     if GEOS5FP_connection is None:
         GEOS5FP_connection = GEOS5FP(
             working_directory=working_directory,
-            download_directory=GEOS5FP_download,
-            products_directory=GEOS5FP_products
+            download_directory=GEOS5FP_download
         )
 
     bundled_spacetrack_credentials_filename = join(abspath(dirname(__file__)), "spacetrack_credentials.txt")

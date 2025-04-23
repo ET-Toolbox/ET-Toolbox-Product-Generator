@@ -8,7 +8,7 @@ import numpy as np
 import colored_logging
 import rasters as rt
 from gedi_canopy_height import GEDICanopyHeight
-from geos5fp import GEOS5FP
+from GEOS5FP import GEOS5FP
 from ETtoolbox.GFS import forecast_Ta_C, forecast_RH, get_GFS_listing, forecast_SWin
 from harmonized_landsat_sentinel import HLS2Connection
 from ETtoolbox.LANCE import retrieve_VNP43MA4N, retrieve_VNP43IA4N, retrieve_VNP21NRT_emissivity, available_LANCE_dates
@@ -16,13 +16,13 @@ from ETtoolbox.LANCE_GEOS5FP_NRT import LANCE_GEOS5FP_NRT, LANCENotAvailableErro
     check_LANCE_already_processed, DEFAULT_LANCE_OUTPUT_DIRECTORY, load_LANCE
 from ETtoolbox.LANCE_GFS_forecast import LANCE_GFS_forecast
 from ETtoolbox.LandsatL2C2 import LandsatL2C2
-from modisci import MODISCI
+from MODISCI import MODISCI
 from ETtoolbox.PTJPLSM import PTJPLSM, DEFAULT_PREVIEW_QUALITY, DEFAULT_RESAMPLING
 from ETtoolbox.SRTM import SRTM
 from soil_capacity_wilting import SoilGrids
 from solar_apparent_time import solar_to_UTC
 from ETtoolbox.daterange import date_range
-from geos5fp.downscaling import bias_correct, downscale_soil_moisture, downscale_air_temperature, \
+from GEOS5FP.downscaling import bias_correct, downscale_soil_moisture, downscale_air_temperature, \
     downscale_vapor_pressure_deficit, downscale_relative_humidity
 from rasters import Raster, RasterGrid
 from sentinel_tiles import sentinel_tiles

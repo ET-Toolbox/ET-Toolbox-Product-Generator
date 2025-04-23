@@ -20,11 +20,10 @@ import rasters as rt
 from ETtoolbox.ERS_credentials import get_ERS_credentials
 from ETtoolbox.FLiES.FLiES import FLiES
 from gedi_canopy_height import GEDICanopyHeight
-from geos5fp import GEOS5FP
-from modisci import MODISCI
+from GEOS5FP import GEOS5FP
+from MODISCI import MODISCI
 from ETtoolbox.SRTM import SRTM
 from rasters import Raster, RasterGeometry, RasterGrid
-from solar_apparent_time import day_of_year
 
 __author__ = "Gregory Halverson, Robert Freepartner"
 

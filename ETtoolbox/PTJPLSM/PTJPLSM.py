@@ -17,8 +17,8 @@ from ETtoolbox.BESS import DEFAULT_DOWNSCALE_AIR, DEFAULT_DOWNSCALE_HUMIDITY, DE
 
 from gedi_canopy_height import GEDICanopyHeight
 
-from geos5fp import GEOS5FP
-from modisci import MODISCI
+from GEOS5FP import GEOS5FP
+from MODISCI import MODISCI
 from ETtoolbox.SRTM import SRTM
 
 from ETtoolbox.PTJPL import PTJPL
