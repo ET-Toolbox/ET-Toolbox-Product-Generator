@@ -58,7 +58,7 @@ dependencies = [
     "scikit-image",
     "scipy",
     "sentinelsat",
-    "sentinel-tile-grid",
+    "sentinel-tiles",
     "six",
     "shapely",
     "solar-apparent-time",

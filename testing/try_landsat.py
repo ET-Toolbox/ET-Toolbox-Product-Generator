@@ -1,8 +1,8 @@
 from ETtoolbox.LandsatL2C2 import LandsatL2C2
-from ETtoolbox.sentinel import sentinel_tile_grid
+from ETtoolbox.sentinel import sentinel_tiles
 
 tile = "11SPS"
-geometry = sentinel_tile_grid.grid(tile, 30)
+geometry = sentinel_tiles.grid(tile, 30)
 
 landsat = LandsatL2C2(working_directory="~/data/landsat_testing")
 

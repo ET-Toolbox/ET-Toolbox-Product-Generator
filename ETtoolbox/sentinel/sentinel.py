@@ -1034,7 +1034,7 @@ class SentinelTileGrid(MGRS):
 
         return tiles
 
-sentinel_tile_grid = SentinelTileGrid()
+sentinel_tiles = SentinelTileGrid()
 
 class NoSentinelGranulesAvailable(Exception):
     pass
