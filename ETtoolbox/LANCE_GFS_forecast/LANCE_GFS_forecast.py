@@ -318,7 +318,8 @@ def LANCE_GFS_forecast(
             date_UTC=LANCE_processing_date,
             variable="NDVI",
             directory=LANCE_download_directory,
-            resampling="cubic"
+            resampling="cubic",
+            ERS_credentials_filename=ERS_credentials_filename
         )
 
     results["NDVI"] = NDVI

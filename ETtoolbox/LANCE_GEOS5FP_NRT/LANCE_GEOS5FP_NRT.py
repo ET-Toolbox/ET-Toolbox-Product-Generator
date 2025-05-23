@@ -306,7 +306,8 @@ def LANCE_GEOS5FP_NRT(
             date_UTC=LANCE_processing_date,
             variable="NDVI",
             directory=LANCE_download_directory,
-            resampling="cubic"
+            resampling="cubic",
+            ERS_credentials_filename=ERS_credentials_filename
         )
 
     results["NDVI"] = NDVI

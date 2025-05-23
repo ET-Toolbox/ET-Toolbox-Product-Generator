@@ -455,7 +455,8 @@ def ET_toolbox_hindcast_forecast_tile(
                 date_UTC=target_date,
                 variable="NDVI",
                 directory=LANCE_download_directory,
-                resampling="cubic"
+                resampling="cubic",
+                ERS_credentials_filename=ERS_credentials_filename
             )
 
             NDVI_I_smooth = GEOS5FP_connection.NDVI(time_UTC=time_UTC, geometry=I_geometry, resampling="cubic")

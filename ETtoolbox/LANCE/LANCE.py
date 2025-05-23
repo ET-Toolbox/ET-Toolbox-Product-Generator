@@ -488,7 +488,8 @@ def retrieve_VNP43IA4N(
         date_UTC: date = None,
         variable: str = None,
         resampling: str = "cubic",
-        directory: str = None) -> rt.Raster:
+        directory: str = None,
+        ERS_credentials_filename: str = None) -> rt.Raster:
     if variable is None:
         variable = "NDVI"
 
@@ -505,7 +506,7 @@ def retrieve_VNP43IA4N(
 
     for i, (tile, URL) in listing.iterrows():
         logger.info(f"processing VNP43IA4 tile: {tile} URL: {URL}")
-        filename = download_LANCE_VIIRS(URL=URL, directory=directory, ERS_token=API_key)
+        filename = download_LANCE_VIIRS(URL=URL, directory=directory, ERS_credentials_filename=ERS_credentials_filename)
         image = read_VNP43IA4N_variable(filename=filename, variable=variable, geometry=geometry, resampling=resampling)
         composite_image = composite_image.fill(image)
 
