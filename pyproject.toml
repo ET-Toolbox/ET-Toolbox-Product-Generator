@@ -40,7 +40,7 @@ dependencies = [
     "PTJPLSM",
     "python-dateutil",
     "pytictoc",
-    "rasters>=1.5.0",
+    "rasters>=1.5.2",
     "rasterio>1.0.0",
     "requests",
     "scikit-image",
