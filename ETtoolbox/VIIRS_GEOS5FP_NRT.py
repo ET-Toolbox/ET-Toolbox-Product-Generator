@@ -278,18 +278,6 @@ def VIIRS_GEOS5FP_NRT(
     VNP09_connection = VNP09GA_002.VNP09GA(download_directory=VIIRS_download_directory)
 
     if ST_C is None:
-        # logger.info(
-        #     f"retrieving {cl.name('VNP21_NRT')} {cl.name('ST_C')} from VIIRS on {cl.time(VIIRS_processing_date)}")
-
-        # ST_K = retrieve_VNP21NRT_ST(
-        #     geometry=geometry,
-        #     date_solar=VIIRS_processing_date,
-        #     directory=VIIRS_download_directory,
-        #     resampling="cubic",
-        #     spacetrack_credentials_filename=spacetrack_credentials_filename,
-        #     ERS_credentials_filename=ERS_credentials_filename
-        # )
-
         logger.info(
             f"retrieving {cl.name('VNP21A1D')} {cl.name('ST_C')} from VIIRS on {cl.time(VIIRS_processing_date)}")
 
@@ -307,21 +295,8 @@ def VIIRS_GEOS5FP_NRT(
     results["ST"] = ST_C
 
     if NDVI is None:
-        # logger.info(
-        #     f"retrieving {cl.name('VNP43IA4N')} {cl.name('NDVI')} from VIIRS on {cl.time(VIIRS_processing_date)}")
-
-        # NDVI = retrieve_VNP43IA4N(
-        #     geometry=geometry,
-        #     date_UTC=VIIRS_processing_date,
-        #     variable="NDVI",
-        #     directory=VIIRS_download_directory,
-        #     resampling="cubic",
-        #     ERS_credentials_filename=ERS_credentials_filename
-        # )
-
         logger.info(
             f"retrieving {cl.name('VNP09GA')} {cl.name('NDVI')} from VIIRS on {cl.time(VIIRS_processing_date)}")
-
 
         NDVI = VNP09_connection.NDVI(
             date_UTC=VIIRS_processing_date,
@@ -331,11 +306,7 @@ def VIIRS_GEOS5FP_NRT(
 
     results["NDVI"] = NDVI
 
-    if emissivity is None:
-        # logger.info(
-        #     f"retrieving {cl.name('VNP21_NRT')} {cl.name('emissivity')} from VIIRS on {cl.time(VIIRS_processing_date)}")
-        # emissivity = retrieve_VNP21NRT_emissivity(geometry=geometry, date_solar=VIIRS_processing_date,
-        #                                           directory=VIIRS_download_directory, resampling="cubic")
+    if emissivity is None:                                       directory=VIIRS_download_directory, resampling="cubic")
         logger.info(
             f"retrieving {cl.name('VNP21A1D')} {cl.name('emissivity')} from VIIRS on {cl.time(VIIRS_processing_date)}")
         emissivity = VNP21_connection.Emis_14(
@@ -350,17 +321,6 @@ def VIIRS_GEOS5FP_NRT(
     results["emissivity"] = emissivity
 
     if albedo is None:
-        # logger.info(
-        #     f"retrieving {cl.name('VNP43MA4N')} {cl.name('albedo')} from VIIRS on {cl.time(VIIRS_processing_date)}")
-
-        # albedo = retrieve_VNP43MA4N(
-        #     geometry=geometry,
-        #     date_UTC=VIIRS_processing_date,
-        #     variable="albedo",
-        #     directory=VIIRS_download_directory,
-        #     resampling="cubic"
-        # )
-
         logger.info(
             f"retrieving {cl.name('VNP09GA')} {cl.name('albedo')} from VIIRS on {cl.time(VIIRS_processing_date)}")
 
