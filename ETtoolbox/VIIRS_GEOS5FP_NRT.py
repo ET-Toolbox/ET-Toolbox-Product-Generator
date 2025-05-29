@@ -412,20 +412,6 @@ def VIIRS_GEOS5FP_NRT(
 
     results["RH"] = RH
 
-    # if SWin is None:
-    #     Ra, Rg, UV, VIS, NIR, VISdiff, NIRdiff, VISdir, NIRdir = model.FLiES(
-    #         geometry=geometry,
-    #         target=target,
-    #         time_UTC=time_UTC,
-    #         albedo=albedo
-    #     )
-    #
-    #     SWin_coarse = GEOS5FP_connection.SWin(time_UTC=time_UTC, geometry=coarse_geometry, resampling="cubic")
-    #     SWin = bias_correct(
-    #         coarse_image=SWin_coarse,
-    #         fine_image=Rg
-    #     )
-
     Ra = None
     Rg = None
     UV = None

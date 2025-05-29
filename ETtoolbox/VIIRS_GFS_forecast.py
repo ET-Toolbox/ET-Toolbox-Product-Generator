@@ -22,6 +22,8 @@ from soil_capacity_wilting import SoilGrids
 from GEOS5FP.downscaling import downscale_air_temperature, downscale_soil_moisture, bias_correct
 from sentinel_tiles import sentinel_tiles
 from solar_apparent_time import solar_to_UTC
+import colored_logging as cl
+from verma_net_radiation import process_verma_net_radiation
 
 DEFAULT_GFS_DOWNLOAD_DIRECTORY = "GFS_download_directory"
 DEFAULT_GFS_OUTPUT_DIRECTORY = "GFS_output"
@@ -131,16 +133,6 @@ def load_GFS(GFS_output_directory: str, target_date: Union[date, str], target: s
 
     return dataset
 
-
-def available_VIIRS_dates(product: str, archive: str, remote=DEFAULT_REMOTE) -> List[date]:
-    year = datetime.utcnow().year
-    URL = posixpath.join(str(remote), str(archive), str(product), f"{year:04d}")
-    listing = HTTP_listing(URL)
-    dates = sorted([datetime.strptime(f"{year:04d}{posixpath.basename(item)}", "%Y%j").date() for item in listing])
-
-    return dates
-
-
 def VIIRS_GFS_forecast(
         target_date: Union[date, str],
         geometry: RasterGrid,
@@ -241,12 +233,11 @@ def VIIRS_GFS_forecast(
             logger.info(f"connecting to GEOS-5 FP")
             GEOS5FP_connection = GEOS5FP(
                 working_directory=working_directory,
-                download_directory=GEOS5FP_download,
-                products_directory=GEOS5FP_products
+                download_directory=GEOS5FP_download
             )
         except Exception as e:
             logger.exception(e)
-            raise GEOS5FPNotAvailableError("unable to connect to GEOS-5 FP")
+            raise Exception("unable to connect to GEOS-5 FP")
 
     GFS_already_processed = check_GFS_already_processed(
         GFS_output_directory=GFS_output_directory,
@@ -270,24 +261,8 @@ def VIIRS_GFS_forecast(
     if VIIRS_download_directory is None:
         VIIRS_download_directory = join(working_directory, DEFAULT_VIIRS_DOWNLOAD_DIRECTORY)
 
-    logger.info(f"VIIRS download directory: {colored_logging.dir(VIIRS_download_directory)}")
-    VIIRS_dates = available_VIIRS_dates("VNP43MA4N", archive="5000")
-    earliest_VIIRS_date = VIIRS_dates[0]
-    latest_VIIRS_date = VIIRS_dates[-1]
-    logger.info(f"VIIRS is available from {colored_logging.time(earliest_VIIRS_date)} to {colored_logging.time(latest_VIIRS_date)}")
-
-    if target_date < earliest_VIIRS_date:
-        raise ValueError(f"target date {target_date} is before earliest available VIIRS {earliest_VIIRS_date}")
-
-    if target_date <= latest_VIIRS_date:
-        logger.warning(
-            f"target date {colored_logging.time(target_date)} is within VIIRS date range from {colored_logging.time(earliest_VIIRS_date)} to {colored_logging.time(latest_VIIRS_date)}")
-        if VIIRS_processing_date is None:
-            VIIRS_processing_date = target_date
-    else:
-        if VIIRS_processing_date is None:
-            VIIRS_processing_date = latest_VIIRS_date
-        logger.info(f"processing VIIRS on latest date available: {colored_logging.time(VIIRS_processing_date)}")
+    VIIRS_processing_date = target_date
+    VIIRS_processing_time = time_UTC
 
     VIIRS_processing_datetime_solar = datetime(VIIRS_processing_date.year, VIIRS_processing_date.month,
                                                VIIRS_processing_date.day, 13, 30)
@@ -359,60 +334,6 @@ def VIIRS_GFS_forecast(
 
     results["albedo"] = albedo
 
-    if model is None:
-        if model_name == "PTJPLSM":
-            model = PTJPLSM(
-                working_directory=working_directory,
-                static_directory=static_directory,
-                SRTM_connection=SRTM_connection,
-                SRTM_download=SRTM_download,
-                GEOS5FP_connection=GEOS5FP_connection,
-                GEOS5FP_download=GEOS5FP_download,
-                GEOS5FP_products=GEOS5FP_products,
-                GEDI_connection=GEDI_connection,
-                GEDI_download=GEDI_download,
-                ORNL_connection=ORNL_connection,
-                CI_directory=CI_directory,
-                soil_grids_connection=soil_grids_connection,
-                soil_grids_download=soil_grids_connection,
-                intermediate_directory=intermediate_directory,
-                preview_quality=preview_quality,
-                ANN_model=ANN_model,
-                ANN_model_filename=ANN_model_filename,
-                resampling=resampling,
-                downscale_air=downscale_air,
-                downscale_humidity=downscale_humidity,
-                downscale_moisture=downscale_moisture,
-                save_intermediate=save_intermediate,
-                include_preview=include_preview,
-                show_distribution=show_distribution
-            )
-        elif model_name == "PTJPL":
-            model = PTJPL(
-                working_directory=working_directory,
-                static_directory=static_directory,
-                SRTM_connection=SRTM_connection,
-                SRTM_download=SRTM_download,
-                GEOS5FP_connection=GEOS5FP_connection,
-                GEOS5FP_download=GEOS5FP_download,
-                GEOS5FP_products=GEOS5FP_products,
-                GEDI_connection=GEDI_connection,
-                GEDI_download=GEDI_download,
-                ORNL_connection=ORNL_connection,
-                CI_directory=CI_directory,
-                intermediate_directory=intermediate_directory,
-                preview_quality=preview_quality,
-                ANN_model=ANN_model,
-                ANN_model_filename=ANN_model_filename,
-                resampling=resampling,
-                downscale_air=downscale_air,
-                downscale_humidity=downscale_humidity,
-                downscale_moisture=downscale_moisture,
-                save_intermediate=save_intermediate,
-                include_preview=include_preview,
-                show_distribution=show_distribution
-            )
-
     if SRTM_connection is None:
         logger.info("connecting to SRTM")
         SRTM_connection = SRTM(
@@ -426,7 +347,7 @@ def VIIRS_GFS_forecast(
     logger.info(f"running PT-JPL-SM ET model forecast at {colored_logging.time(time_UTC)}")
 
     if coarse_geometry is None:
-        coarse_geometry = sentinel_tiles.grid(coarse_cell_size)
+        coarse_geometry = sentinel_tiles.grid(target, coarse_cell_size)
 
     if Ta_C is None:
         logger.info(f"retrieving GFS {colored_logging.name('Ta')} forecast at {colored_logging.time(time_UTC)}")
@@ -745,41 +666,29 @@ def VIIRS_GFS_forecast(
 
     results["SWin"] = SWin
 
-    if model_name == "PTJPLSM":
-        PTJPL_results = model.PTJPL(
-            geometry=geometry,
-            target=target,
-            time_UTC=time_UTC,
-            ST_C=ST_C,
-            emissivity=emissivity,
-            NDVI=NDVI,
-            albedo=albedo,
-            SWin=SWin,
-            SM=SM,
-            wind_speed=wind_speed,
-            Ta_C=Ta_C,
-            RH=RH,
-            Rn=Rn,
-            water=water
-        )
-    elif model_name == "PTJPL":
-        PTJPL_results = model.PTJPL(
-            geometry=geometry,
-            target=target,
-            time_UTC=time_UTC,
-            ST_C=ST_C,
-            emissivity=emissivity,
-            NDVI=NDVI,
-            albedo=albedo,
-            SWin=SWin,
-            wind_speed=wind_speed,
-            Ta_C=Ta_C,
-            RH=RH,
-            Rn=Rn,
-            water=water
-        )
-    else:
-        raise ValueError(f"unrecognized model: {model_name}")
+    
+    verma_results = process_verma_net_radiation(
+        SWin=SWin,
+        albedo=albedo,
+        ST_C=ST_C,
+        emissivity=emissivity,
+        Ta_C=Ta_C,
+        RH=RH
+    )
+
+    Rn = verma_results["Rn"]
+
+    logger.info(f"running PT-JPL ET model hindcast at {cl.time(time_UTC)}")
+
+    PTJPL_results = PTJPL(
+        NDVI=NDVI,
+        ST_C=ST_C,
+        emissivity=emissivity,
+        albedo=albedo,
+        Rn=Rn,
+        Ta_C=Ta_C,
+        RH=RH
+    )
 
     for k, v in PTJPL_results.items():
         results[k] = v
