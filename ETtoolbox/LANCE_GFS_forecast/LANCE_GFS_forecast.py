@@ -3,7 +3,7 @@ from typing import Dict, Callable
 from rasters import Raster, RasterGrid
 from gedi_canopy_height import GEDICanopyHeight
 from GEOS5FP import GEOS5FP
-from ETtoolbox.GFS import *
+from global_forecasting_system import *
 from ETtoolbox.LANCE import *
 from MODISCI import MODISCI
 from PTJPL import PTJPL

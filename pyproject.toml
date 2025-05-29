@@ -25,6 +25,7 @@ dependencies = [
     "geopandas",
     "GEOS5FP",
     "gedi-canopy-height",
+    "global-forecasting-system",
     "harmonized-landsat-sentinel",
     "h5py",
     "koppengeiger",

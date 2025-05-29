@@ -9,7 +9,7 @@ import colored_logging
 import rasters as rt
 from gedi_canopy_height import GEDICanopyHeight
 from GEOS5FP import GEOS5FP
-from ETtoolbox.GFS import forecast_Ta_C, forecast_RH, get_GFS_listing, forecast_SWin
+from global_forecasting_system import forecast_Ta_C, forecast_RH, get_GFS_listing, forecast_SWin
 from harmonized_landsat_sentinel import HLS2Connection
 from .LandsatL2C2 import LandsatL2C2
 from MODISCI import MODISCI
