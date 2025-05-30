@@ -12,6 +12,7 @@ from ETtoolbox.SRTM import SRTM
 from soil_capacity_wilting import SoilGrids
 from GEOS5FP.downscaling import downscale_air_temperature, downscale_soil_moisture, bias_correct
 from sentinel_tiles import sentinel_tiles
+from check_distribution import check_distribution
 
 DEFAULT_GFS_DOWNLOAD_DIRECTORY = "GFS_download_directory"
 DEFAULT_GFS_OUTPUT_DIRECTORY = "GFS_output"
@@ -654,7 +655,7 @@ def LANCE_GFS_forecast(
             else:
                 RH = forecast_RH(time_UTC=time_UTC, geometry=geometry, directory=GFS_download, listing=GFS_listing)
 
-    model.check_distribution(RH, "RH", date_UTC=date_UTC, target=target)
+    check_distribution(RH, "RH", date_UTC=date_UTC, target=target)
     results["RH"] = RH
 
     if wind_speed is None:

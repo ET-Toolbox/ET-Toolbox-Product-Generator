@@ -24,10 +24,14 @@ from sentinel_tiles import sentinel_tiles
 from solar_apparent_time import solar_to_UTC
 import colored_logging as cl
 from verma_net_radiation import process_verma_net_radiation
+import NASADEM
+from check_distribution import check_distribution
 
-DEFAULT_GFS_DOWNLOAD_DIRECTORY = "GFS_download_directory"
+DEFAULT_GFS_DOWNLOAD_DIRECTORY = "~/data/GFS"
 DEFAULT_GFS_OUTPUT_DIRECTORY = "GFS_output"
-DEFAULT_VIIRS_DOWNLOAD_DIRECTORY = "VIIRS_download_directory"
+DEFAULT_VIIRS_DOWNLOAD_DIRECTORY = "~/data/VIIRS_download_directory"
+VNP21A1D_DOWNLOAD_DIRECTORY = "~/data/VNP21A1D"
+VNP09GA_DOWNLOAD_DIRECTORY = "~/data/VNP09GA"
 DEFAULT_RESAMPLING = "cubic"
 DEFAULT_PREVIEW_QUALITY = 20
 GFS_CELL_SIZE = 27375
@@ -155,7 +159,8 @@ def VIIRS_GFS_forecast(
         static_directory: str = None,
         GFS_download: str = None,
         GFS_output_directory: str = None,
-        VIIRS_download_directory: str = None,
+        VNP21A1D_download_directory: str = VNP21A1D_DOWNLOAD_DIRECTORY,
+        VNP09GA_download_directory: str = VNP09GA_DOWNLOAD_DIRECTORY,
         SRTM_connection: SRTM = None,
         SRTM_download: str = None,
         GEOS5FP_connection: GEOS5FP = None,
@@ -209,7 +214,7 @@ def VIIRS_GFS_forecast(
     logger.info(f"GFS-VIIRS working directory: {colored_logging.dir(working_directory)}")
 
     if GFS_download is None:
-        GFS_download = join(working_directory, DEFAULT_GFS_DOWNLOAD_DIRECTORY)
+        GFS_download = DEFAULT_GFS_DOWNLOAD_DIRECTORY
 
     logger.info(f"GFS download directory: {colored_logging.dir(GFS_download)}")
 
@@ -219,10 +224,8 @@ def VIIRS_GFS_forecast(
     logger.info(f"GFS output directory: {colored_logging.dir(GFS_output_directory)}")
 
     if SRTM_connection is None:
-        SRTM_connection = SRTM(
-            working_directory=working_directory,
+        SRTM_connection = NASADEM.NASADEMConnection(
             download_directory=SRTM_download,
-            offline_ok=True
         )
 
     if water is None:
@@ -258,8 +261,13 @@ def VIIRS_GFS_forecast(
         else:
             return
 
-    if VIIRS_download_directory is None:
-        VIIRS_download_directory = join(working_directory, DEFAULT_VIIRS_DOWNLOAD_DIRECTORY)
+    logger.info("pulling GFS listing")
+    GFS_listing = get_GFS_listing()
+    earliest_GFS_date = global_forecasting_system.earliest_date_UTC(listing=GFS_listing)
+
+    if target_date < earliest_GFS_date:
+        raise ValueError(
+            f"target date {colored_logging.time(target_date)} is before earliest GFS date {colored_logging.time(earliest_GFS_date)}")
 
     VIIRS_processing_date = target_date
     VIIRS_processing_time = time_UTC
@@ -276,8 +284,8 @@ def VIIRS_GFS_forecast(
         logger.info(
             f"target date {colored_logging.time(target_date)} is {colored_logging.val(forecast_distance_days)} days past VIIRS processing date {colored_logging.time(VIIRS_processing_date)}")
 
-    VNP21_connection = VNP21A1D_002.VNP21A1D(download_directory=VIIRS_download_directory)
-    VNP09_connection = VNP09GA_002.VNP09GA(download_directory=VIIRS_download_directory)
+    VNP21_connection = VNP21A1D_002.VNP21A1D(download_directory=VNP21A1D_download_directory)
+    VNP09_connection = VNP09GA_002.VNP09GA(download_directory=VNP09GA_download_directory)
 
     if ST_C is None:
         logger.info(
@@ -585,7 +593,7 @@ def VIIRS_GFS_forecast(
             else:
                 RH = forecast_RH(time_UTC=time_UTC, geometry=geometry, directory=GFS_download, listing=GFS_listing)
 
-    model.check_distribution(RH, "RH", date_UTC=date_UTC, target=target)
+    check_distribution(RH, "RH", date_UTC=date_UTC, target=target)
     results["RH"] = RH
 
     if wind_speed is None:
