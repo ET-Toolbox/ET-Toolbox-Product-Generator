@@ -25,17 +25,7 @@ from GEOS5FP.downscaling import downscale_air_temperature, downscale_soil_moistu
     downscale_relative_humidity, bias_correct
 from solar_apparent_time import solar_to_UTC
 
-ET_MODEL_NAME = "PTJPL"
-DEFAULT_VIIRS_DOWNLOAD_DIRECTORY = "VIIRS_download_directory"
-DEFAULT_VIIRS_OUTPUT_DIRECTORY = "VIIRS_output"
-DEFAULT_RESAMPLING = "cubic"
-DEFAULT_PREVIEW_QUALITY = 20
-DEFAULT_DOWNSCALE_AIR = False
-DEFAULT_DOWNSCALE_HUMIDITY = False
-DEFAULT_DOWNSCALE_MOISTURE = False
-DEFAULT_COARSE_CELL_SIZE = 27375
-DEFAULT_TARGET_VARIABLES = ["LE", "ET", "ESI"]
-FLOOR_TOPT = True
+from .constants import *
 
 logger = logging.getLogger(__name__)
 
@@ -306,7 +296,7 @@ def VIIRS_GEOS5FP_NRT(
 
     results["NDVI"] = NDVI
 
-    if emissivity is None:                                       directory=VIIRS_download_directory, resampling="cubic")
+    if emissivity is None:                                       
         logger.info(
             f"retrieving {cl.name('VNP21A1D')} {cl.name('emissivity')} from VIIRS on {cl.time(VIIRS_processing_date)}")
         emissivity = VNP21_connection.Emis_14(
@@ -453,16 +443,17 @@ def VIIRS_GEOS5FP_NRT(
             logger.info("generating solar radiation using GEOS-5 FP")
             SWin = GEOS5FP_connection.SWin(time_UTC=time_UTC, geometry=geometry, resampling="cubic")
 
-    verma_results = process_verma_net_radiation(
-        SWin=SWin,
-        albedo=albedo,
-        ST_C=ST_C,
-        emissivity=emissivity,
-        Ta_C=Ta_C,
-        RH=RH
-    )
+    if Rn is None:
+        verma_results = process_verma_net_radiation(
+            SWin=SWin,
+            albedo=albedo,
+            ST_C=ST_C,
+            emissivity=emissivity,
+            Ta_C=Ta_C,
+            RH=RH
+        )
 
-    Rn = verma_results["Rn"]
+        Rn = verma_results["Rn"]
 
     logger.info(f"running PT-JPL ET model hindcast at {cl.time(time_UTC)}")
 

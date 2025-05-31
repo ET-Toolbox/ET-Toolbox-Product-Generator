@@ -27,19 +27,7 @@ from verma_net_radiation import process_verma_net_radiation
 import NASADEM
 from check_distribution import check_distribution
 
-DEFAULT_GFS_DOWNLOAD_DIRECTORY = "~/data/GFS"
-DEFAULT_GFS_OUTPUT_DIRECTORY = "GFS_output"
-DEFAULT_VIIRS_DOWNLOAD_DIRECTORY = "~/data/VIIRS_download_directory"
-VNP21A1D_DOWNLOAD_DIRECTORY = "~/data/VNP21A1D"
-VNP09GA_DOWNLOAD_DIRECTORY = "~/data/VNP09GA"
-DEFAULT_RESAMPLING = "cubic"
-DEFAULT_PREVIEW_QUALITY = 20
-GFS_CELL_SIZE = 27375
-DEFAULT_TARGET_VARIABLES = ["LE", "ET", "ESI"]
-
-DEFAULT_DOWNSCALE_AIR = False
-DEFAULT_DOWNSCALE_HUMIDITY = False
-DEFAULT_DOWNSCALE_MOISTURE = False
+from .constants import *
 
 logger = logging.getLogger(__name__)
 
