@@ -1,3 +1,10 @@
+from typing import Union, List
+from datetime import date, datetime
+from dateutil import parser
+from os.path import join, exists, basename, abspath, expanduser
+import rasters as rt
+import numpy as np
+
 from glob import glob
 from os.path import splitext
 from typing import Dict, Callable
@@ -6,35 +13,28 @@ from rasters import RasterGrid
 
 from gedi_canopy_height import GEDICanopyHeight
 from GEOS5FP import GEOS5FP
-from ETtoolbox.LANCE import *
+
 from MODISCI import MODISCI
 from PTJPL import PTJPL
-from PTJPLSM import PTJPLSM
-from ETtoolbox.SRTM import SRTM
 from soil_capacity_wilting import SoilGrids
-from ETtoolbox.VIIRS.VNP09GA import VNP09GA
-from ETtoolbox.VIIRS.VNP21A1D import VNP21A1D
-from ETtoolbox.VIIRS.VNP43MA4 import VNP43MA4
+
 from GEOS5FP.downscaling import downscale_air_temperature, downscale_soil_moisture, downscale_vapor_pressure_deficit, \
     downscale_relative_humidity, bias_correct
 from PTJPL import FLOOR_TOPT
 
-ET_MODEL_NAME = "PTJPLSM"
+import logging
+import colored_logging as cl
 
-VIIRS_DOWNLOAD_DIRECTORY = "VIIRS_download"
-VIIRS_PRODUCTS_DIRECTORY = "VIIRS_products"
-VIIRS_GEOS5FP_OUTPUT_DIRECTORY = "VIIRS_GEOS5FP_output"
+from solar_apparent_time import solar_to_UTC
 
-USE_VIIRS_COMPOSITE = True
-VIIRS_COMPOSITE_DAYS = 0
+from verma_net_radiation import process_verma_net_radiation
 
-DEFAULT_RESAMPLING = "cubic"
-DEFAULT_PREVIEW_QUALITY = 20
-DEFAULT_DOWNSCALE_AIR = False
-DEFAULT_DOWNSCALE_HUMIDITY = False
-DEFAULT_DOWNSCALE_MOISTURE = False
-DEFAULT_COARSE_CELL_SIZE = 27375
-DEFAULT_TARGET_VARIABLES = ["LE", "ET", "ESI"]
+from VNP09GA_002 import VNP09GA
+from VNP21A1D_002 import VNP21A1D
+
+from NASADEM import NASADEMConnection
+
+from .constants import *
 
 logger = logging.getLogger(__name__)
 
@@ -93,7 +93,7 @@ def check_VIIRS_GEOS5FP_already_processed(
         products: List[str]):
     already_processed = True
     logger.info(
-        f"checking if VIIRS GEOS-5 FP has previously been processed at {colored_logging.place(target)} on {colored_logging.time(target_date)}")
+        f"checking if VIIRS GEOS-5 FP has previously been processed at {cl.place(target)} on {cl.time(target_date)}")
 
     for product in products:
         filename = generate_VIIRS_GEOS5FP_output_filename(
@@ -106,10 +106,10 @@ def check_VIIRS_GEOS5FP_already_processed(
 
         if exists(filename):
             logger.info(
-                f"found previous VIIRS GEOS-5 FP {colored_logging.name(product)} at {colored_logging.place(target)} on {colored_logging.time(target_date)}: {colored_logging.file(filename)}")
+                f"found previous VIIRS GEOS-5 FP {cl.name(product)} at {cl.place(target)} on {cl.time(target_date)}: {cl.file(filename)}")
         else:
             logger.info(
-                f"did not find previous VIIRS GEOS-5 FP {colored_logging.name(product)} at {colored_logging.place(target)} on {colored_logging.time(target_date)}")
+                f"did not find previous VIIRS GEOS-5 FP {cl.name(product)} at {cl.place(target)} on {cl.time(target_date)}")
             already_processed = False
 
     return already_processed
@@ -117,7 +117,7 @@ def check_VIIRS_GEOS5FP_already_processed(
 
 def load_VIIRS_GEOS5FP(VIIRS_GEOS5FP_output_directory: str, target_date: Union[date, str], target: str,
                        products: List[str] = None):
-    logger.info(f"loading VIIRS GEOS-5 FP products for {colored_logging.place(target)} on {colored_logging.time(target_date)}")
+    logger.info(f"loading VIIRS GEOS-5 FP products for {cl.place(target)} on {cl.time(target_date)}")
 
     dataset = {}
 
@@ -128,9 +128,9 @@ def load_VIIRS_GEOS5FP(VIIRS_GEOS5FP_output_directory: str, target_date: Union[d
     )
 
     pattern = join(directory, "*.tif")
-    logger.info(f"searching for VIIRS GEOS-5 FP product: {colored_logging.val(pattern)}")
+    logger.info(f"searching for VIIRS GEOS-5 FP product: {cl.val(pattern)}")
     filenames = glob(pattern)
-    logger.info(f"found {colored_logging.val(len(filenames))} VIIRS GEOS-5 FP files")
+    logger.info(f"found {cl.val(len(filenames))} VIIRS GEOS-5 FP files")
 
     for filename in filenames:
         product = splitext(basename(filename))[0].split("_")[-1]
@@ -138,7 +138,7 @@ def load_VIIRS_GEOS5FP(VIIRS_GEOS5FP_output_directory: str, target_date: Union[d
         if products is not None and product not in products:
             continue
 
-        logger.info(f"loading VIIRS GEOS-5 FP file: {colored_logging.file(filename)}")
+        logger.info(f"loading VIIRS GEOS-5 FP file: {cl.file(filename)}")
         image = rt.Raster.open(filename)
         dataset[product] = image
 
@@ -161,17 +161,15 @@ def VIIRS_GEOS5FP(
         RH: Union[rt.Raster, str] = None,
         water: rt.Raster = None,
         elevation_km: rt.Raster = None,
-        model: PTJPLSM = None,
         ET_model_name: str = ET_MODEL_NAME,
         working_directory: str = None,
         static_directory: str = None,
-        VIIRS_download_directory: str = None,
-        VIIRS_products_directory: str = None,
-        VIIRS_shortwave_source: Union[VNP09GA, VNP43MA4] = None,
+        VNP09GA_download_directory: str = None,
+        VNP21A1D_download_directory: str = None,
         use_VIIRS_composite: bool = USE_VIIRS_COMPOSITE,
         VIIRS_composite_days: int = VIIRS_COMPOSITE_DAYS,
         VIIRS_GEOS5FP_output_directory: str = None,
-        SRTM_connection: SRTM = None,
+        SRTM_connection: NASADEMConnection = None,
         SRTM_download: str = None,
         GEOS5FP_connection: GEOS5FP = None,
         GEOS5FP_download: str = None,
@@ -203,11 +201,11 @@ def VIIRS_GEOS5FP(
     if isinstance(target_date, str):
         target_date = parser.parse(target_date).date()
 
-    logger.info(f"VIIRS GEOS-5 FP target date: {colored_logging.time(target_date)}")
+    logger.info(f"VIIRS GEOS-5 FP target date: {cl.time(target_date)}")
     time_solar = datetime(target_date.year, target_date.month, target_date.day, 13, 30)
-    logger.info(f"VIIRS GEOS-5 FP target time solar: {colored_logging.time(time_solar)}")
+    logger.info(f"VIIRS GEOS-5 FP target time solar: {cl.time(time_solar)}")
     time_UTC = solar_to_UTC(time_solar, geometry.centroid.latlon.x)
-    logger.info(f"VIIRS GEOS-5 FP target time UTC: {colored_logging.time(time_UTC)}")
+    logger.info(f"VIIRS GEOS-5 FP target time UTC: {cl.time(time_UTC)}")
 
     if working_directory is None:
         working_directory = "."
@@ -215,7 +213,7 @@ def VIIRS_GEOS5FP(
     working_directory = abspath(expanduser(working_directory))
 
     if SRTM_connection is None:
-        SRTM_connection = SRTM(
+        SRTM_connection = NASADEMConnection(
             working_directory=static_directory,
             download_directory=SRTM_download,
             offline_ok=True
@@ -227,41 +225,30 @@ def VIIRS_GEOS5FP(
     if elevation_km is None:
         elevation_km = SRTM_connection.elevation_km(geometry)
 
-    logger.info(f"VIIRS GEOS-5 FP working directory: {colored_logging.dir(working_directory)}")
+    logger.info(f"VIIRS GEOS-5 FP working directory: {cl.dir(working_directory)}")
 
-    if VIIRS_download_directory is None:
-        VIIRS_download_directory = join(working_directory, VIIRS_DOWNLOAD_DIRECTORY)
+    if VNP09GA_download_directory is None:
+        VNP09GA_download_directory = VNP09GA_download_directory
 
-    logger.info(f"VIIRS download directory: {colored_logging.dir(VIIRS_download_directory)}")
+    logger.info(f"VNP09GA download directory: {cl.dir(VNP09GA_download_directory)}")
 
-    if VIIRS_products_directory is None:
-        VIIRS_products_directory = join(working_directory, VIIRS_PRODUCTS_DIRECTORY)
-
-    logger.info(f"VIIRS products directory: {colored_logging.dir(VIIRS_products_directory)}")
-
-    vnp21 = VNP21A1D(
-        working_directory=working_directory,
-        download_directory=VIIRS_download_directory,
-        products_directory=VIIRS_products_directory
+    VNP09GA_connection = VNP09GA(
+        download_directory=VNP09GA_download_directory,
     )
 
-    if VIIRS_shortwave_source is None:
-        VIIRS_shortwave_source = VNP43MA4(
-            working_directory=working_directory,
-            download_directory=VIIRS_download_directory,
-            products_directory=VIIRS_products_directory
-        )
+    if VNP21A1D_download_directory is None:
+        VNP21A1D_download_directory = VNP21A1D_DOWNLOAD_DIRECTORY
 
-        # VIIRS_shortwave_source = VNP09GA(
-        #     working_directory=working_directory,
-        #     download_directory=VIIRS_download_directory,
-        #     products_directory=VIIRS_products_directory
-        # )
+    logger.info(f"VNP21A1D download directory: {cl.dir(VNP21A1D_download_directory)}")
+
+    VNP21A1D_connection = VNP21A1D(
+        download_directory=VNP21A1D_download_directory,
+    )
 
     if VIIRS_GEOS5FP_output_directory is None:
         VIIRS_GEOS5FP_output_directory = join(working_directory, VIIRS_GEOS5FP_OUTPUT_DIRECTORY)
 
-    logger.info(f"VIIRS GEOS-5 FP output directory: {colored_logging.dir(VIIRS_GEOS5FP_output_directory)}")
+    logger.info(f"VIIRS GEOS-5 FP output directory: {cl.dir(VIIRS_GEOS5FP_output_directory)}")
 
     VIIRS_GEOS5FP_already_processed = check_VIIRS_GEOS5FP_already_processed(
         VIIRS_GEOS5FP_output_directory=VIIRS_GEOS5FP_output_directory,
@@ -287,8 +274,7 @@ def VIIRS_GEOS5FP(
             logger.info(f"connecting to GEOS-5 FP")
             GEOS5FP_connection = GEOS5FP(
                 working_directory=working_directory,
-                download_directory=GEOS5FP_download,
-                products_directory=GEOS5FP_products
+                download_directory=GEOS5FP_download
             )
         except Exception as e:
             logger.exception(e)
@@ -305,17 +291,15 @@ def VIIRS_GEOS5FP(
 
     if ST_C is None:
         logger.info(
-            f"retrieving {colored_logging.name('VNP21A1D')} {colored_logging.name('ST_C')} from VIIRS on {colored_logging.time(target_date)}")
-        # ST_C = retrieve_VNP21NRT_ST(geometry=geometry, date_solar=target_date,
-        #                             directory=VIIRS_download_directory, resampling="cubic") - 273.15
-        ST_C = vnp21.ST_C(date_UTC=target_date, geometry=geometry, resampling="cubic")
+            f"retrieving {cl.name('VNP21A1D')} {cl.name('ST_C')} from VIIRS on {cl.time(target_date)}")
+        ST_C = VNP21A1D_connection.ST_C(date_UTC=target_date, geometry=geometry, resampling="cubic")
 
         if use_VIIRS_composite:
             for days_back in range(1, VIIRS_composite_days):
                 fill_date = target_date - timedelta(days_back)
                 logger.info(
-                    f"gap-filling {colored_logging.name('VNP21A1D')} {colored_logging.name('ST_C')} from VIIRS on {colored_logging.time(fill_date)} for {colored_logging.time(target_date)}")
-                ST_C_fill = vnp21.ST_C(date_UTC=target_date, geometry=geometry, resampling="cubic")
+                    f"gap-filling {cl.name('VNP21A1D')} {cl.name('ST_C')} from VIIRS on {cl.time(fill_date)} for {cl.time(target_date)}")
+                ST_C_fill = VNP21A1D_connection.ST_C(date_UTC=target_date, geometry=geometry, resampling="cubic")
                 ST_C = rt.where(np.isnan(ST_C), ST_C_fill, ST_C)
 
         ST_C_smooth = GEOS5FP_connection.Ts_K(time_UTC=time_UTC, geometry=geometry, resampling="cubic") - 273.15
@@ -325,33 +309,21 @@ def VIIRS_GEOS5FP(
 
     if NDVI is None:
         logger.info(
-            f"retrieving {colored_logging.name('VNP09GA')} {colored_logging.name('NDVI')} from LANCE on {colored_logging.time(target_date)}")
+            f"retrieving {cl.name('VNP09GA')} {cl.name('NDVI')} on {cl.time(target_date)}")
 
-        # NDVI = retrieve_VNP43IA4N(
-        #     geometry=geometry,
-        #     date_UTC=target_date,
-        #     variable="NDVI",
-        #     directory=VIIRS_download_directory,
-        #     resampling="cubic"
-        # )
-        NDVI = VIIRS_shortwave_source.NDVI(date_UTC=target_date, geometry=geometry, resampling="cubic")
+        NDVI = VNP09GA_connection.NDVI(date_UTC=target_date, geometry=geometry, resampling="cubic")
 
         if use_VIIRS_composite:
             for days_back in range(1, VIIRS_composite_days):
                 fill_date = target_date - timedelta(days_back)
                 logger.info(
-                    f"gap-filling {colored_logging.name('VNP09GA')} {colored_logging.name('NDVI')} from VIIRS on {colored_logging.time(fill_date)} for {colored_logging.time(target_date)}")
-                NDVI_fill = VIIRS_shortwave_source.NDVI(date_UTC=target_date, geometry=geometry, resampling="cubic")
+                    f"gap-filling {cl.name('VNP09GA')} {cl.name('NDVI')} on {cl.time(fill_date)} for {cl.time(target_date)}")
+                NDVI_fill = VNP09GA_connection.NDVI(date_UTC=target_date, geometry=geometry, resampling="cubic")
                 NDVI = rt.where(np.isnan(NDVI), NDVI_fill, NDVI)
 
     results["NDVI"] = NDVI
 
     if emissivity is None:
-        # logger.info(
-        #     f"retrieving {colored_logging.name('VNP21_NRT')} {colored_logging.name('emissivity')} from LANCE on {colored_logging.time(target_date)}")
-        # emissivity = retrieve_VNP21NRT_emissivity(geometry=geometry, date_solar=target_date,
-        #                                           directory=VIIRS_download_directory, resampling="cubic")
-
         emissivity = 1.0094 + 0.047 * np.log(NDVI)
         emissivity = rt.where(water, 0.96, emissivity)
 
@@ -359,84 +331,19 @@ def VIIRS_GEOS5FP(
 
     if albedo is None:
         logger.info(
-            f"retrieving {colored_logging.name('VNP09GA')} {colored_logging.name('albedo')} from LANCE on {colored_logging.time(target_date)}")
+            f"retrieving {cl.name('VNP09GA')} {cl.name('albedo')} from LANCE on {cl.time(target_date)}")
 
-        # albedo = retrieve_VNP43MA4N(
-        #     geometry=geometry,
-        #     date_UTC=target_date,
-        #     variable="albedo",
-        #     directory=VIIRS_download_directory,
-        #     resampling="cubic"
-        # )
-        albedo = VIIRS_shortwave_source.albedo(date_UTC=target_date, geometry=geometry, resampling="cubic")
+        albedo = VNP09GA_connection.albedo(date_UTC=target_date, geometry=geometry, resampling="cubic")
 
         if use_VIIRS_composite:
             for days_back in range(1, VIIRS_composite_days):
                 fill_date = target_date - timedelta(days_back)
                 logger.info(
-                    f"gap-filling {colored_logging.name('VNP09GA')} {colored_logging.name('albedo')} from VIIRS on {colored_logging.time(fill_date)} for {colored_logging.time(target_date)}")
+                    f"gap-filling {cl.name('VNP09GA')} {cl.name('albedo')} from VIIRS on {cl.time(fill_date)} for {cl.time(target_date)}")
                 albedo_fill = VIIRS_shortwave_source.albedo(date_UTC=target_date, geometry=geometry, resampling="cubic")
                 albedo = rt.where(np.isnan(albedo), albedo_fill, albedo)
 
     results["albedo"] = albedo
-
-    if model is None:
-        if ET_model_name == "PTJPLSM":
-            model = PTJPLSM(
-                working_directory=working_directory,
-                static_directory=static_directory,
-                SRTM_connection=SRTM_connection,
-                SRTM_download=SRTM_download,
-                GEOS5FP_connection=GEOS5FP_connection,
-                GEOS5FP_download=GEOS5FP_download,
-                GEOS5FP_products=GEOS5FP_products,
-                GEDI_connection=GEDI_connection,
-                GEDI_download=GEDI_download,
-                ORNL_connection=ORNL_connection,
-                CI_directory=CI_directory,
-                soil_grids_connection=soil_grids_connection,
-                soil_grids_download=soil_grids_download,
-                intermediate_directory=intermediate_directory,
-                preview_quality=preview_quality,
-                ANN_model=ANN_model,
-                ANN_model_filename=ANN_model_filename,
-                resampling=resampling,
-                downscale_air=downscale_air,
-                downscale_humidity=downscale_humidity,
-                downscale_moisture=downscale_moisture,
-                floor_Topt=floor_Topt,
-                save_intermediate=save_intermediate,
-                include_preview=include_preview,
-                show_distribution=show_distribution
-            )
-        elif ET_model_name == "PTJPL":
-            model = PTJPL(
-                working_directory=working_directory,
-                static_directory=static_directory,
-                SRTM_connection=SRTM_connection,
-                SRTM_download=SRTM_download,
-                GEOS5FP_connection=GEOS5FP_connection,
-                GEOS5FP_download=GEOS5FP_download,
-                GEOS5FP_products=GEOS5FP_products,
-                GEDI_connection=GEDI_connection,
-                GEDI_download=GEDI_download,
-                ORNL_connection=ORNL_connection,
-                CI_directory=CI_directory,
-                intermediate_directory=intermediate_directory,
-                preview_quality=preview_quality,
-                ANN_model=ANN_model,
-                ANN_model_filename=ANN_model_filename,
-                resampling=resampling,
-                downscale_air=downscale_air,
-                downscale_humidity=downscale_humidity,
-                downscale_moisture=downscale_moisture,
-                floor_Topt=floor_Topt,
-                save_intermediate=save_intermediate,
-                include_preview=include_preview,
-                show_distribution=show_distribution,
-            )
-        else:
-            raise ValueError(f"unrecognized model: {ET_model_name}")
 
     coarse_geometry = geometry.rescale(coarse_cell_size)
 
@@ -459,7 +366,7 @@ def VIIRS_GEOS5FP(
     results["Ta"] = Ta_C
 
     if water is None:
-        water = model.SRTM_connection.swb(geometry)
+        water = SRTM_connection.swb(geometry)
 
     results["water"] = water
 
@@ -558,79 +465,29 @@ def VIIRS_GEOS5FP(
             logger.info("generating solar radiation using GEOS-5 FP")
             SWin = GEOS5FP_connection.SWin(time_UTC=time_UTC, geometry=geometry, resampling="cubic")
 
-    if Rn is None or isinstance(Rn, str):
-        if Rn == "BESS":
-            logger.info(
-                f"generating net radiation using Breathing Earth System Simulator for {colored_logging.place(target)} at {colored_logging.time(time_UTC)} UTC")
-
-            ST_K = ST_C + 273.15
-            Ta_K = Ta_C + 273.15
-
-            BESS_results = model.BESS(
-                geometry=geometry,
-                target=target,
-                time_UTC=time_UTC,
-                ST_K=ST_K,
-                Ta_K=Ta_K,
-                RH=RH,
-                elevation_km=elevation_km,
-                NDVI=NDVI,
-                albedo=albedo,
-                Rg=SWin,
-                VISdiff=VISdiff,
-                VISdir=VISdir,
-                NIRdiff=NIRdiff,
-                NIRdir=NIRdir,
-                UV=UV,
-                water=water,
-                output_variables=["Rn", "LE", "GPP"]
-            )
-
-            Rn = BESS_results["Rn"]
-        if Rn == "Verma":
-            Rn = None
-
-    if ET_model_name == "PTJPLSM":
-        logger.info(f"running PT-JPL-SM ET model at {colored_logging.time(time_UTC)}")
-
-        PTJPL_results = model.PTJPL(
-            geometry=geometry,
-            target=target,
-            time_UTC=time_UTC,
+    if Rn is None:
+        verma_results = process_verma_net_radiation(
+            SWin=SWin,
+            albedo=albedo,
             ST_C=ST_C,
             emissivity=emissivity,
-            NDVI=NDVI,
-            albedo=albedo,
-            SWin=SWin,
-            SM=SM,
-            wind_speed=wind_speed,
             Ta_C=Ta_C,
-            RH=RH,
-            Rn=Rn,
-            water=water,
-            output_variables=target_variables,
+            RH=RH
         )
-    elif ET_model_name == "PTJPL":
-        logger.info(f"running PT-JPL ET model at {colored_logging.time(time_UTC)}")
 
-        PTJPL_results = model.PTJPL(
-            geometry=geometry,
-            target=target,
-            time_UTC=time_UTC,
-            ST_C=ST_C,
-            emissivity=emissivity,
-            NDVI=NDVI,
-            albedo=albedo,
-            SWin=SWin,
-            wind_speed=wind_speed,
-            Ta_C=Ta_C,
-            RH=RH,
-            Rn=Rn,
-            water=water,
-            output_variables=target_variables
-        )
-    else:
-        raise ValueError(f"unrecognized model: {ET_model_name}")
+        Rn = verma_results["Rn"]
+
+    logger.info(f"running PT-JPL ET model hindcast at {cl.time(time_UTC)}")
+
+    PTJPL_results = PTJPL(
+        NDVI=NDVI,
+        ST_C=ST_C,
+        emissivity=emissivity,
+        albedo=albedo,
+        Rn=Rn,
+        Ta_C=Ta_C,
+        RH=RH
+    )
 
     for k, v in PTJPL_results.items():
         results[k] = v
@@ -649,7 +506,7 @@ def VIIRS_GEOS5FP(
             continue
 
         logger.info(
-            f"writing VIIRS GEOS-5 FP {colored_logging.name(product)} at {colored_logging.place(target)} at {colored_logging.time(time_UTC)} to file: {colored_logging.file(filename)}")
+            f"writing VIIRS GEOS-5 FP {cl.name(product)} at {cl.place(target)} at {cl.time(time_UTC)} to file: {cl.file(filename)}")
         image.to_geotiff(filename)
 
     return results

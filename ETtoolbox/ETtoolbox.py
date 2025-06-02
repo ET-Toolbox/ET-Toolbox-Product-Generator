@@ -4,18 +4,14 @@ from os.path import join, abspath, expanduser
 from typing import List, Callable, Union
 
 import numpy as np
-
+import VNP09GA_002
 import colored_logging
 import rasters as rt
 from gedi_canopy_height import GEDICanopyHeight
 from GEOS5FP import GEOS5FP
-from ETtoolbox.GFS import forecast_Ta_C, forecast_RH, get_GFS_listing, forecast_SWin
+from global_forecasting_system import forecast_Ta_C, forecast_RH, get_GFS_listing, forecast_SWin
 from harmonized_landsat_sentinel import HLS2Connection
-from ETtoolbox.LANCE import retrieve_VNP43MA4N, retrieve_VNP43IA4N, retrieve_VNP21NRT_emissivity, available_LANCE_dates
-from ETtoolbox.LANCE_GEOS5FP_NRT import LANCE_GEOS5FP_NRT, LANCENotAvailableError, GEOS5FPNotAvailableError, retrieve_VNP21NRT_ST, \
-    check_LANCE_already_processed, DEFAULT_LANCE_OUTPUT_DIRECTORY, load_LANCE
-from ETtoolbox.LANCE_GFS_forecast import LANCE_GFS_forecast
-from ETtoolbox.LandsatL2C2 import LandsatL2C2
+from .LandsatL2C2 import LandsatL2C2
 from MODISCI import MODISCI
 from PTJPLSM import PTJPLSM
 from ETtoolbox.SRTM import SRTM
@@ -42,7 +38,7 @@ FLOOR_TOPT = True
 
 STATIC_DIRECTORY = "PTJPL_static"
 SRTM_DIRECTORY = "SRTM_download_directory"
-LANCE_DIRECTORY = "LANCE_download_directory"
+VIIRS_DIRECTORY = "VIIRS_download_directory"
 GEOS5FP_DIRECTORY = "GEOS5FP_download_directory"
 GFS_DIRECTORY = "GFS_download_directory"
 
@@ -147,8 +143,8 @@ def ET_toolbox_hindcast_forecast_tile(
         landsat_download: str = None,
         landsat_initialization_days: int = LANDSAT_INITIALIZATION_DAYS,
         GFS_download_directory: str = None,
-        LANCE_download_directory: str = None,
-        LANCE_output_directory: str = None,
+        VIIRS_download_directory: str = None,
+        VIIRS_output_directory: str = None,
         SRTM_connection: SRTM = None,
         SRTM_download_directory: str = None,
         GEOS5FP_connection: GEOS5FP = None,
@@ -205,10 +201,10 @@ def ET_toolbox_hindcast_forecast_tile(
 
     logger.info(f"SRTM directory: {SRTM_download_directory}")
 
-    if LANCE_download_directory is None:
-        LANCE_download_directory = join(working_directory, LANCE_DIRECTORY)
+    if VIIRS_download_directory is None:
+        VIIRS_download_directory = join(working_directory, VIIRS_DIRECTORY)
 
-    logger.info(f"LANCE directory: {LANCE_download_directory}")
+    logger.info(f"VIIRS directory: {VIIRS_download_directory}")
 
     if GEOS5FP_download_directory is None:
         GEOS5FP_download_directory = join(working_directory, GEOS5FP_DIRECTORY)
@@ -246,8 +242,7 @@ def ET_toolbox_hindcast_forecast_tile(
     if GEOS5FP_connection is None:
         GEOS5FP_connection = GEOS5FP(
             working_directory=working_directory,
-            download_directory=GEOS5FP_download_directory,
-            products_directory=GEOS5FP_products
+            download_directory=GEOS5FP_download_directory
         )
 
     if SRTM_connection is None:
@@ -268,53 +263,59 @@ def ET_toolbox_hindcast_forecast_tile(
     water_M = SRTM_connection.swb(M_geometry)
     water_I = SRTM_connection.swb(I_geometry)
 
-    if LANCE_output_directory is None:
-        LANCE_output_directory = join(working_directory, DEFAULT_LANCE_OUTPUT_DIRECTORY)
+    if VIIRS_output_directory is None:
+        VIIRS_output_directory = join(working_directory, DEFAULT_VIIRS_OUTPUT_DIRECTORY)
 
-    logger.info("listing available LANCE dates")
-    LANCE_dates = available_LANCE_dates("VNP43MA4N", archive="5000")
-    earliest_LANCE_date = LANCE_dates[0]
-    latest_LANCE_date = LANCE_dates[-1]
-    logger.info(f"LANCE is available from {colored_logging.time(earliest_LANCE_date)} to {colored_logging.time(latest_LANCE_date)}")
+    logger.info("listing available VIIRS dates")
+    
+    VIIRS_dates = VNP09GA_002.available_dates(
+        start_date_UTC=present_date - timedelta(days=7),
+        end_date_UTC=present_date,
+        geometry=M_geometry
+    )
 
-    LANCE_dates_processed = set()
-    LANCE_not_processed = True
+    earliest_VIIRS_date = VIIRS_dates[0]
+    latest_VIIRS_date = VIIRS_dates[-1]
+    logger.info(f"VIIRS is available from {colored_logging.time(earliest_VIIRS_date)} to {colored_logging.time(latest_VIIRS_date)}")
+
+    VIIRS_dates_processed = set()
+    VIIRS_not_processed = True
 
     for relative_days in range(-7, 0):
         target_date = present_date + timedelta(days=relative_days)
-        logger.info(f"LANCE GEOS-5 FP target date: {colored_logging.time(target_date)} ({colored_logging.time(relative_days)} days)")
+        logger.info(f"VIIRS GEOS-5 FP target date: {colored_logging.time(target_date)} ({colored_logging.time(relative_days)} days)")
 
         time_solar = datetime(target_date.year, target_date.month, target_date.day, 13, 30)
-        logger.info(f"LANCE target time solar: {colored_logging.time(time_solar)}")
+        logger.info(f"VIIRS target time solar: {colored_logging.time(time_solar)}")
         time_UTC = solar_to_UTC(time_solar, HLS_geometry.centroid.latlon.x)
 
-        if target_date < earliest_LANCE_date:
+        if target_date < earliest_VIIRS_date:
             logger.info(
-                f"target date {target_date} is before earliest available LANCE {earliest_LANCE_date}")
+                f"target date {target_date} is before earliest available VIIRS {earliest_VIIRS_date}")
             continue
 
-        if target_date > latest_LANCE_date:
+        if target_date > latest_VIIRS_date:
             logger.info(
-                f"target date {target_date} is after latest available LANCE {latest_LANCE_date}")
+                f"target date {target_date} is after latest available VIIRS {latest_VIIRS_date}")
             continue
 
-        LANCE_already_processed = check_LANCE_already_processed(
-            LANCE_output_directory=LANCE_output_directory,
+        VIIRS_already_processed = check_VIIRS_already_processed(
+            VIIRS_output_directory=VIIRS_output_directory,
             target_date=target_date,
             time_UTC=time_UTC,
             target=tile,
             products=target_variables
         )
 
-        if LANCE_already_processed:
-            logger.info(f"LANCE GEOS-5 FP already processed at tile {colored_logging.place(tile)} for date {target_date}")
-            LANCE_dates_processed |= {target_date}
+        if VIIRS_already_processed:
+            logger.info(f"VIIRS GEOS-5 FP already processed at tile {colored_logging.place(tile)} for date {target_date}")
+            VIIRS_dates_processed |= {target_date}
             continue
         else:
-            LANCE_not_processed = False
+            VIIRS_not_processed = False
 
-    HLS_start = earliest_LANCE_date - timedelta(days=HLS_initialization_days)
-    HLS_end = earliest_LANCE_date - timedelta(days=1)
+    HLS_start = earliest_VIIRS_date - timedelta(days=HLS_initialization_days)
+    HLS_end = earliest_VIIRS_date - timedelta(days=1)
 
     logger.info(f"forming HLS NDVI composite from {colored_logging.time(HLS_start)} to {colored_logging.time(HLS_end)}")
 
@@ -349,8 +350,8 @@ def ET_toolbox_hindcast_forecast_tile(
         download_directory=landsat_download
     )
 
-    landsat_start = earliest_LANCE_date - timedelta(days=landsat_initialization_days)
-    landsat_end = earliest_LANCE_date - timedelta(days=1)
+    landsat_start = earliest_VIIRS_date - timedelta(days=landsat_initialization_days)
+    landsat_end = earliest_VIIRS_date - timedelta(days=1)
     landsat_listing = landsat.scene_search(start=landsat_start, end=landsat_end, target_geometry=HLS_polygon_latlon)
     ST_C_images = []
 
@@ -370,33 +371,33 @@ def ET_toolbox_hindcast_forecast_tile(
 
     for relative_days in range(-7, 0):
         target_date = present_date + timedelta(days=relative_days)
-        logger.info(f"LANCE GEOS-5 FP target date: {colored_logging.time(target_date)} ({colored_logging.time(relative_days)} days)")
+        logger.info(f"VIIRS GEOS-5 FP target date: {colored_logging.time(target_date)} ({colored_logging.time(relative_days)} days)")
 
         time_solar = datetime(target_date.year, target_date.month, target_date.day, 13, 30)
-        logger.info(f"LANCE target time solar: {colored_logging.time(time_solar)}")
+        logger.info(f"VIIRS target time solar: {colored_logging.time(time_solar)}")
         time_UTC = solar_to_UTC(time_solar, HLS_geometry.centroid.latlon.x)
 
-        if target_date < earliest_LANCE_date:
+        if target_date < earliest_VIIRS_date:
             logger.info(
-                f"target date {target_date} is before earliest available LANCE {earliest_LANCE_date}")
+                f"target date {target_date} is before earliest available VIIRS {earliest_VIIRS_date}")
             continue
 
-        if target_date > latest_LANCE_date:
+        if target_date > latest_VIIRS_date:
             logger.info(
-                f"target date {target_date} is after latest available LANCE {latest_LANCE_date}")
+                f"target date {target_date} is after latest available VIIRS {latest_VIIRS_date}")
             continue
 
         try:
-            LANCE_already_processed = check_LANCE_already_processed(
-                LANCE_output_directory=LANCE_output_directory,
+            VIIRS_already_processed = check_VIIRS_already_processed(
+                VIIRS_output_directory=VIIRS_output_directory,
                 target_date=target_date,
                 time_UTC=time_UTC,
                 target=tile,
                 products=target_variables
             )
 
-            if LANCE_already_processed:
-                logger.info(f"LANCE GEOS-5 FP already processed at tile {colored_logging.place(tile)} for date {target_date}")
+            if VIIRS_already_processed:
+                logger.info(f"VIIRS GEOS-5 FP already processed at tile {colored_logging.place(tile)} for date {target_date}")
                 continue
 
             try:
@@ -414,11 +415,11 @@ def ET_toolbox_hindcast_forecast_tile(
             landsat_ST_C_prior = landsat_ST_C
 
             logger.info(
-                f"retrieving LANCE VNP21 ST for tile {colored_logging.place(tile)} on date {colored_logging.time(target_date)} at {colored_logging.val(M_cell_size)}m resolution")
+                f"retrieving VIIRS VNP21 ST for tile {colored_logging.place(tile)} on date {colored_logging.time(target_date)} at {colored_logging.val(M_cell_size)}m resolution")
             ST_K_M = retrieve_VNP21NRT_ST(
                 geometry=M_geometry,
                 date_solar=target_date,
-                directory=LANCE_download_directory, resampling="cubic"
+                directory=VIIRS_download_directory, resampling="cubic"
             )
 
             ST_C_M = ST_K_M - 273.15
@@ -435,12 +436,12 @@ def ET_toolbox_hindcast_forecast_tile(
             NDVI_HLS_prior = NDVI_HLS
 
             logger.info(
-                f"retrieving LANCE VIIRS M-band NDVI for tile {colored_logging.place(tile)} on date {colored_logging.time(target_date)} at {colored_logging.val(M_cell_size)}m resolution")
+                f"retrieving VIIRS VIIRS M-band NDVI for tile {colored_logging.place(tile)} on date {colored_logging.time(target_date)} at {colored_logging.val(M_cell_size)}m resolution")
             NDVI_M = retrieve_VNP43MA4N(
                 geometry=M_geometry,
                 date_UTC=target_date,
                 variable="NDVI",
-                directory=LANCE_download_directory,
+                directory=VIIRS_download_directory,
                 resampling="cubic"
             )
 
@@ -449,12 +450,12 @@ def ET_toolbox_hindcast_forecast_tile(
             NDVI_M = rt.where(water_M, np.nan, NDVI_M)
 
             logger.info(
-                f"retrieving LANCE VIIRS I-band NDVI for tile {colored_logging.place(tile)} on date {colored_logging.time(target_date)} at {colored_logging.val(I_cell_size)}m resolution")
+                f"retrieving VIIRS VIIRS I-band NDVI for tile {colored_logging.place(tile)} on date {colored_logging.time(target_date)} at {colored_logging.val(I_cell_size)}m resolution")
             NDVI_I = retrieve_VNP43IA4N(
                 geometry=I_geometry,
                 date_UTC=target_date,
                 variable="NDVI",
-                directory=LANCE_download_directory,
+                directory=VIIRS_download_directory,
                 resampling="cubic",
                 ERS_credentials_filename=ERS_credentials_filename
             )
@@ -477,11 +478,11 @@ def ET_toolbox_hindcast_forecast_tile(
             check_distribution(NDVI, "NDVI", target_date, tile)
 
             logger.info(
-                f"retrieving LANCE VNP21 emissivity for tile {colored_logging.place(tile)} on date {colored_logging.time(target_date)} at {colored_logging.val(M_cell_size)}m resolution")
+                f"retrieving VIIRS VNP21 emissivity for tile {colored_logging.place(tile)} on date {colored_logging.time(target_date)} at {colored_logging.val(M_cell_size)}m resolution")
             emissivity_M = retrieve_VNP21NRT_emissivity(
                 geometry=M_geometry,
                 date_solar=target_date,
-                directory=LANCE_download_directory,
+                directory=VIIRS_download_directory,
                 resampling="cubic"
             )
 
@@ -510,12 +511,12 @@ def ET_toolbox_hindcast_forecast_tile(
             albedo_HLS_prior = albedo_HLS
 
             logger.info(
-                f"retrieving LANCE VIIRS M-band albedo for tile {colored_logging.place(tile)} on date {colored_logging.time(target_date)} at {colored_logging.val(M_cell_size)}m resolution")
+                f"retrieving VIIRS VIIRS M-band albedo for tile {colored_logging.place(tile)} on date {colored_logging.time(target_date)} at {colored_logging.val(M_cell_size)}m resolution")
             albedo_M = retrieve_VNP43MA4N(
                 geometry=M_geometry,
                 date_UTC=target_date,
                 variable="albedo",
-                directory=LANCE_download_directory,
+                directory=VIIRS_download_directory,
                 resampling="cubic"
             )
 
@@ -644,7 +645,7 @@ def ET_toolbox_hindcast_forecast_tile(
 
             check_distribution(RH, "RH", target_date, tile)
 
-            LANCE_GEOS5FP_NRT(
+            VIIRS_GEOS5FP_NRT(
                 target_date=target_date,
                 geometry=HLS_geometry,
                 target=tile,
@@ -658,8 +659,8 @@ def ET_toolbox_hindcast_forecast_tile(
                 CI_directory=CI_directory,
                 soil_grids_connection=soil_grids_connection,
                 soil_grids_download=soil_grids_download,
-                LANCE_download_directory=LANCE_download_directory,
-                LANCE_output_directory=LANCE_output_directory,
+                VIIRS_download_directory=VIIRS_download_directory,
+                VIIRS_output_directory=VIIRS_output_directory,
                 intermediate_directory=intermediate_directory,
                 preview_quality=preview_quality,
                 ANN_model=ANN_model,
@@ -688,55 +689,55 @@ def ET_toolbox_hindcast_forecast_tile(
                 save_intermediate=save_intermediate
             )
 
-            LANCE_dates_processed |= {target_date}
-        except (LANCENotAvailableError, GEOS5FPNotAvailableError) as e:
+            VIIRS_dates_processed |= {target_date}
+        except (VIIRSNotAvailableError, GEOS5FPNotAvailableError) as e:
             logger.warning(e)
-            logger.warning(f"LANCE GEOS-5 FP cannot be processed for date: {target_date}")
+            logger.warning(f"VIIRS GEOS-5 FP cannot be processed for date: {target_date}")
             missing_dates.append(target_date)
             continue
         except Exception as e:
             logger.exception(e)
-            logger.warning(f"LANCE GEOS-5 FP cannot be processed for date: {target_date}")
+            logger.warning(f"VIIRS GEOS-5 FP cannot be processed for date: {target_date}")
             missing_dates.append(target_date)
             continue
 
-    logger.info("missing LANCE GEOS-5 FP dates: " + ", ".join(colored_logging.time(d) for d in missing_dates))
+    logger.info("missing VIIRS GEOS-5 FP dates: " + ", ".join(colored_logging.time(d) for d in missing_dates))
 
     forecast_dates = missing_dates + [present_date + timedelta(days=d) for d in range(8)]
 
-    earliest_LANCE_date = min(LANCE_dates_processed)
-    latest_LANCE_date = max(LANCE_dates_processed)
+    earliest_VIIRS_date = min(VIIRS_dates_processed)
+    latest_VIIRS_date = max(VIIRS_dates_processed)
 
     for target_date in forecast_dates:
         relative_days = target_date - present_date
-        logger.info(f"GFS LANCE target date: {colored_logging.time(target_date)} ({colored_logging.time(relative_days)} days)")
+        logger.info(f"GFS VIIRS target date: {colored_logging.time(target_date)} ({colored_logging.time(relative_days)} days)")
 
         time_solar = datetime(target_date.year, target_date.month, target_date.day, 13, 30)
-        logger.info(f"LANCE target time solar: {colored_logging.time(time_solar)}")
+        logger.info(f"VIIRS target time solar: {colored_logging.time(time_solar)}")
         time_UTC = solar_to_UTC(time_solar, HLS_geometry.centroid.latlon.x)
 
-        if target_date < earliest_LANCE_date:
-            # raise ValueError(f"target date {target_date} is before earliest available LANCE {earliest_LANCE_date}")
-            logger.warning(f"target date {target_date} is before earliest available LANCE {earliest_LANCE_date}")
+        if target_date < earliest_VIIRS_date:
+            # raise ValueError(f"target date {target_date} is before earliest available VIIRS {earliest_VIIRS_date}")
+            logger.warning(f"target date {target_date} is before earliest available VIIRS {earliest_VIIRS_date}")
             continue
 
-        if target_date <= latest_LANCE_date:
+        if target_date <= latest_VIIRS_date:
             logger.warning(
-                f"target date {colored_logging.time(target_date)} is within LANCE date range from {colored_logging.time(earliest_LANCE_date)} to {colored_logging.time(latest_LANCE_date)}")
-            LANCE_processing_date = target_date
+                f"target date {colored_logging.time(target_date)} is within VIIRS date range from {colored_logging.time(earliest_VIIRS_date)} to {colored_logging.time(latest_VIIRS_date)}")
+            VIIRS_processing_date = target_date
         else:
-            LANCE_processing_date = latest_LANCE_date
-            logger.info(f"processing LANCE on latest date available: {colored_logging.time(LANCE_processing_date)}")
+            VIIRS_processing_date = latest_VIIRS_date
+            logger.info(f"processing VIIRS on latest date available: {colored_logging.time(VIIRS_processing_date)}")
 
-        LANCE_processing_datetime_solar = datetime(LANCE_processing_date.year, LANCE_processing_date.month,
-                                                   LANCE_processing_date.day, 13, 30)
-        logger.info(f"LANCE processing date/time solar: {colored_logging.time(LANCE_processing_datetime_solar)}")
-        LANCE_processing_datetime_UTC = solar_to_UTC(LANCE_processing_datetime_solar, HLS_geometry.centroid.latlon.x)
-        logger.info(f"LANCE processing date/time UTC: {colored_logging.time(LANCE_processing_datetime_UTC)}")
+        VIIRS_processing_datetime_solar = datetime(VIIRS_processing_date.year, VIIRS_processing_date.month,
+                                                   VIIRS_processing_date.day, 13, 30)
+        logger.info(f"VIIRS processing date/time solar: {colored_logging.time(VIIRS_processing_datetime_solar)}")
+        VIIRS_processing_datetime_UTC = solar_to_UTC(VIIRS_processing_datetime_solar, HLS_geometry.centroid.latlon.x)
+        logger.info(f"VIIRS processing date/time UTC: {colored_logging.time(VIIRS_processing_datetime_UTC)}")
 
-        most_recent = load_LANCE(
-            LANCE_output_directory=LANCE_output_directory,
-            target_date=LANCE_processing_date,
+        most_recent = load_VIIRS(
+            VIIRS_output_directory=VIIRS_output_directory,
+            target_date=VIIRS_processing_date,
             target=tile
         )
 
@@ -754,7 +755,7 @@ def ET_toolbox_hindcast_forecast_tile(
 
         if apply_GEOS5FP_GFS_bias_correction:
             matching_SWin_GFS = forecast_SWin(
-                time_UTC=LANCE_processing_datetime_UTC,
+                time_UTC=VIIRS_processing_datetime_UTC,
                 geometry=GFS_geometry,
                 directory=GFS_download_directory,
                 resampling="cubic",
@@ -762,7 +763,7 @@ def ET_toolbox_hindcast_forecast_tile(
             )
 
             matching_SWin_GEOS5FP = GEOS5FP_connection.SWin(
-                time_UTC=LANCE_processing_datetime_UTC,
+                time_UTC=VIIRS_processing_datetime_UTC,
                 geometry=GFS_geometry,
                 resampling="cubic"
             )
@@ -782,9 +783,9 @@ def ET_toolbox_hindcast_forecast_tile(
         Ta_C_GFS = forecast_Ta_C(time_UTC=time_UTC, geometry=GFS_geometry, directory=GFS_download_directory, listing=GFS_listing)
 
         if apply_GEOS5FP_GFS_bias_correction:
-            matching_Ta_C_GFS = forecast_Ta_C(time_UTC=LANCE_processing_datetime_UTC, geometry=GFS_geometry,
+            matching_Ta_C_GFS = forecast_Ta_C(time_UTC=VIIRS_processing_datetime_UTC, geometry=GFS_geometry,
                                               directory=GFS_download_directory, resampling="cubic", listing=GFS_listing)
-            matching_Ta_C_GEOS5FP = GEOS5FP_connection.Ta_C(time_UTC=LANCE_processing_datetime_UTC,
+            matching_Ta_C_GEOS5FP = GEOS5FP_connection.Ta_C(time_UTC=VIIRS_processing_datetime_UTC,
                                                             geometry=GFS_geometry,
                                                             resampling="cubic")
             Ta_C_GFS_bias = matching_Ta_C_GFS - matching_Ta_C_GEOS5FP
@@ -802,9 +803,9 @@ def ET_toolbox_hindcast_forecast_tile(
         RH_GFS = forecast_RH(time_UTC=time_UTC, geometry=GFS_geometry, directory=GFS_download_directory, listing=GFS_listing)
 
         if apply_GEOS5FP_GFS_bias_correction:
-            matching_RH_GFS = forecast_RH(time_UTC=LANCE_processing_datetime_UTC, geometry=GFS_geometry,
+            matching_RH_GFS = forecast_RH(time_UTC=VIIRS_processing_datetime_UTC, geometry=GFS_geometry,
                                           directory=GFS_download_directory, resampling="cubic", listing=GFS_listing)
-            matching_RH_GEOS5FP = GEOS5FP_connection.RH(time_UTC=LANCE_processing_datetime_UTC, geometry=GFS_geometry,
+            matching_RH_GEOS5FP = GEOS5FP_connection.RH(time_UTC=VIIRS_processing_datetime_UTC, geometry=GFS_geometry,
                                                         resampling="cubic")
             RH_GFS_bias = matching_RH_GFS - matching_RH_GEOS5FP
             RH_GFS = RH_GFS - RH_GFS_bias
@@ -815,7 +816,7 @@ def ET_toolbox_hindcast_forecast_tile(
         )
 
         try:
-            LANCE_GFS_forecast(
+            VIIRS_GFS_forecast(
                 target_date=target_date,
                 geometry=HLS_geometry,
                 coarse_geometry=GFS_geometry,
@@ -831,7 +832,7 @@ def ET_toolbox_hindcast_forecast_tile(
                 CI_directory=CI_directory,
                 soil_grids_connection=soil_grids_connection,
                 soil_grids_download=soil_grids_download,
-                LANCE_download_directory=LANCE_download_directory,
+                VIIRS_download_directory=VIIRS_download_directory,
                 intermediate_directory=intermediate_directory,
                 preview_quality=preview_quality,
                 ANN_model=ANN_model,
@@ -853,7 +854,7 @@ def ET_toolbox_hindcast_forecast_tile(
                 downscale_humidity=downscale_humidity,
                 downscale_moisture=downscale_moisture,
                 apply_GEOS5FP_GFS_bias_correction=apply_GEOS5FP_GFS_bias_correction,
-                LANCE_processing_date=LANCE_processing_date,
+                VIIRS_processing_date=VIIRS_processing_date,
                 resampling=resampling,
                 show_distribution=show_distribution,
                 load_previous=load_previous,
@@ -861,5 +862,5 @@ def ET_toolbox_hindcast_forecast_tile(
             )
         except Exception as e:
             logger.exception(e)
-            logger.warning(f"LANCE GFS cannot be processed for date: {target_date}")
+            logger.warning(f"VIIRS GFS cannot be processed for date: {target_date}")
             continue

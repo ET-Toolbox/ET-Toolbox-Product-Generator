@@ -16,129 +16,26 @@ from soil_capacity_wilting import SoilGrids
 from solar_apparent_time import solar_to_UTC
 
 from ETtoolbox.LandsatL2C2 import LandsatL2C2
-from PTJPLSM import PTJPLSM
-from ETtoolbox.SRTM import SRTM
-from ETtoolbox.VIIRS import VNP43MA4
-from ETtoolbox.VIIRS.VNP09GA import VNP09GA
-from ETtoolbox.VIIRS.VNP21A1D import VNP21A1D
+from PTJPL import PTJPL
 from ETtoolbox.VIIRS_GEOS5FP import VIIRS_GEOS5FP, check_VIIRS_GEOS5FP_already_processed, VIIRS_DOWNLOAD_DIRECTORY, \
     VIIRS_PRODUCTS_DIRECTORY
 from ETtoolbox.daterange import date_range
 
+from check_distribution import check_distribution
+
+from NASADEM import NASADEMConnection
+from VNP09GA_002 import VNP09GA
+from VNP21A1D_002 import VNP21A1D
+
+import colored_logging as cl
+
+from .constants import *
+
 logger = logging.getLogger(__name__)
-
-ET_MODEL_NAME = "PTJPLSM"
-SWIN_MODEL_NAME = "GEOS5FP"
-RN_MODEL_NAME = "Verma"
-
-DOWNSCALE_AIR = False
-DOWNSCALE_HUMIDITY = False
-DOWNSCALE_MOISTURE = False
-FLOOR_TOPT = True
-
-USE_VIIRS_COMPOSITE = True
-VIIRS_COMPOSITE_DAYS = 8
-
-HLS_CELL_SIZE = 30
-I_CELL_SIZE = 500
-M_CELL_SIZE = 1000
-GEOS5FP_CELL_SIZE = 27375
-# GFS_CELL_SIZE = 54750
-GFS_CELL_SIZE = 27375
-LANDSAT_INITIALIZATION_DAYS = 16
-HLS_INITIALIZATION_DAYS = 10
-
-SAVE_INTERMEDIATE = False
-SHOW_DISTRIBUTION = True
-LOAD_PREVIOUS = False
-
-VIIRS_GEOS5FP_OUTPUT_DIRECTORY = "VIIRS_GEOS5FP_VermaRn_PTJPLSMboostedToptET_1km_output"
-
-TARGET_VARIABLES = [
-    "Rn",
-    "LE",
-    "ET",
-    "ESI",
-    "SM",
-    "ST",
-    "Ta",
-    "RH",
-    "SWin",
-    "VPD",
-    "fg",
-    "fM",
-    "fSM",
-    "fT",
-    "fREW",
-    "fTREW",
-    "fTRM",
-    "Topt"
-]
 
 
 class BlankOutputError(ValueError):
     pass
-
-
-def check_distribution(
-        image: Raster,
-        variable: str,
-        date_UTC: date or str,
-        target: str):
-    unique = np.unique(image)
-    nan_proportion = np.count_nonzero(np.isnan(image)) / np.size(image)
-
-    if len(unique) < 10:
-        logger.info(
-            "variable " + colored_logging.name(variable) + " on " + colored_logging.time(f"{date_UTC:%Y-%m-%d}") + " at " + colored_logging.place(
-                target))
-
-        for value in unique:
-            count = np.count_nonzero(image == value)
-
-            if value == 0:
-                logger.info(f"* {colored_logging.colored(value, 'red')}: {colored_logging.colored(count, 'red')}")
-            else:
-                logger.info(f"* {colored_logging.val(value)}: {colored_logging.val(count)}")
-    else:
-        minimum = np.nanmin(image)
-
-        if minimum < 0:
-            minimum_string = colored_logging.colored(f"{minimum:0.3f}", "red")
-        else:
-            minimum_string = colored_logging.val(f"{minimum:0.3f}")
-
-        maximum = np.nanmax(image)
-
-        if maximum <= 0:
-            maximum_string = colored_logging.colored(f"{maximum:0.3f}", "red")
-        else:
-            maximum_string = colored_logging.val(f"{maximum:0.3f}")
-
-        if nan_proportion > 0.5:
-            nan_proportion_string = colored_logging.colored(f"{(nan_proportion * 100):0.2f}%", "yellow")
-        elif nan_proportion == 1:
-            nan_proportion_string = colored_logging.colored(f"{(nan_proportion * 100):0.2f}%", "red")
-        else:
-            nan_proportion_string = colored_logging.val(f"{(nan_proportion * 100):0.2f}%")
-
-        message = "variable " + colored_logging.name(variable) + \
-                  " on " + colored_logging.time(f"{date_UTC:%Y-%m-%d}") + \
-                  " at " + colored_logging.place(target) + \
-                  " min: " + minimum_string + \
-                  " mean: " + colored_logging.val(f"{np.nanmean(image):0.3f}") + \
-                  " max: " + maximum_string + \
-                  " nan: " + nan_proportion_string + f" ({colored_logging.val(image.nodata)})"
-
-        if np.all(image == 0):
-            message += " all zeros"
-            logger.warning(message)
-        else:
-            logger.info(message)
-
-    if nan_proportion == 1:
-        raise BlankOutputError(f"variable {variable} on {date_UTC:%Y-%m-%d} at {target} is a blank image")
-
 
 def generate_landsat_ST_C_prior(
         date_UTC: Union[date, str],
@@ -185,19 +82,17 @@ def ET_toolbox_historical_coarse_tile(
         start_date: Union[date, str] = None,
         end_date: Union[date, str] = None,
         water: Raster = None,
-        model: PTJPLSM = None,
         ET_model_name: str = ET_MODEL_NAME,
         SWin_model_name: str = SWIN_MODEL_NAME,
         Rn_model_name: str = RN_MODEL_NAME,
         working_directory: str = None,
         static_directory: str = None,
-        VIIRS_download_directory: str = None,
-        VIIRS_products_directory: str = None,
+        VNP09GA_download_directory: str = None,
+        VNP21A1D_download_directory: str = None,
         use_VIIRS_composite: bool = USE_VIIRS_COMPOSITE,
         VIIRS_composite_days: int = VIIRS_COMPOSITE_DAYS,
         VIIRS_GEOS5FP_output_directory: str = None,
-        VIIRS_shortwave_source: Union[VNP09GA, VNP43MA4] = None,
-        SRTM_connection: SRTM = None,
+        SRTM_connection: NASADEMConnection = None,
         SRTM_download: str = None,
         GEOS5FP_connection: GEOS5FP = None,
         GEOS5FP_download: str = None,
@@ -249,8 +144,7 @@ def ET_toolbox_historical_coarse_tile(
         )
 
     if SRTM_connection is None:
-        # FIXME fix handling of credentials here
-        SRTM_connection = SRTM(
+        SRTM_connection = NASADEMConnection(
             working_directory=working_directory,
             download_directory=SRTM_download,
             offline_ok=True
@@ -258,27 +152,22 @@ def ET_toolbox_historical_coarse_tile(
 
     water_M = SRTM_connection.swb(M_geometry)
 
-    if VIIRS_download_directory is None:
-        VIIRS_download_directory = join(working_directory, VIIRS_DOWNLOAD_DIRECTORY)
+    if VNP09GA_download_directory is None:
+        VNP09GA_download_directory = VNP09GA_DOWNLOAD_DIRECTORY
 
-    logger.info(f"VIIRS download directory: {colored_logging.dir(VIIRS_download_directory)}")
+    logger.info(f"VNP09GA download directory: {cl.dir(VNP09GA_download_directory)}")
 
-    if VIIRS_products_directory is None:
-        VIIRS_products_directory = join(working_directory, VIIRS_PRODUCTS_DIRECTORY)
+    VNP21A1D_connection = VNP21A1D(
+        download_directory=VNP21A1D_download_directory,
+        )
+    
+    if VNP21A1D_download_directory is None:
+        VNP21A1D_download_directory = VNP21A1D_DOWNLOAD_DIRECTORY
 
-    logger.info(f"VIIRS products directory: {colored_logging.dir(VIIRS_products_directory)}")
+    logger.info(f"VNP21A1D download directory: {cl.dir(VNP21A1D_download_directory)}")
 
-    vnp21 = VNP21A1D(
-        working_directory=working_directory,
-        download_directory=VIIRS_download_directory,
-        products_directory=VIIRS_products_directory
-    )
-
-    if VIIRS_shortwave_source is None:
-        VIIRS_shortwave_source = VNP43MA4(
-            working_directory=working_directory,
-            download_directory=VIIRS_download_directory,
-            products_directory=VIIRS_products_directory
+    VNP21A1D_connection = VNP21A1D(
+        download_directory=VNP21A1D_download_directory,
         )
 
     if VIIRS_GEOS5FP_output_directory is None:
@@ -345,14 +234,13 @@ def ET_toolbox_historical_coarse_tile(
                 CI_directory=CI_directory,
                 soil_grids_connection=soil_grids_connection,
                 soil_grids_download=soil_grids_download,
-                VIIRS_download_directory=VIIRS_download_directory,
+                VNP09GA_download_directory=VNP09GA_download_directory,
+                VNP21A1D_download_directory=VNP21A1D_download_directory,`
                 VIIRS_GEOS5FP_output_directory=VIIRS_GEOS5FP_output_directory,
-                VIIRS_shortwave_source=VIIRS_shortwave_source,
                 intermediate_directory=intermediate_directory,
                 preview_quality=preview_quality,
                 ANN_model=ANN_model,
                 ANN_model_filename=ANN_model_filename,
-                model=model,
                 ET_model_name=ET_model_name,
                 SWin=SWin_model_name,
                 Rn=Rn_model_name,
@@ -370,11 +258,7 @@ def ET_toolbox_historical_coarse_tile(
             )
 
             VIIRS_dates_processed |= {target_date}
-        # except (VIIRSNotAvailableError, GEOS5FPNotAvailableError) as e:
-        #     logger.warning(e)
-        #     logger.warning(f"VIIRS GEOS-5 FP cannot be processed for date: {target_date}")
-        #     missing_dates.append(target_date)
-        #     continue
+
         except Exception as e:
             logger.exception(e)
             logger.warning(f"VIIRS GEOS-5 FP cannot be processed for date: {target_date}")

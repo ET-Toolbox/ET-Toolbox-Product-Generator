@@ -15,12 +15,9 @@ from solar_apparent_time import solar_to_UTC
 from harmonized_landsat_sentinel import HLS2Connection
 from ETtoolbox.LandsatL2C2 import LandsatL2C2
 from MODISCI import MODISCI
-from PTJPLSM import PTJPLSM
-from ETtoolbox.SRTM import SRTM
+from PTJPL import PTJPL
 from soil_capacity_wilting import SoilGrids
-from ETtoolbox.VIIRS.VNP09GA import VNP09GA
-from ETtoolbox.VIIRS.VNP21A1D import VNP21A1D
-from ETtoolbox.VIIRS import VNP43MA4
+
 from ETtoolbox.VIIRS_GEOS5FP import VIIRS_GEOS5FP, check_VIIRS_GEOS5FP_already_processed, VIIRS_DOWNLOAD_DIRECTORY, \
     VIIRS_PRODUCTS_DIRECTORY, VIIRS_GEOS5FP_OUTPUT_DIRECTORY
 from ETtoolbox.daterange import date_range
@@ -29,105 +26,21 @@ from GEOS5FP.downscaling import bias_correct, downscale_soil_moisture, downscale
 from rasters import Raster, RasterGrid
 from sentinel_tiles import sentinel_tiles
 
+from NASADEM import NASADEMConnection
+from VNP09GA_002 import VNP09GA
+from VNP21A1D_002 import VNP21A1D
+
+from check_distribution import check_distribution
+
+import colored_logging as cl
+
+from .constants import *
+
 logger = logging.getLogger(__name__)
-
-ET_MODEL_NAME = "PTJPLSM"
-SWIN_MODEL_NAME = "GEOS5FP"
-RN_MODEL_NAME = "Verma"
-
-FLOOR_TOPT = True
-
-DOWNSCALE_AIR = False
-DOWNSCALE_HUMIDITY = False
-DOWNSCALE_MOISTURE = False
-
-USE_VIIRS_COMPOSITE = True
-VIIRS_COMPOSITE_DAYS = 8
-
-HLS_CELL_SIZE = 30
-I_CELL_SIZE = 500
-M_CELL_SIZE = 1000
-GEOS5FP_CELL_SIZE = 27375
-# GFS_CELL_SIZE = 54750
-GFS_CELL_SIZE = 27375
-LANDSAT_INITIALIZATION_DAYS = 16
-HLS_INITIALIZATION_DAYS = 10
-
-TARGET_VARIABLES = [
-    "Rn",
-    "LE",
-    "ET",
-    "ESI",
-    "SM",
-    "ST",
-    "Ta",
-    "RH",
-    "SWin"
-]
 
 
 class BlankOutputError(ValueError):
     pass
-
-
-def check_distribution(
-        image: Raster,
-        variable: str,
-        date_UTC: date or str,
-        target: str):
-    unique = np.unique(image)
-    nan_proportion = np.count_nonzero(np.isnan(image)) / np.size(image)
-
-    if len(unique) < 10:
-        logger.info(
-            "variable " + colored_logging.name(variable) + " on " + colored_logging.time(f"{date_UTC:%Y-%m-%d}") + " at " + colored_logging.place(
-                target))
-
-        for value in unique:
-            count = np.count_nonzero(image == value)
-
-            if value == 0:
-                logger.info(f"* {colored_logging.colored(value, 'red')}: {colored_logging.colored(count, 'red')}")
-            else:
-                logger.info(f"* {colored_logging.val(value)}: {colored_logging.val(count)}")
-    else:
-        minimum = np.nanmin(image)
-
-        if minimum < 0:
-            minimum_string = colored_logging.colored(f"{minimum:0.3f}", "red")
-        else:
-            minimum_string = colored_logging.val(f"{minimum:0.3f}")
-
-        maximum = np.nanmax(image)
-
-        if maximum <= 0:
-            maximum_string = colored_logging.colored(f"{maximum:0.3f}", "red")
-        else:
-            maximum_string = colored_logging.val(f"{maximum:0.3f}")
-
-        if nan_proportion > 0.5:
-            nan_proportion_string = colored_logging.colored(f"{(nan_proportion * 100):0.2f}%", "yellow")
-        elif nan_proportion == 1:
-            nan_proportion_string = colored_logging.colored(f"{(nan_proportion * 100):0.2f}%", "red")
-        else:
-            nan_proportion_string = colored_logging.val(f"{(nan_proportion * 100):0.2f}%")
-
-        message = "variable " + colored_logging.name(variable) + \
-                  " on " + colored_logging.time(f"{date_UTC:%Y-%m-%d}") + \
-                  " at " + colored_logging.place(target) + \
-                  " min: " + minimum_string + \
-                  " mean: " + colored_logging.val(f"{np.nanmean(image):0.3f}") + \
-                  " max: " + maximum_string + \
-                  " nan: " + nan_proportion_string + f" ({colored_logging.val(image.nodata)})"
-
-        if np.all(image == 0):
-            message += " all zeros"
-            logger.warning(message)
-        else:
-            logger.info(message)
-
-    if nan_proportion == 1:
-        raise BlankOutputError(f"variable {variable} on {date_UTC:%Y-%m-%d} at {target} is a blank image")
 
 def generate_landsat_ST_C_prior(
         date_UTC: Union[date, str],
@@ -173,7 +86,6 @@ def ET_toolbox_historical_fine_tile(
         start_date: Union[date, str] = None,
         end_date: Union[date, str] = None,
         water: Raster = None,
-        model: PTJPLSM = None,
         ET_model_name: str = ET_MODEL_NAME,
         SWin_model_name: str = SWIN_MODEL_NAME,
         Rn_model_name: str = RN_MODEL_NAME,
@@ -183,13 +95,13 @@ def ET_toolbox_historical_fine_tile(
         HLS_initialization_days: int = HLS_INITIALIZATION_DAYS,
         landsat_download: str = None,
         landsat_initialization_days: int = LANDSAT_INITIALIZATION_DAYS,
-        VIIRS_download_directory: str = None,
-        VIIRS_products_directory: str = None,
+        VNP09GA_download_directory: str = None,
+        VNP21A1D_download_directory: str = None,
         use_VIIRS_composite: bool = USE_VIIRS_COMPOSITE,
         VIIRS_composite_days: int = VIIRS_COMPOSITE_DAYS,
         VIIRS_GEOS5FP_output_directory: str = None,
-        VIIRS_shortwave_source: Union[VNP09GA, VNP43MA4] = None,
-        SRTM_connection: SRTM = None,
+        VIIRS_shortwave_source: VNP09GA = None,
+        SRTM_connection: NASADEMConnection = None,
         SRTM_download: str = None,
         GEOS5FP_connection: GEOS5FP = None,
         GEOS5FP_download: str = None,
@@ -280,37 +192,24 @@ def ET_toolbox_historical_fine_tile(
     water_M = SRTM_connection.swb(M_geometry)
     water_I = SRTM_connection.swb(I_geometry)
 
-    if VIIRS_download_directory is None:
-        VIIRS_download_directory = join(working_directory, VIIRS_DOWNLOAD_DIRECTORY)
+    
+    if VNP09GA_download_directory is None:
+        VNP09GA_download_directory = VNP09GA_DOWNLOAD_DIRECTORY
 
-    logger.info(f"VIIRS download directory: {colored_logging.dir(VIIRS_download_directory)}")
+    logger.info(f"VNP09GA download directory: {cl.dir(VNP09GA_download_directory)}")
 
-    if VIIRS_products_directory is None:
-        VIIRS_products_directory = join(working_directory, VIIRS_PRODUCTS_DIRECTORY)
-
-    logger.info(f"VIIRS products directory: {colored_logging.dir(VIIRS_products_directory)}")
-
-    vnp21 = VNP21A1D(
-        working_directory=working_directory,
-        download_directory=VIIRS_download_directory,
-        products_directory=VIIRS_products_directory
-    )
-
-    if VIIRS_shortwave_source is None:
-        VIIRS_shortwave_source = VNP43MA4(
-            working_directory=working_directory,
-            download_directory=VIIRS_download_directory,
-            products_directory=VIIRS_products_directory
+    VNP21A1D_connection = VNP21A1D(
+        download_directory=VNP21A1D_download_directory,
         )
+    
+    if VNP21A1D_download_directory is None:
+        VNP21A1D_download_directory = VNP21A1D_DOWNLOAD_DIRECTORY
 
-        # VIIRS_shortwave_source = VNP09GA(
-        #     working_directory=working_directory,
-        #     download_directory=VIIRS_download_directory,
-        #     products_directory=VIIRS_products_directory
-        # )
+    logger.info(f"VNP21A1D download directory: {cl.dir(VNP21A1D_download_directory)}")
 
-    if VIIRS_GEOS5FP_output_directory is None:
-        VIIRS_GEOS5FP_output_directory = join(working_directory, VIIRS_GEOS5FP_OUTPUT_DIRECTORY)
+    VNP21A1D_connection = VNP21A1D(
+        download_directory=VNP21A1D_download_directory,
+        )
 
     logger.info(f"VIIRS GEOS-5 FP output directory: {colored_logging.dir(VIIRS_GEOS5FP_output_directory)}")
 
@@ -373,28 +272,6 @@ def ET_toolbox_historical_fine_tile(
         download_directory=landsat_download
     )
 
-    # landsat_start = start_date - timedelta(days=landsat_initialization_days)
-    # landsat_end = start_date - timedelta(days=1)
-    #
-    # logger.info(f"generating Landsat temperature composite from {landsat_start} to {landsat_end}")
-    #
-    # landsat_listing = landsat.scene_search(start=landsat_start, end=landsat_end, target_geometry=HLS_geometry)
-    # landsat_composite_dates = sorted(set(landsat_listing.date_UTC))
-    # logger.info(f"found Landsat granules on dates: {', '.join(landsat_composite_dates)}")
-    #
-    # ST_C_images = []
-    #
-    # for date_UTC in landsat_composite_dates:
-    #     try:
-    #         ST_C = landsat.product(acquisition_date=date_UTC, product="ST_C", geometry=HLS_geometry, target_name=tile)
-    #         ST_C_images.append(ST_C)
-    #     except Exception as e:
-    #         logger.warning(e)
-    #         continue
-    #
-    # landsat_ST_C_initial = Raster(np.nanmedian(np.stack(ST_C_images), axis=0), geometry=HLS_geometry)
-    # landsat_ST_C_prior = landsat_ST_C_initial
-
     landsat_ST_C_prior = generate_landsat_ST_C_prior(
         date_UTC=start_date,
         geometry=HLS_geometry,
@@ -439,12 +316,8 @@ def ET_toolbox_historical_fine_tile(
 
             logger.info(
                 f"retrieving VIIRS VNP21 ST for tile {colored_logging.place(tile)} on date {colored_logging.time(target_date)} at {colored_logging.val(M_cell_size)}m resolution")
-            # ST_K_M = retrieve_VNP21NRT_ST(
-            #     geometry=M_geometry,
-            #     date_solar=target_date,
-            #     directory=VIIRS_download, resampling="cubic"
-            # )
-            ST_C_M = vnp21.ST_C(
+
+            ST_C_M = VNP21A1D_connection.ST_C(
                 date_UTC=target_date,
                 geometry=M_geometry,
                 resampling="cubic"
@@ -455,17 +328,8 @@ def ET_toolbox_historical_fine_tile(
                     fill_date = target_date - timedelta(days_back)
                     logger.info(
                         f"gap-filling {colored_logging.name('VNP21A1D')} {colored_logging.name('ST_C')} from VIIRS on {colored_logging.time(fill_date)} for {colored_logging.time(target_date)}")
-                    ST_C_M_fill = vnp21.ST_C(date_UTC=target_date, geometry=M_geometry, resampling="cubic")
+                    ST_C_M_fill = VNP21A1D_connection.ST_C(date_UTC=target_date, geometry=M_geometry, resampling="cubic")
                     ST_C_M = rt.where(np.isnan(ST_C_M), ST_C_M_fill, ST_C_M)
-
-            # for i in range(1, 16):
-            #     ST_C_M_fill = vnp21.ST_C(
-            #         date_UTC=target_date - timedelta(days=i),
-            #         geometry=M_geometry,
-            #         resampling="cubic"
-            #     )
-            #
-            #     ST_C_M = rt.where(np.isnan(ST_C_M), ST_C_M_fill, ST_C_M)
 
             ST_C_M_smooth = GEOS5FP_connection.Ts_K(time_UTC=time_UTC, geometry=M_geometry,
                                                     resampling="cubic") - 273.15
@@ -479,29 +343,9 @@ def ET_toolbox_historical_fine_tile(
 
             NDVI_HLS_prior = NDVI_HLS
 
-            # logger.info(
-            #     f"retrieving VIIRS VIIRS M-band NDVI for tile {colored_logging.place(tile)} on date {colored_logging.time(target_date)} at {colored_logging.val(M_cell_size)}m resolution")
-            # NDVI_M = retrieve_VNP43MA4N(
-            #     geometry=M_geometry,
-            #     date_UTC=target_date,
-            #     variable="NDVI",
-            #     directory=VIIRS_download,
-            #     resampling="cubic"
-            # )
-            #
-            # NDVI_M_smooth = GEOS5FP_connection.NDVI(time_UTC=time_UTC, geometry=M_geometry, resampling="cubic")
-            # NDVI_M = rt.where(np.isnan(NDVI_M), NDVI_M_smooth, NDVI_M)
-            # NDVI_M = rt.where(water_M, np.nan, NDVI_M)
-
             logger.info(
                 f"retrieving VIIRS I-band NDVI for tile {colored_logging.place(tile)} on date {colored_logging.time(target_date)} at {colored_logging.val(I_cell_size)}m resolution")
-            # NDVI_I = retrieve_VNP43IA4N(
-            #     geometry=I_geometry,
-            #     date_UTC=target_date,
-            #     variable="NDVI",
-            #     directory=VIIRS_download,
-            #     resampling="cubic"
-            # )
+
             NDVI_I = VIIRS_shortwave_source.NDVI(
                 date_UTC=target_date,
                 geometry=I_geometry,
@@ -535,28 +379,7 @@ def ET_toolbox_historical_fine_tile(
 
             logger.info(
                 f"retrieving VIIRS VNP21 emissivity for tile {colored_logging.place(tile)} on date {colored_logging.time(target_date)} at {colored_logging.val(M_cell_size)}m resolution")
-            # emissivity_M = retrieve_VNP21NRT_emissivity(
-            #     geometry=M_geometry,
-            #     date_solar=target_date,
-            #     directory=VIIRS_download,
-            #     resampling="cubic"
-            # )
-            #
-            # emissivity_M = rt.where(water_M, 0.96, emissivity_M)
-            # emissivity_M = rt.where(np.isnan(emissivity_M), 1.0094 + 0.047 * np.log(rt.clip(NDVI_M, 0.01, 1)),
-            #                         emissivity_M)
-            # emissivity_estimate = 1.0094 + 0.047 * np.log(rt.clip(NDVI, 0.01, 1))
-
-
-            # logger.info(
-            #     f"down-scaling VNP21 emissivity to HLS composite for tile {colored_logging.place(tile)} on date {colored_logging.time(target_date)} from {colored_logging.val(M_cell_size)}m to {colored_logging.val(HLS_cell_size)}m resolution")
-            # emissivity = bias_correct(
-            #     coarse_image=emissivity_M,
-            #     fine_image=emissivity_estimate
-            # )
-            #
-            # emissivity = rt.where(water_HLS, 0.96, emissivity)
-            # emissivity = rt.clip(emissivity, 0, 1)
+            
             emissivity = 1.0094 + 0.047 * np.log(NDVI)
             emissivity = rt.where(water, 0.96, emissivity)
             check_distribution(emissivity, "emissivity", target_date, tile)
@@ -571,13 +394,7 @@ def ET_toolbox_historical_fine_tile(
 
             logger.info(
                 f"retrieving VIIRS M-band albedo for tile {colored_logging.place(tile)} on date {colored_logging.time(target_date)} at {colored_logging.val(M_cell_size)}m resolution")
-            # albedo_M = retrieve_VNP43MA4N(
-            #     geometry=M_geometry,
-            #     date_UTC=target_date,
-            #     variable="albedo",
-            #     directory=VIIRS_download,
-            #     resampling="cubic"
-            # )
+            
             albedo_M = VIIRS_shortwave_source.albedo(date_UTC=target_date, geometry=M_geometry, resampling="cubic")
 
             if use_VIIRS_composite:
@@ -602,7 +419,6 @@ def ET_toolbox_historical_fine_tile(
             albedo = rt.where(np.isnan(albedo), albedo_smooth, albedo)
             albedo = rt.clip(albedo, 0, 1)
             check_distribution(albedo, "albedo", target_date, tile)
-            # most_recent["albedo"] = albedo
 
             logger.info(
                 f"down-scaling VNP21 ST to Landsat 8/9 for tile {colored_logging.place(tile)} on date {colored_logging.time(target_date)} from {colored_logging.val(M_cell_size)}m to {colored_logging.val(HLS_cell_size)}m resolution")
@@ -617,7 +433,6 @@ def ET_toolbox_historical_fine_tile(
             ST_C = rt.where(np.isnan(ST_C), ST_C_smooth, ST_C)
             ST_K = ST_C + 273.15
             check_distribution(ST_C, "ST_C", target_date, tile)
-            # most_recent["ST_C"] = ST_C
 
             SM = None
 
@@ -645,7 +460,6 @@ def ET_toolbox_historical_fine_tile(
                 SM = GEOS5FP_connection.SFMC(time_UTC=time_UTC, geometry=HLS_geometry, resampling="cubic")
 
             check_distribution(SM, "SM", target_date, tile)
-            # most_recent["SM"] = SM
 
             Ta_K = None
 
@@ -670,7 +484,6 @@ def ET_toolbox_historical_fine_tile(
 
             Ta_C = Ta_K - 273.15
             check_distribution(Ta_C, "Ta_C", target_date, tile)
-            # most_recent["Ta_C"] = Ta_C
 
             RH = None
 
@@ -730,14 +543,14 @@ def ET_toolbox_historical_fine_tile(
                 CI_directory=CI_directory,
                 soil_grids_connection=soil_grids_connection,
                 soil_grids_download=soil_grids_download,
-                VIIRS_download_directory=VIIRS_download_directory,
+                VNP09GA_download_directory=VNP09GA_download_directory,
+                VNP21A1D_download_directory=VNP21A1D_download_directory,
                 VIIRS_GEOS5FP_output_directory=VIIRS_GEOS5FP_output_directory,
                 VIIRS_shortwave_source=VIIRS_shortwave_source,
                 intermediate_directory=intermediate_directory,
                 preview_quality=preview_quality,
                 ANN_model=ANN_model,
                 ANN_model_filename=ANN_model_filename,
-                model=model,
                 ET_model_name=ET_model_name,
                 ST_C=ST_C,
                 emissivity=emissivity,
@@ -762,11 +575,7 @@ def ET_toolbox_historical_fine_tile(
             )
 
             VIIRS_dates_processed |= {target_date}
-        # except (VIIRSNotAvailableError, GEOS5FPNotAvailableError) as e:
-        #     logger.warning(e)
-        #     logger.warning(f"VIIRS GEOS-5 FP cannot be processed for date: {target_date}")
-        #     missing_dates.append(target_date)
-        #     continue
+
         except Exception as e:
             logger.exception(e)
             logger.warning(f"VIIRS GEOS-5 FP cannot be processed for date: {target_date}")
