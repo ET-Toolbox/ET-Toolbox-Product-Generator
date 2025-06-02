@@ -16,20 +16,18 @@ from soil_capacity_wilting import SoilGrids
 from solar_apparent_time import solar_to_UTC
 
 from ETtoolbox.LandsatL2C2 import LandsatL2C2
-from PTJPLSM import PTJPLSM
-from ETtoolbox.SRTM import SRTM
-from ETtoolbox.VIIRS import VNP43MA4
-from ETtoolbox.VIIRS.VNP09GA import VNP09GA
-from ETtoolbox.VIIRS.VNP21A1D import VNP21A1D
+from PTJPL import PTJPL
 from ETtoolbox.VIIRS_GEOS5FP import VIIRS_GEOS5FP, check_VIIRS_GEOS5FP_already_processed, VIIRS_DOWNLOAD_DIRECTORY, \
     VIIRS_PRODUCTS_DIRECTORY
 from ETtoolbox.daterange import date_range
 
 from check_distribution import check_distribution
 
-import NASADEM
-import VNP09GA_002
-import VNP21A1D_002
+from NASADEM import NASADEMConnection
+from VNP09GA_002 import VNP09GA
+from VNP21A1D_002 import VNP21A1D
+
+import colored_logging as cl
 
 from .constants import *
 
@@ -84,19 +82,17 @@ def ET_toolbox_historical_coarse_tile(
         start_date: Union[date, str] = None,
         end_date: Union[date, str] = None,
         water: Raster = None,
-        model: PTJPLSM = None,
         ET_model_name: str = ET_MODEL_NAME,
         SWin_model_name: str = SWIN_MODEL_NAME,
         Rn_model_name: str = RN_MODEL_NAME,
         working_directory: str = None,
         static_directory: str = None,
-        VIIRS_download_directory: str = None,
-        VIIRS_products_directory: str = None,
+        VNP09GA_download_directory: str = None,
+        VNP21A1D_download_directory: str = None,
         use_VIIRS_composite: bool = USE_VIIRS_COMPOSITE,
         VIIRS_composite_days: int = VIIRS_COMPOSITE_DAYS,
         VIIRS_GEOS5FP_output_directory: str = None,
-        VIIRS_shortwave_source: Union[VNP09GA, VNP43MA4] = None,
-        SRTM_connection: SRTM = None,
+        SRTM_connection: NASADEMConnection = None,
         SRTM_download: str = None,
         GEOS5FP_connection: GEOS5FP = None,
         GEOS5FP_download: str = None,
@@ -148,8 +144,7 @@ def ET_toolbox_historical_coarse_tile(
         )
 
     if SRTM_connection is None:
-        # FIXME fix handling of credentials here
-        SRTM_connection = SRTM(
+        SRTM_connection = NASADEMConnection(
             working_directory=working_directory,
             download_directory=SRTM_download,
             offline_ok=True
@@ -157,27 +152,22 @@ def ET_toolbox_historical_coarse_tile(
 
     water_M = SRTM_connection.swb(M_geometry)
 
-    if VIIRS_download_directory is None:
-        VIIRS_download_directory = join(working_directory, VIIRS_DOWNLOAD_DIRECTORY)
+    if VNP09GA_download_directory is None:
+        VNP09GA_download_directory = VNP09GA_DOWNLOAD_DIRECTORY
 
-    logger.info(f"VIIRS download directory: {colored_logging.dir(VIIRS_download_directory)}")
+    logger.info(f"VNP09GA download directory: {cl.dir(VNP09GA_download_directory)}")
 
-    if VIIRS_products_directory is None:
-        VIIRS_products_directory = join(working_directory, VIIRS_PRODUCTS_DIRECTORY)
+    VNP21A1D_connection = VNP21A1D(
+        download_directory=VNP21A1D_download_directory,
+        )
+    
+    if VNP21A1D_download_directory is None:
+        VNP21A1D_download_directory = VNP21A1D_DOWNLOAD_DIRECTORY
 
-    logger.info(f"VIIRS products directory: {colored_logging.dir(VIIRS_products_directory)}")
+    logger.info(f"VNP21A1D download directory: {cl.dir(VNP21A1D_download_directory)}")
 
-    vnp21 = VNP21A1D(
-        working_directory=working_directory,
-        download_directory=VIIRS_download_directory,
-        products_directory=VIIRS_products_directory
-    )
-
-    if VIIRS_shortwave_source is None:
-        VIIRS_shortwave_source = VNP43MA4(
-            working_directory=working_directory,
-            download_directory=VIIRS_download_directory,
-            products_directory=VIIRS_products_directory
+    VNP21A1D_connection = VNP21A1D(
+        download_directory=VNP21A1D_download_directory,
         )
 
     if VIIRS_GEOS5FP_output_directory is None:

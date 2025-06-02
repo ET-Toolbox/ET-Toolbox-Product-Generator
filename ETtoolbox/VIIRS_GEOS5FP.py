@@ -16,8 +16,6 @@ from GEOS5FP import GEOS5FP
 
 from MODISCI import MODISCI
 from PTJPL import PTJPL
-from PTJPLSM import PTJPLSM
-from ETtoolbox.SRTM import SRTM
 from soil_capacity_wilting import SoilGrids
 
 from GEOS5FP.downscaling import downscale_air_temperature, downscale_soil_moisture, downscale_vapor_pressure_deficit, \
@@ -33,6 +31,8 @@ from verma_net_radiation import process_verma_net_radiation
 
 from VNP09GA_002 import VNP09GA
 from VNP21A1D_002 import VNP21A1D
+
+from NASADEM import NASADEMConnection
 
 from .constants import *
 
@@ -161,7 +161,6 @@ def VIIRS_GEOS5FP(
         RH: Union[rt.Raster, str] = None,
         water: rt.Raster = None,
         elevation_km: rt.Raster = None,
-        model: PTJPLSM = None,
         ET_model_name: str = ET_MODEL_NAME,
         working_directory: str = None,
         static_directory: str = None,
@@ -170,7 +169,7 @@ def VIIRS_GEOS5FP(
         use_VIIRS_composite: bool = USE_VIIRS_COMPOSITE,
         VIIRS_composite_days: int = VIIRS_COMPOSITE_DAYS,
         VIIRS_GEOS5FP_output_directory: str = None,
-        SRTM_connection: SRTM = None,
+        SRTM_connection: NASADEMConnection = None,
         SRTM_download: str = None,
         GEOS5FP_connection: GEOS5FP = None,
         GEOS5FP_download: str = None,
@@ -214,7 +213,7 @@ def VIIRS_GEOS5FP(
     working_directory = abspath(expanduser(working_directory))
 
     if SRTM_connection is None:
-        SRTM_connection = SRTM(
+        SRTM_connection = NASADEMConnection(
             working_directory=static_directory,
             download_directory=SRTM_download,
             offline_ok=True
@@ -367,7 +366,7 @@ def VIIRS_GEOS5FP(
     results["Ta"] = Ta_C
 
     if water is None:
-        water = model.SRTM_connection.swb(geometry)
+        water = SRTM_connection.swb(geometry)
 
     results["water"] = water
 
