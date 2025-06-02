@@ -234,14 +234,13 @@ def ET_toolbox_historical_coarse_tile(
                 CI_directory=CI_directory,
                 soil_grids_connection=soil_grids_connection,
                 soil_grids_download=soil_grids_download,
-                VIIRS_download_directory=VIIRS_download_directory,
+                VNP09GA_download_directory=VNP09GA_download_directory,
+                VNP21A1D_download_directory=VNP21A1D_download_directory,`
                 VIIRS_GEOS5FP_output_directory=VIIRS_GEOS5FP_output_directory,
-                VIIRS_shortwave_source=VIIRS_shortwave_source,
                 intermediate_directory=intermediate_directory,
                 preview_quality=preview_quality,
                 ANN_model=ANN_model,
                 ANN_model_filename=ANN_model_filename,
-                model=model,
                 ET_model_name=ET_model_name,
                 SWin=SWin_model_name,
                 Rn=Rn_model_name,
@@ -259,11 +258,7 @@ def ET_toolbox_historical_coarse_tile(
             )
 
             VIIRS_dates_processed |= {target_date}
-        # except (VIIRSNotAvailableError, GEOS5FPNotAvailableError) as e:
-        #     logger.warning(e)
-        #     logger.warning(f"VIIRS GEOS-5 FP cannot be processed for date: {target_date}")
-        #     missing_dates.append(target_date)
-        #     continue
+
         except Exception as e:
             logger.exception(e)
             logger.warning(f"VIIRS GEOS-5 FP cannot be processed for date: {target_date}")
