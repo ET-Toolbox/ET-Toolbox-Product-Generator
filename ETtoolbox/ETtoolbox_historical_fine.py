@@ -176,7 +176,7 @@ def ET_toolbox_historical_fine_tile(
 
     if SRTM_connection is None:
         # FIXME fix handling of credentials here
-        SRTM_connection = SRTM(
+        SRTM_connection = NASADEMConnection(
             working_directory=working_directory,
             download_directory=SRTM_download,
             offline_ok=True
@@ -192,7 +192,6 @@ def ET_toolbox_historical_fine_tile(
     water_M = SRTM_connection.swb(M_geometry)
     water_I = SRTM_connection.swb(I_geometry)
 
-    
     if VNP09GA_download_directory is None:
         VNP09GA_download_directory = VNP09GA_DOWNLOAD_DIRECTORY
 
