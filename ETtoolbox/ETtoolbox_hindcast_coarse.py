@@ -49,12 +49,12 @@ def ET_toolbox_hindcast_coarse_tile(
         ANN_model_filename: str = None,
         spacetrack_credentials_filename: str = None,
         ERS_credentials_filename: str = None,
-        resampling: str = DEFAULT_RESAMPLING,
-        meso_cell_size: float = DEFAULT_MESO_CELL_SIZE,
-        coarse_cell_size: float = DEFAULT_COARSE_CELL_SIZE,
-        downscale_air: bool = DEFAULT_DOWNSCALE_AIR,
-        downscale_humidity: bool = DEFAULT_DOWNSCALE_HUMIDITY,
-        downscale_moisture: bool = DEFAULT_DOWNSCALE_MOISTURE,
+        resampling: str = RESAMPLING,
+        meso_cell_size: float = MESO_CELL_SIZE,
+        coarse_cell_size: float = COARSE_CELL_SIZE,
+        downscale_air: bool = DOWNSCALE_AIR,
+        downscale_humidity: bool = DOWNSCALE_HUMIDITY,
+        downscale_moisture: bool = DOWNSCALE_MOISTURE,
         save_intermediate: bool = False,
         show_distribution: bool = True,
         load_previous: bool = True,
@@ -69,7 +69,7 @@ def ET_toolbox_hindcast_coarse_tile(
         geometry = sentinel_tiles.grid(tile, cell_size=meso_cell_size)
 
     if target_variables is None:
-        target_variables = DEFAULT_TARGET_VARIABLES
+        target_variables = TARGET_VARIABLES
 
     if GEOS5FP_connection is None:
         GEOS5FP_connection = GEOS5FP(

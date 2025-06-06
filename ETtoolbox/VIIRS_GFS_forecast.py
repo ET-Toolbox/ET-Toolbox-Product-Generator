@@ -160,15 +160,15 @@ def VIIRS_GFS_forecast(
         soil_grids_download: str = None,
         intermediate_directory=None,
         model_name: str = "PTJPL",
-        preview_quality: int = DEFAULT_PREVIEW_QUALITY,
+        preview_quality: int = PREVIEW_QUALITY,
         ANN_model: Callable = None,
         ANN_model_filename: str = None,
         spacetrack_credentials_filename: str = None,
         ERS_credentials_filename: str = None,
-        resampling: str = DEFAULT_RESAMPLING,
-        downscale_air: bool = DEFAULT_DOWNSCALE_AIR,
-        downscale_humidity: bool = DEFAULT_DOWNSCALE_HUMIDITY,
-        downscale_moisture: bool = DEFAULT_DOWNSCALE_MOISTURE,
+        resampling: str = RESAMPLING,
+        downscale_air: bool = DOWNSCALE_AIR,
+        downscale_humidity: bool = DOWNSCALE_HUMIDITY,
+        downscale_moisture: bool = DOWNSCALE_MOISTURE,
         apply_GEOS5FP_GFS_bias_correction: bool = True,
         VIIRS_processing_date: Union[date, str] = None,
         GFS_listing: pd.DataFrame = None,
@@ -176,7 +176,7 @@ def VIIRS_GFS_forecast(
         include_preview: bool = True,
         show_distribution: bool = True,
         load_previous: bool = True,
-        target_variables: List[str] = DEFAULT_TARGET_VARIABLES) -> Dict[str, Raster]:
+        target_variables: List[str] = TARGET_VARIABLES) -> Dict[str, Raster]:
     results = {}
 
     if isinstance(target_date, str):
@@ -200,12 +200,12 @@ def VIIRS_GFS_forecast(
     logger.info(f"GFS-VIIRS working directory: {colored_logging.dir(working_directory)}")
 
     if GFS_download is None:
-        GFS_download = DEFAULT_GFS_DOWNLOAD_DIRECTORY
+        GFS_download = GFS_DOWNLOAD_DIRECTORY
 
     logger.info(f"GFS download directory: {colored_logging.dir(GFS_download)}")
 
     if GFS_output_directory is None:
-        GFS_output_directory = join(working_directory, DEFAULT_GFS_OUTPUT_DIRECTORY)
+        GFS_output_directory = join(working_directory, GFS_OUTPUT_DIRECTORY)
 
     logger.info(f"GFS output directory: {colored_logging.dir(GFS_output_directory)}")
 

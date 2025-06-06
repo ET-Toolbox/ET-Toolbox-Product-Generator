@@ -169,20 +169,20 @@ def VIIRS_GEOS5FP_NRT(
         intermediate_directory: str = None,
         spacetrack_credentials_filename: str = None,
         ERS_credentials_filename: str = None,
-        preview_quality: int = DEFAULT_PREVIEW_QUALITY,
+        preview_quality: int = PREVIEW_QUALITY,
         ANN_model: Callable = None,
         ANN_model_filename: str = None,
-        resampling: str = DEFAULT_RESAMPLING,
-        coarse_cell_size: float = DEFAULT_COARSE_CELL_SIZE,
-        downscale_air: bool = DEFAULT_DOWNSCALE_AIR,
-        downscale_humidity: bool = DEFAULT_DOWNSCALE_HUMIDITY,
-        downscale_moisture: bool = DEFAULT_DOWNSCALE_MOISTURE,
+        resampling: str = RESAMPLING,
+        coarse_cell_size: float = COARSE_CELL_SIZE,
+        downscale_air: bool = DOWNSCALE_AIR,
+        downscale_humidity: bool = DOWNSCALE_HUMIDITY,
+        downscale_moisture: bool = DOWNSCALE_MOISTURE,
         floor_Topt: bool = FLOOR_TOPT,
         save_intermediate: bool = False,
         include_preview: bool = True,
         show_distribution: bool = True,
         load_previous: bool = True,
-        target_variables: List[str] = DEFAULT_TARGET_VARIABLES) -> Dict[str, rt.Raster]:
+        target_variables: List[str] = TARGET_VARIABLES) -> Dict[str, rt.Raster]:
     results = {}
 
     if isinstance(target_date, str):
@@ -213,7 +213,7 @@ def VIIRS_GEOS5FP_NRT(
     logger.info(f"VIIRS working directory: {cl.dir(working_directory)}")
 
     if VIIRS_download_directory is None:
-        VIIRS_download_directory = join(working_directory, DEFAULT_VIIRS_DOWNLOAD_DIRECTORY)
+        VIIRS_download_directory = join(working_directory, VIIRS_DOWNLOAD_DIRECTORY)
 
     logger.info(f"VIIRS download directory: {cl.dir(VIIRS_download_directory)}")
 
