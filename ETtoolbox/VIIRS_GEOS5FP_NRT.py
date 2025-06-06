@@ -26,110 +26,16 @@ from GEOS5FP.downscaling import downscale_air_temperature, downscale_soil_moistu
 from solar_apparent_time import solar_to_UTC
 
 from .constants import *
+from .generate_VIIRS_output_directory import generate_VIIRS_output_directory
+from .generate_VIIRS_output_filename import generate_VIIRS_output_filename
+from .check_VIIRS_already_processed import check_VIIRS_already_processed
+from .load_VIIRS import load_VIIRS
 
 logger = logging.getLogger(__name__)
 
 
 class GEOS5FPNotAvailableError(Exception):
     pass
-
-
-def generate_VIIRS_output_directory(
-        VIIRS_output_directory: str,
-        target_date: Union[date, str],
-        target: str):
-    if isinstance(target_date, str):
-        target_date = parser.parse(target_date).date()
-
-    directory = join(
-        abspath(expanduser(VIIRS_output_directory)),
-        f"{target_date:%Y-%m-%d}",
-        f"VIIRS_{target_date:%Y-%m-%d}_{target}",
-    )
-
-    return directory
-
-
-def generate_VIIRS_output_filename(
-        VIIRS_output_directory: str,
-        target_date: Union[date, str],
-        time_UTC: Union[datetime, str],
-        target: str,
-        product: str):
-    if isinstance(target_date, str):
-        target_date = parser.parse(target_date).date()
-
-    if isinstance(time_UTC, str):
-        time_UTC = parser.parse(time_UTC)
-
-    directory = generate_VIIRS_output_directory(
-        VIIRS_output_directory=VIIRS_output_directory,
-        target_date=target_date,
-        target=target
-    )
-
-    filename = join(directory, f"VIIRS_{time_UTC:%Y.%m.%d.%H.%M.%S}_{target}_{product}.tif")
-
-    return filename
-
-
-def check_VIIRS_already_processed(
-        VIIRS_output_directory: str,
-        target_date: Union[date, str],
-        time_UTC: Union[datetime, str],
-        target: str,
-        products: List[str]):
-    already_processed = True
-    logger.info(
-        f"checking if VIIRS GEOS-5 FP has previously been processed at {cl.place(target)} on {cl.time(target_date)}")
-
-    for product in products:
-        filename = generate_VIIRS_output_filename(
-            VIIRS_output_directory=VIIRS_output_directory,
-            target_date=target_date,
-            time_UTC=time_UTC,
-            target=target,
-            product=product
-        )
-
-        if exists(filename):
-            logger.info(
-                f"found previous VIIRS GEOS-5 FP {cl.name(product)} at {cl.place(target)} on {cl.time(target_date)}: {cl.file(filename)}")
-        else:
-            logger.info(
-                f"did not find previous VIIRS GEOS-5 FP {cl.name(product)} at {cl.place(target)} on {cl.time(target_date)}")
-            already_processed = False
-
-    return already_processed
-
-
-def load_VIIRS(VIIRS_output_directory: str, target_date: Union[date, str], target: str, products: List[str] = None):
-    logger.info(f"loading VIIRS GEOS-5 FP products for {cl.place(target)} on {cl.time(target_date)}")
-
-    dataset = {}
-
-    directory = generate_VIIRS_output_directory(
-        VIIRS_output_directory=VIIRS_output_directory,
-        target_date=target_date,
-        target=target
-    )
-
-    pattern = join(directory, "*.tif")
-    logger.info(f"searching for VIIRS product: {cl.val(pattern)}")
-    filenames = glob(pattern)
-    logger.info(f"found {cl.val(len(filenames))} VIIRS files")
-
-    for filename in filenames:
-        product = splitext(basename(filename))[0].split("_")[-1]
-
-        if products is not None and product not in products:
-            continue
-
-        logger.info(f"loading VIIRS GEOS-5 FP file: {cl.file(filename)}")
-        image = rt.Raster.open(filename)
-        dataset[product] = image
-
-    return dataset
 
 
 def VIIRS_GEOS5FP_NRT(
@@ -218,7 +124,7 @@ def VIIRS_GEOS5FP_NRT(
     logger.info(f"VIIRS download directory: {cl.dir(VIIRS_download_directory)}")
 
     if VIIRS_output_directory is None:
-        VIIRS_output_directory = join(working_directory, DEFAULT_VIIRS_OUTPUT_DIRECTORY)
+        VIIRS_output_directory = join(working_directory, VIIRS_OUTPUT_DIRECTORY)
 
     logger.info(f"VIIRS output directory: {cl.dir(VIIRS_output_directory)}")
 

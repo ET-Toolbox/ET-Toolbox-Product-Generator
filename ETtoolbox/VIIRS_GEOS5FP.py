@@ -35,115 +35,15 @@ from VNP21A1D_002 import VNP21A1D
 from NASADEM import NASADEMConnection
 
 from .constants import *
+from .generate_VIIRS_GEOS5FP_output_directory import generate_VIIRS_GEOS5FP_output_directory
+from .generate_VIIRS_GEOS5FP_output_filename import generate_VIIRS_GEOS5FP_output_filename
+from .check_VIIRS_GEOS5FP_already_processed import check_VIIRS_GEOS5FP_already_processed
+from .load_VIIRS_GEOS5FP import load_VIIRS_GEOS5FP
 
 logger = logging.getLogger(__name__)
 
-
 class GEOS5FPNotAvailableError(Exception):
     pass
-
-
-def generate_VIIRS_GEOS5FP_output_directory(
-        VIIRS_GEOS5FP_output_directory: str,
-        target_date: Union[date, str],
-        target: str):
-    if VIIRS_GEOS5FP_output_directory is None:
-        raise ValueError("no VIIRS GEOS-5 FP output directory given")
-
-    if isinstance(target_date, str):
-        target_date = parser.parse(target_date).date()
-
-    directory = join(
-        abspath(expanduser(VIIRS_GEOS5FP_output_directory)),
-        f"{target_date:%Y-%m-%d}",
-        f"VIIRS-GEOS5FP_{target_date:%Y-%m-%d}_{target}",
-    )
-
-    return directory
-
-
-def generate_VIIRS_GEOS5FP_output_filename(
-        VIIRS_GEOS5FP_output_directory: str,
-        target_date: Union[date, str],
-        time_UTC: Union[datetime, str],
-        target: str,
-        product: str):
-    if isinstance(target_date, str):
-        target_date = parser.parse(target_date).date()
-
-    if isinstance(time_UTC, str):
-        time_UTC = parser.parse(time_UTC)
-
-    directory = generate_VIIRS_GEOS5FP_output_directory(
-        VIIRS_GEOS5FP_output_directory=VIIRS_GEOS5FP_output_directory,
-        target_date=target_date,
-        target=target
-    )
-
-    filename = join(directory, f"VIIRS-GEOS5FP_{time_UTC:%Y.%m.%d.%H.%M.%S}_{target}_{product}.tif")
-
-    return filename
-
-
-def check_VIIRS_GEOS5FP_already_processed(
-        VIIRS_GEOS5FP_output_directory: str,
-        target_date: Union[date, str],
-        time_UTC: Union[datetime, str],
-        target: str,
-        products: List[str]):
-    already_processed = True
-    logger.info(
-        f"checking if VIIRS GEOS-5 FP has previously been processed at {cl.place(target)} on {cl.time(target_date)}")
-
-    for product in products:
-        filename = generate_VIIRS_GEOS5FP_output_filename(
-            VIIRS_GEOS5FP_output_directory=VIIRS_GEOS5FP_output_directory,
-            target_date=target_date,
-            time_UTC=time_UTC,
-            target=target,
-            product=product
-        )
-
-        if exists(filename):
-            logger.info(
-                f"found previous VIIRS GEOS-5 FP {cl.name(product)} at {cl.place(target)} on {cl.time(target_date)}: {cl.file(filename)}")
-        else:
-            logger.info(
-                f"did not find previous VIIRS GEOS-5 FP {cl.name(product)} at {cl.place(target)} on {cl.time(target_date)}")
-            already_processed = False
-
-    return already_processed
-
-
-def load_VIIRS_GEOS5FP(VIIRS_GEOS5FP_output_directory: str, target_date: Union[date, str], target: str,
-                       products: List[str] = None):
-    logger.info(f"loading VIIRS GEOS-5 FP products for {cl.place(target)} on {cl.time(target_date)}")
-
-    dataset = {}
-
-    directory = generate_VIIRS_GEOS5FP_output_directory(
-        VIIRS_GEOS5FP_output_directory=VIIRS_GEOS5FP_output_directory,
-        target_date=target_date,
-        target=target
-    )
-
-    pattern = join(directory, "*.tif")
-    logger.info(f"searching for VIIRS GEOS-5 FP product: {cl.val(pattern)}")
-    filenames = glob(pattern)
-    logger.info(f"found {cl.val(len(filenames))} VIIRS GEOS-5 FP files")
-
-    for filename in filenames:
-        product = splitext(basename(filename))[0].split("_")[-1]
-
-        if products is not None and product not in products:
-            continue
-
-        logger.info(f"loading VIIRS GEOS-5 FP file: {cl.file(filename)}")
-        image = rt.Raster.open(filename)
-        dataset[product] = image
-
-    return dataset
-
 
 def VIIRS_GEOS5FP(
         target_date: Union[date, str],
@@ -340,7 +240,7 @@ def VIIRS_GEOS5FP(
                 fill_date = target_date - timedelta(days_back)
                 logger.info(
                     f"gap-filling {cl.name('VNP09GA')} {cl.name('albedo')} from VIIRS on {cl.time(fill_date)} for {cl.time(target_date)}")
-                albedo_fill = VIIRS_shortwave_source.albedo(date_UTC=target_date, geometry=geometry, resampling="cubic")
+                albedo_fill = VNP09GA_connection.albedo(date_UTC=target_date, geometry=geometry, resampling="cubic")
                 albedo = rt.where(np.isnan(albedo), albedo_fill, albedo)
 
     results["albedo"] = albedo
@@ -424,46 +324,9 @@ def VIIRS_GEOS5FP(
 
     results["RH"] = RH
 
-    Ra = None
-    Rg = None
-    UV = None
-    VIS = None
-    NIR = None
-    VISdiff = None
-    NIRdiff = None
-    VISdir = None
-    NIRdir = None
-
     if SWin is None or isinstance(SWin, str):
-        if SWin == "FLiES":
-            logger.info("generating solar radiation using the Forest Light Environmental Simulator")
-            Ra, Rg, UV, VIS, NIR, VISdiff, NIRdiff, VISdir, NIRdir = model.FLiES(
-                geometry=geometry,
-                target=target,
-                time_UTC=time_UTC,
-                albedo=albedo
-            )
-
-            SWin = Rg
-
-        if SWin == "FLiES-GEOS5FP":
-            logger.info(
-                "generating solar radiation using Forest Light Environmental Simulator bias-corrected with GEOS-5 FP")
-            Ra, Rg, UV, VIS, NIR, VISdiff, NIRdiff, VISdir, NIRdir = model.FLiES(
-                geometry=geometry,
-                target=target,
-                time_UTC=time_UTC,
-                albedo=albedo
-            )
-
-            SWin_coarse = GEOS5FP_connection.SWin(time_UTC=time_UTC, geometry=coarse_geometry, resampling="cubic")
-            SWin = bias_correct(
-                coarse_image=SWin_coarse,
-                fine_image=Rg
-            )
-        elif SWin == "GEOS5FP" or SWin is None:
-            logger.info("generating solar radiation using GEOS-5 FP")
-            SWin = GEOS5FP_connection.SWin(time_UTC=time_UTC, geometry=geometry, resampling="cubic")
+        logger.info("generating solar radiation using GEOS-5 FP")
+        SWin = GEOS5FP_connection.SWin(time_UTC=time_UTC, geometry=geometry, resampling="cubic")
 
     if Rn is None:
         verma_results = process_verma_net_radiation(
