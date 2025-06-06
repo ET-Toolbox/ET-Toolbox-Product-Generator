@@ -17,7 +17,7 @@ from ETtoolbox.VIIRS import *
 from MODISCI import MODISCI
 from PTJPL import PTJPL
 from PTJPLSM import PTJPLSM
-from ETtoolbox.SRTM import SRTM
+from NASADEM import NASADEM
 from soil_capacity_wilting import SoilGrids
 from GEOS5FP.downscaling import downscale_air_temperature, downscale_soil_moisture, bias_correct
 from sentinel_tiles import sentinel_tiles
@@ -149,7 +149,7 @@ def VIIRS_GFS_forecast(
         GFS_output_directory: str = None,
         VNP21A1D_download_directory: str = VNP21A1D_DOWNLOAD_DIRECTORY,
         VNP09GA_download_directory: str = VNP09GA_DOWNLOAD_DIRECTORY,
-        SRTM_connection: SRTM = None,
+        SRTM_connection: NASADEM = None,
         SRTM_download: str = None,
         GEOS5FP_connection: GEOS5FP = None,
         GEOS5FP_download: str = None,

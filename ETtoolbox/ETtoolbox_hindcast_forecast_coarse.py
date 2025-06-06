@@ -11,7 +11,7 @@ from ETtoolbox.LANCE_GEOS5FP_NRT import LANCE_GEOS5FP_NRT, LANCENotAvailableErro
 from ETtoolbox.LANCE_GFS_forecast import LANCE_GFS_forecast
 from MODISCI import MODISCI
 from PTJPLSM import PTJPLSM
-from ETtoolbox.SRTM import SRTM
+from NASADEM import NASADEM
 from soil_capacity_wilting import SoilGrids
 from rasters import Raster, RasterGrid
 from sentinel_tiles import sentinel_tiles
@@ -52,7 +52,7 @@ def ET_toolbox_hindcast_tile(
         static_directory: str = None,
         LANCE_download: str = None,
         output_directory: str = None,
-        SRTM_connection: SRTM = None,
+        SRTM_connection: NASADEM = None,
         SRTM_download: str = None,
         GEOS5FP_connection: GEOS5FP = None,
         GEOS5FP_download: str = None,
@@ -175,7 +175,7 @@ def ET_toolbox_hindcast_forecast_tile(
         static_directory: str = None,
         LANCE_download: str = None,
         LANCE_output_directory: str = None,
-        SRTM_connection: SRTM = None,
+        SRTM_connection: NASADEM = None,
         SRTM_download: str = None,
         GEOS5FP_connection: GEOS5FP = None,
         GEOS5FP_download: str = None,

@@ -10,7 +10,7 @@ from ETtoolbox.LANCE import LANCENotAvailableError
 from MODISCI import MODISCI
 from PTJPL import PTJPL
 from PTJPLSM import PTJPLSM
-from ETtoolbox.SRTM import SRTM
+from NASADEM import NASADEM
 from soil_capacity_wilting import SoilGrids
 from GEOS5FP.downscaling import downscale_air_temperature, downscale_soil_moisture, downscale_vapor_pressure_deficit, \
     downscale_relative_humidity, bias_correct
@@ -157,7 +157,7 @@ def LANCE_GEOS5FP_NRT(
         LANCE_download_directory: str = None,
         LANCE_output_directory: str = None,
         output_bucket_name: str = None,
-        SRTM_connection: SRTM = None,
+        SRTM_connection: NASADEM = None,
         SRTM_download: str = None,
         GEOS5FP_connection: GEOS5FP = None,
         GEOS5FP_download: str = None,

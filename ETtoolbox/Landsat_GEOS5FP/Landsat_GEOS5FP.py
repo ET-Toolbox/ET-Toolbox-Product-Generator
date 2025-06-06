@@ -9,13 +9,13 @@ from typing import Dict, Callable
 from gedi_canopy_height import GEDICanopyHeight
 from GEOS5FP import GEOS5FP
 from MODISCI import MODISCI
-from ETtoolbox.SRTM import SRTM
 from soil_capacity_wilting import SoilGrids
 from glob import glob
 import numpy as np
 import rasters as rt
 import colored_logging
 from solar_apparent_time import UTC_to_solar, solar_to_UTC
+from NASADEM import NASADEM
 
 DEFAULT_Landsat_DOWNLOAD_DIRECTORY = "Landsat_download"
 DEFAULT_Landsat_OUTPUT_DIRECTORY = "Landsat_output"
@@ -128,7 +128,7 @@ def Landsat_GEOS5FP(
         static_directory: str = None,
         Landsat_download_directory: str = None,
         Landsat_output_directory: str = None,
-        SRTM_connection: SRTM = None,
+        SRTM_connection: NASADEM = None,
         SRTM_download: str = None,
         GEOS5FP_connection: GEOS5FP = None,
         GEOS5FP_download: str = None,

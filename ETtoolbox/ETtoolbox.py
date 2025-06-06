@@ -14,7 +14,7 @@ from harmonized_landsat_sentinel import HLS2Connection
 from LandsatL2C2 import LandsatL2C2
 from MODISCI import MODISCI
 from PTJPLSM import PTJPLSM
-from ETtoolbox.SRTM import SRTM
+from NASADEM import NASADEM
 from soil_capacity_wilting import SoilGrids
 from solar_apparent_time import solar_to_UTC
 from ETtoolbox.daterange import date_range
@@ -145,7 +145,7 @@ def ET_toolbox_hindcast_forecast_tile(
         GFS_download_directory: str = None,
         VIIRS_download_directory: str = None,
         VIIRS_output_directory: str = None,
-        SRTM_connection: SRTM = None,
+        SRTM_connection: NASADEM = None,
         SRTM_download_directory: str = None,
         GEOS5FP_connection: GEOS5FP = None,
         GEOS5FP_download_directory: str = None,
