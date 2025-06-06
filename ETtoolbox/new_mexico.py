@@ -14,9 +14,9 @@ def new_mexico_VIIRS_server(
         output_directory: str = None,
         output_bucket_name: str = None,
         static_directory: str = None,
-        LANCE_download: str = None,
-        SRTM_download: str = None,
-        GEOS5FP_download: str = None):
+        VIIRS_download_directory: str = None,
+        NASADEM_download_directory: str = None,
+        GEOS5FP_download_directory: str = None):
     if working_directory is None:
         working_directory = "/new_mexico_VIIRS"
     
@@ -26,22 +26,22 @@ def new_mexico_VIIRS_server(
     if static_directory is None:
         static_directory = "/static"
 
-    if LANCE_download is None:
-        LANCE_download = "/LANCE"
+    if VIIRS_download_directory is None:
+        VIIRS_download_directory = "/VIIRS"
 
-    if SRTM_download is None:
-        SRTM_download = "/SRTM"
+    if NASADEM_download_directory is None:
+        NASADEM_download_directory = "/SRTM"
 
-    if GEOS5FP_download is None:
-        GEOS5FP_download = "/GEOS5FP"
+    if GEOS5FP_download_directory is None:
+        GEOS5FP_download_directory = "/GEOS5FP"
 
     logger.info("starting New Mexico VIIRS data production")
 
     logger.info(f"working directory: {working_directory}")
     logger.info(f"static directory: {static_directory}")
-    logger.info(f"LANCE directory: {LANCE_download}")
-    logger.info(f"SRTM directory: {SRTM_download}")
-    logger.info(f"GEOS-5 FP directory: {GEOS5FP_download}")
+    logger.info(f"VIIRS directory: {VIIRS_download_directory}")
+    logger.info(f"SRTM directory: {NASADEM_download_directory}")
+    logger.info(f"GEOS-5 FP directory: {GEOS5FP_download_directory}")
 
     # tiles = ["h08v05", "h09v05"]
     tiles = [
@@ -109,9 +109,9 @@ def new_mexico_VIIRS_server(
                 output_directory=output_directory,
                 output_bucket_name=output_bucket_name,
                 static_directory=static_directory,
-                SRTM_download=SRTM_download,
-                LANCE_download=LANCE_download,
-                GEOS5FP_download=GEOS5FP_download,
+                SRTM_download=NASADEM_download_directory,
+                VIIRS_download_directory=VIIRS_download_directory,
+                GEOS5FP_download=GEOS5FP_download_directory,
             )
 
         while (datetime.utcnow().hour % 3 != 0):
@@ -144,10 +144,10 @@ def main(argv=sys.argv):
     else:
         SRTM_download = join(working_directory, "SRTM_download_directory")
 
-    if "--LANCE" in argv:
-        LANCE_download = argv[argv.index("--LANCE") + 1]
+    if "--VIIRS" in argv:
+        VIIRS_download = argv[argv.index("--VIIRS") + 1]
     else:
-        LANCE_download = join(working_directory, "LANCE_download_directory")
+        VIIRS_download = join(working_directory, "VIIRS_download_directory")
 
     if "--GEOS5FP" in argv:
         GEOS5FP_download = argv[argv.index("--GEOS5FP") + 1]
@@ -158,9 +158,9 @@ def main(argv=sys.argv):
         working_directory=working_directory,
         output_directory=output_directory,
         static_directory=static_directory,
-        SRTM_download=SRTM_download,
-        LANCE_download=LANCE_download,
-        GEOS5FP_download=GEOS5FP_download
+        NASADEM_download_directory=SRTM_download,
+        VIIRS_download_directory=VIIRS_download,
+        GEOS5FP_download_directory=GEOS5FP_download
     )
 
 

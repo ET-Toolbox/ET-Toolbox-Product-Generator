@@ -9,7 +9,7 @@ from gedi_canopy_height import GEDICanopyHeight
 from GEOS5FP import GEOS5FP
 from MODISCI import MODISCI
 from PTJPL import PTJPL
-from NASADEM import NASADEM
+from NASADEM import NASADEMConnection
 from soil_capacity_wilting import SoilGrids
 from rasters import Raster, RasterGrid
 from sentinel_tiles import sentinel_tiles
@@ -30,10 +30,10 @@ def ET_toolbox_hindcast_coarse_tile(
         model_name: str = "PTJPL",
         working_directory: str = None,
         static_directory: str = None,
-        LANCE_download: str = None,
+        VIIRS_download_directory: str = None,
         output_directory: str = None,
         output_bucket_name: str = None,
-        SRTM_connection: NASADEM = None,
+        SRTM_connection: NASADEMConnection = None,
         SRTM_download: str = None,
         GEOS5FP_connection: GEOS5FP = None,
         GEOS5FP_download: str = None,
@@ -88,11 +88,9 @@ def ET_toolbox_hindcast_coarse_tile(
         ERS_credentials_filename = default_ERS_credentials_filename
 
     if SRTM_connection is None:
-        # FIXME fix handling of credentials here
-        SRTM_connection = NASADEM(
+        SRTM_connection = NASADEMConnection(
             working_directory=working_directory,
             download_directory=SRTM_download,
-            ERS_credentials_filename=ERS_credentials_filename,
             offline_ok=True
         )
 
@@ -100,10 +98,10 @@ def ET_toolbox_hindcast_coarse_tile(
 
     for relative_days in range(-7, 1):
         target_date = present_date + timedelta(days=relative_days)
-        logger.info(f"LANCE GEOS-5 FP target date: {colored_logging.time(target_date)} ({colored_logging.time(relative_days)} days)")
+        logger.info(f"VIIRS GEOS-5 FP target date: {colored_logging.time(target_date)} ({colored_logging.time(relative_days)} days)")
 
         time_solar = datetime(target_date.year, target_date.month, target_date.day, 13, 30)
-        logger.info(f"LANCE target time solar: {colored_logging.time(time_solar)}")
+        logger.info(f"VIIRS target time solar: {colored_logging.time(time_solar)}")
 
         try:
             VIIRS_GEOS5FP_NRT(
@@ -123,8 +121,8 @@ def ET_toolbox_hindcast_coarse_tile(
                 CI_directory=CI_directory,
                 soil_grids_connection=soil_grids_connection,
                 soil_grids_download=soil_grids_download,
-                LANCE_download_directory=LANCE_download,
-                LANCE_output_directory=output_directory,
+                VIIRS_download_directory=VIIRS_download_directory,
+                VIIRS_output_directory=output_directory,
                 output_bucket_name=output_bucket_name,
                 intermediate_directory=intermediate_directory,
                 ANN_model=ANN_model,
@@ -145,16 +143,16 @@ def ET_toolbox_hindcast_coarse_tile(
             )
         except GEOS5FPNotAvailableError as e:
             logger.warning(e)
-            logger.warning(f"LANCE GEOS-5 FP cannot be processed for date: {target_date}")
+            logger.warning(f"VIIRS GEOS-5 FP cannot be processed for date: {target_date}")
             missing_dates.append(target_date)
             continue
         except Exception as e:
             logger.exception(e)
-            logger.warning(f"LANCE GEOS-5 FP cannot be processed for date: {target_date}")
+            logger.warning(f"VIIRS GEOS-5 FP cannot be processed for date: {target_date}")
             missing_dates.append(target_date)
             continue
 
-    logger.info("missing LANCE GEOS-5 FP dates: " + ", ".join(colored_logging.time(d) for d in missing_dates))
+    logger.info("missing VIIRS GEOS-5 FP dates: " + ", ".join(colored_logging.time(d) for d in missing_dates))
 
 
 def main(argv=sys.argv):
@@ -175,10 +173,10 @@ def main(argv=sys.argv):
     else:
         SRTM_download = join(working_directory, "SRTM_download_directory")
 
-    if "--LANCE" in argv:
-        LANCE_download_directory = argv[argv.index("--LANCE") + 1]
+    if "--VIIRS" in argv:
+        VIIRS_download_directory = argv[argv.index("--VIIRS") + 1]
     else:
-        LANCE_download_directory = join(working_directory, "LANCE_download_directory")
+        VIIRS_download_directory = join(working_directory, "VIIRS_download_directory")
 
     if "--GEOS5FP" in argv:
         GEOS5FP_download = argv[argv.index("--GEOS5FP") + 1]
@@ -206,7 +204,7 @@ def main(argv=sys.argv):
         static_directory=static_directory,
         output_directory=output_directory,
         SRTM_download=SRTM_download,
-        LANCE_download=LANCE_download_directory,
+        VIIRS_download_directory=VIIRS_download_directory,
         GEOS5FP_download=GEOS5FP_download,
         spacetrack_credentials_filename=spacetrack_credentials_filename,
         ERS_credentials_filename=ERS_credentials_filename

@@ -331,7 +331,7 @@ def VIIRS_GEOS5FP(
 
     if albedo is None:
         logger.info(
-            f"retrieving {cl.name('VNP09GA')} {cl.name('albedo')} from LANCE on {cl.time(target_date)}")
+            f"retrieving {cl.name('VNP09GA')} {cl.name('albedo')} on {cl.time(target_date)}")
 
         albedo = VNP09GA_connection.albedo(date_UTC=target_date, geometry=geometry, resampling="cubic")
 
