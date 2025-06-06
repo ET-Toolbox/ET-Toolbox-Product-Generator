@@ -1,45 +1,24 @@
 import logging
 import sys
 from datetime import datetime, timedelta, date
-from os.path import join, abspath, dirname, exists, expanduser
+from os.path import join, exists, expanduser
 from typing import List, Callable, Union
-
 
 import colored_logging
 from gedi_canopy_height import GEDICanopyHeight
 from GEOS5FP import GEOS5FP
-from ETtoolbox.LANCE_GEOS5FP_NRT import LANCE_GEOS5FP_NRT, LANCENotAvailableError, GEOS5FPNotAvailableError
 from MODISCI import MODISCI
-from PTJPLSM import PTJPLSM
+from PTJPL import PTJPL
 from NASADEM import NASADEM
 from soil_capacity_wilting import SoilGrids
 from rasters import Raster, RasterGrid
 from sentinel_tiles import sentinel_tiles
 
+from .constants import *
+from .VIIRS_GEOS5FP_NRT import VIIRS_GEOS5FP_NRT, GEOS5FPNotAvailableError
+
 logger = logging.getLogger(__name__)
 
-DEFAULT_RESAMPLING = "cubic"
-
-DEFAULT_MODEL_NAME = "PTJPLSM"
-DEFAULT_DOWNSCALE_AIR = True
-DEFAULT_DOWNSCALE_HUMIDITY = False
-DEFAULT_DOWNSCALE_MOISTURE = True
-DEFAULT_MESO_CELL_SIZE = 500
-DEFAULT_COARSE_CELL_SIZE = 27375
-
-DEFAULT_TARGET_VARIABLES = [
-    "Rn",
-    "LE",
-    "ETc",
-    "ETi",
-    "ETs",
-    "ET",
-    "ESI",
-    "WUE",
-    "SM",
-    "Ta",
-    "RH"
-]
 
 
 def ET_toolbox_hindcast_coarse_tile(
@@ -47,8 +26,8 @@ def ET_toolbox_hindcast_coarse_tile(
         geometry: RasterGrid = None,
         present_date: Union[date, str] = None,
         water: Raster = None,
-        model: PTJPLSM = None,
-        model_name: str = "PTJPLSM",
+        model: PTJPL = None,
+        model_name: str = "PTJPL",
         working_directory: str = None,
         static_directory: str = None,
         LANCE_download: str = None,
@@ -110,7 +89,7 @@ def ET_toolbox_hindcast_coarse_tile(
 
     if SRTM_connection is None:
         # FIXME fix handling of credentials here
-        SRTM_connection = SRTM(
+        SRTM_connection = NASADEM(
             working_directory=working_directory,
             download_directory=SRTM_download,
             ERS_credentials_filename=ERS_credentials_filename,
@@ -127,7 +106,7 @@ def ET_toolbox_hindcast_coarse_tile(
         logger.info(f"LANCE target time solar: {colored_logging.time(time_solar)}")
 
         try:
-            LANCE_GEOS5FP_NRT(
+            VIIRS_GEOS5FP_NRT(
                 target_date=target_date,
                 geometry=geometry,
                 target=tile,
@@ -164,7 +143,7 @@ def ET_toolbox_hindcast_coarse_tile(
                 save_intermediate=save_intermediate,
                 spacetrack_credentials_filename=spacetrack_credentials_filename
             )
-        except (LANCENotAvailableError, GEOS5FPNotAvailableError) as e:
+        except GEOS5FPNotAvailableError as e:
             logger.warning(e)
             logger.warning(f"LANCE GEOS-5 FP cannot be processed for date: {target_date}")
             missing_dates.append(target_date)

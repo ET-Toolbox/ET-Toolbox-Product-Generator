@@ -1,5 +1,5 @@
 from LandsatL2C2 import LandsatL2C2
-from PTJPLSM import PTJPLSM
+from PTJPL import PTJPL
 from datetime import datetime, date, timedelta
 from typing import Union, List
 from os.path import join, abspath, expanduser, splitext, exists, basename
@@ -123,7 +123,7 @@ def Landsat_GEOS5FP(
         Ta_C: rt.Raster = None,
         RH: rt.Raster = None,
         water: rt.Raster = None,
-        model: PTJPLSM = None,
+        model: PTJPL = None,
         working_directory: str = None,
         static_directory: str = None,
         Landsat_download_directory: str = None,
@@ -277,7 +277,7 @@ def Landsat_GEOS5FP(
     results["albedo"] = albedo
     
     if model is None:
-        model = PTJPLSM(
+        model = PTJPL(
             working_directory=working_directory,
             static_directory=static_directory,
             SRTM_connection=SRTM_connection,

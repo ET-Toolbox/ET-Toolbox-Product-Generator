@@ -13,10 +13,8 @@ from rasters import Raster, RasterGrid
 from gedi_canopy_height import GEDICanopyHeight
 from GEOS5FP import GEOS5FP
 from global_forecasting_system import *
-from ETtoolbox.VIIRS import *
 from MODISCI import MODISCI
 from PTJPL import PTJPL
-from PTJPLSM import PTJPLSM
 from NASADEM import NASADEM
 from soil_capacity_wilting import SoilGrids
 from GEOS5FP.downscaling import downscale_air_temperature, downscale_soil_moisture, bias_correct
@@ -142,7 +140,7 @@ def VIIRS_GFS_forecast(
         Ta_C: Raster = None,
         RH: Raster = None,
         water: Raster = None,
-        model: PTJPLSM = None,
+        model: PTJPL = None,
         working_directory: str = None,
         static_directory: str = None,
         GFS_download: str = None,
@@ -418,7 +416,7 @@ def VIIRS_GFS_forecast(
 
     results["Ta"] = Ta_C
 
-    if SM is None and model_name == "PTJPLSM":
+    if SM is None and model_name == "PTJPL":
         logger.info(f"retrieving GFS {colored_logging.name('SM')} forecast at {colored_logging.time(time_UTC)}")
 
         if downscale_moisture:

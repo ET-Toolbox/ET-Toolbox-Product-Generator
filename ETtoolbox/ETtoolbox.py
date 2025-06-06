@@ -13,7 +13,7 @@ from global_forecasting_system import forecast_Ta_C, forecast_RH, get_GFS_listin
 from harmonized_landsat_sentinel import HLS2Connection
 from LandsatL2C2 import LandsatL2C2
 from MODISCI import MODISCI
-from PTJPLSM import PTJPLSM
+from PTJPL import PTJPL
 from NASADEM import NASADEM
 from soil_capacity_wilting import SoilGrids
 from solar_apparent_time import solar_to_UTC
@@ -25,7 +25,7 @@ from sentinel_tiles import sentinel_tiles
 
 logger = logging.getLogger(__name__)
 
-ET_MODEL_NAME = "PTJPLSM"
+ET_MODEL_NAME = "PTJPL"
 SWIN_MODEL_NAME = "GEOS5FP"
 RN_MODEL_NAME = "Verma"
 
@@ -132,7 +132,7 @@ def ET_toolbox_hindcast_forecast_tile(
         tile: str,
         present_date: Union[date, str] = None,
         water: Raster = None,
-        model: PTJPLSM = None,
+        model: PTJPL = None,
         ET_model_name: str = ET_MODEL_NAME,
         SWin_model_name: str = SWIN_MODEL_NAME,
         Rn_model_name: str = RN_MODEL_NAME,

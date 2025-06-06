@@ -7,38 +7,19 @@ from os.path import join
 import colored_logging
 from gedi_canopy_height import GEDICanopyHeight
 from GEOS5FP import GEOS5FP
-from ETtoolbox.LANCE_GEOS5FP_NRT import LANCE_GEOS5FP_NRT, LANCENotAvailableError, GEOS5FPNotAvailableError
-from ETtoolbox.LANCE_GFS_forecast import LANCE_GFS_forecast
+
 from MODISCI import MODISCI
-from PTJPLSM import PTJPLSM
+from PTJPL import PTJPL
 from NASADEM import NASADEM
 from soil_capacity_wilting import SoilGrids
 from rasters import Raster, RasterGrid
 from sentinel_tiles import sentinel_tiles
 
+from .constants import *
+from .VIIRS_GEOS5FP_NRT import VIIRS_GEOS5FP_NRT, GEOS5FPNotAvailableError
+from .VIIRS_GFS_forecast import VIIRS_GFS_forecast
 
 logger = logging.getLogger(__name__)
-
-DEFAULT_MODEL_NAME = "PTJPLSM"
-DEFAULT_DOWNSCALE_AIR = True
-DEFAULT_DOWNSCALE_HUMIDITY = False
-DEFAULT_DOWNSCALE_MOISTURE = True
-DEFAULT_MESO_CELL_SIZE = 500
-DEFAULT_COARSE_CELL_SIZE = 27375
-
-DEFAULT_TARGET_VARIABLES = [
-    "Rn",
-    "LE",
-    "ETc",
-    "ETi",
-    "ETs",
-    "ET",
-    "ESI",
-    "WUE",
-    "SM",
-    "Ta",
-    "RH"
-]
 
 
 def ET_toolbox_hindcast_tile(
@@ -46,11 +27,11 @@ def ET_toolbox_hindcast_tile(
         geometry: RasterGrid = None,
         present_date: Union[date, str] = None,
         water: Raster = None,
-        model: PTJPLSM = None,
-        model_name: str = "PTJPLSM",
+        model: PTJPL = None,
+        model_name: str = "PTJPL",
         working_directory: str = None,
         static_directory: str = None,
-        LANCE_download: str = None,
+        VIIRS_download: str = None,
         output_directory: str = None,
         SRTM_connection: NASADEM = None,
         SRTM_download: str = None,
@@ -108,13 +89,13 @@ def ET_toolbox_hindcast_tile(
 
     for relative_days in range(-7, 1):
         target_date = present_date + timedelta(days=relative_days)
-        logger.info(f"LANCE GEOS-5 FP target date: {colored_logging.time(target_date)} ({colored_logging.time(relative_days)} days)")
+        logger.info(f"VIIRS GEOS-5 FP target date: {colored_logging.time(target_date)} ({colored_logging.time(relative_days)} days)")
 
         time_solar = datetime(target_date.year, target_date.month, target_date.day, 13, 30)
-        logger.info(f"LANCE target time solar: {colored_logging.time(time_solar)}")
+        logger.info(f"VIIRS target time solar: {colored_logging.time(time_solar)}")
 
         try:
-            LANCE_GEOS5FP_NRT(
+            VIIRS_GEOS5FP_NRT(
                 target_date=target_date,
                 geometry=geometry,
                 target=tile,
@@ -131,8 +112,8 @@ def ET_toolbox_hindcast_tile(
                 CI_directory=CI_directory,
                 soil_grids_connection=soil_grids_connection,
                 soil_grids_download=soil_grids_download,
-                LANCE_download_directory=LANCE_download,
-                LANCE_output_directory=output_directory,
+                VIIRS_download_directory=VIIRS_download,
+                VIIRS_output_directory=output_directory,
                 intermediate_directory=intermediate_directory,
                 preview_quality=preview_quality,
                 ANN_model=ANN_model,
@@ -150,18 +131,18 @@ def ET_toolbox_hindcast_tile(
                 load_previous=load_previous,
                 save_intermediate=save_intermediate
             )
-        except (LANCENotAvailableError, GEOS5FPNotAvailableError) as e:
+        except (VIIRSNotAvailableError, GEOS5FPNotAvailableError) as e:
             logger.warning(e)
-            logger.warning(f"LANCE GEOS-5 FP cannot be processed for date: {target_date}")
+            logger.warning(f"VIIRS GEOS-5 FP cannot be processed for date: {target_date}")
             missing_dates.append(target_date)
             continue
         except Exception as e:
             logger.exception(e)
-            logger.warning(f"LANCE GEOS-5 FP cannot be processed for date: {target_date}")
+            logger.warning(f"VIIRS GEOS-5 FP cannot be processed for date: {target_date}")
             missing_dates.append(target_date)
             continue
 
-    logger.info("missing LANCE GEOS-5 FP dates: " + ", ".join(colored_logging.time(d) for d in missing_dates))
+    logger.info("missing VIIRS GEOS-5 FP dates: " + ", ".join(colored_logging.time(d) for d in missing_dates))
 
 
 def ET_toolbox_hindcast_forecast_tile(
@@ -169,12 +150,12 @@ def ET_toolbox_hindcast_forecast_tile(
         geometry: RasterGrid = None,
         present_date: Union[date, str] = None,
         water: Raster = None,
-        model: PTJPLSM = None,
-        model_name: str = "PTJPLSM",
+        model: PTJPL = None,
+        model_name: str = "PTJPL",
         working_directory: str = None,
         static_directory: str = None,
-        LANCE_download: str = None,
-        LANCE_output_directory: str = None,
+        VIIRS_download: str = None,
+        VIIRS_output_directory: str = None,
         SRTM_connection: NASADEM = None,
         SRTM_download: str = None,
         GEOS5FP_connection: GEOS5FP = None,
@@ -221,7 +202,7 @@ def ET_toolbox_hindcast_forecast_tile(
 
     if SRTM_connection is None:
         # FIXME fix handling of credentials here
-        SRTM_connection = SRTM(
+        SRTM_connection = NASADEM(
             working_directory=working_directory,
             download_directory=SRTM_download,
             offline_ok=True
@@ -231,13 +212,13 @@ def ET_toolbox_hindcast_forecast_tile(
 
     for relative_days in range(-7, 1):
         target_date = present_date + timedelta(days=relative_days)
-        logger.info(f"LANCE GEOS-5 FP target date: {colored_logging.time(target_date)} ({colored_logging.time(relative_days)} days)")
+        logger.info(f"VIIRS GEOS-5 FP target date: {colored_logging.time(target_date)} ({colored_logging.time(relative_days)} days)")
 
         time_solar = datetime(target_date.year, target_date.month, target_date.day, 13, 30)
-        logger.info(f"LANCE target time solar: {colored_logging.time(time_solar)}")
+        logger.info(f"VIIRS target time solar: {colored_logging.time(time_solar)}")
 
         try:
-            LANCE_GEOS5FP_NRT(
+            VIIRS_GEOS5FP_NRT(
                 target_date=target_date,
                 geometry=geometry,
                 target=tile,
@@ -254,8 +235,8 @@ def ET_toolbox_hindcast_forecast_tile(
                 CI_directory=CI_directory,
                 soil_grids_connection=soil_grids_connection,
                 soil_grids_download=soil_grids_download,
-                LANCE_download_directory=LANCE_download,
-                LANCE_output_directory=LANCE_output_directory,
+                VIIRS_download_directory=VIIRS_download,
+                VIIRS_output_directory=VIIRS_output_directory,
                 intermediate_directory=intermediate_directory,
                 preview_quality=preview_quality,
                 ANN_model=ANN_model,
@@ -273,27 +254,27 @@ def ET_toolbox_hindcast_forecast_tile(
                 load_previous=load_previous,
                 save_intermediate=save_intermediate
             )
-        except (LANCENotAvailableError, GEOS5FPNotAvailableError) as e:
+        except (VIIRSNotAvailableError, GEOS5FPNotAvailableError) as e:
             logger.warning(e)
-            logger.warning(f"LANCE GEOS-5 FP cannot be processed for date: {target_date}")
+            logger.warning(f"VIIRS GEOS-5 FP cannot be processed for date: {target_date}")
             missing_dates.append(target_date)
             continue
         except Exception as e:
             logger.exception(e)
-            logger.warning(f"LANCE GEOS-5 FP cannot be processed for date: {target_date}")
+            logger.warning(f"VIIRS GEOS-5 FP cannot be processed for date: {target_date}")
             missing_dates.append(target_date)
             continue
 
-    logger.info("missing LANCE GEOS-5 FP dates: " + ", ".join(colored_logging.time(d) for d in missing_dates))
+    logger.info("missing VIIRS GEOS-5 FP dates: " + ", ".join(colored_logging.time(d) for d in missing_dates))
 
     forecast_dates = missing_dates + [present_date + timedelta(days=d) for d in range(8)]
 
     for target_date in forecast_dates:
         relative_days = target_date - present_date
-        logger.info(f"GFS LANCE target date: {colored_logging.time(target_date)} ({colored_logging.time(relative_days)} days)")
+        logger.info(f"GFS VIIRS target date: {colored_logging.time(target_date)} ({colored_logging.time(relative_days)} days)")
 
         try:
-            LANCE_GFS_forecast(
+            VIIRS_GFS_forecast(
                 target_date=target_date,
                 geometry=geometry,
                 target=tile,
@@ -307,7 +288,7 @@ def ET_toolbox_hindcast_forecast_tile(
                 CI_directory=CI_directory,
                 soil_grids_connection=soil_grids_connection,
                 soil_grids_download=soil_grids_download,
-                LANCE_download_directory=LANCE_download,
+                VIIRS_download_directory=VIIRS_download,
                 intermediate_directory=intermediate_directory,
                 preview_quality=preview_quality,
                 ANN_model=ANN_model,
@@ -327,7 +308,7 @@ def ET_toolbox_hindcast_forecast_tile(
             )
         except Exception as e:
             logger.exception(e)
-            logger.warning(f"LANCE GFS cannot be processed for date: {target_date}")
+            logger.warning(f"VIIRS GFS cannot be processed for date: {target_date}")
             continue
 
 def main(argv=sys.argv):
@@ -348,10 +329,10 @@ def main(argv=sys.argv):
     else:
         SRTM_download = join(working_directory, "SRTM_download_directory")
 
-    if "--LANCE" in argv:
-        LANCE_download_directory = argv[argv.index("--LANCE") + 1]
+    if "--VIIRS" in argv:
+        VIIRS_download_directory = argv[argv.index("--VIIRS") + 1]
     else:
-        LANCE_download_directory = join(working_directory, "LANCE_download_directory")
+        VIIRS_download_directory = join(working_directory, "VIIRS_download_directory")
 
     if "--GEOS5FP" in argv:
         GEOS5FP_download = argv[argv.index("--GEOS5FP") + 1]
@@ -369,6 +350,6 @@ def main(argv=sys.argv):
         static_directory=static_directory,
         output_directory=output_directory,
         SRTM_download=SRTM_download,
-        LANCE_download=LANCE_download_directory,
+        VIIRS_download=VIIRS_download_directory,
         GEOS5FP_download=GEOS5FP_download,
     )

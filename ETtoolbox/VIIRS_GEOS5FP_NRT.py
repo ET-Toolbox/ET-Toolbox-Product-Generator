@@ -18,7 +18,7 @@ from GEOS5FP import GEOS5FP
 from MODISCI import MODISCI
 from PTJPL import PTJPL
 from verma_net_radiation import process_verma_net_radiation
-from PTJPLSM import PTJPLSM
+from PTJPL import PTJPL
 import NASADEM
 from soil_capacity_wilting import SoilGrids
 from GEOS5FP.downscaling import downscale_air_temperature, downscale_soil_moisture, downscale_vapor_pressure_deficit, \
@@ -148,7 +148,7 @@ def VIIRS_GEOS5FP_NRT(
         RH: rt.Raster = None,
         water: rt.Raster = None,
         elevation_km: rt.Raster = None,
-        model: PTJPLSM = None,
+        model: PTJPL = None,
         model_name: str = ET_MODEL_NAME,
         working_directory: str = None,
         static_directory: str = None,
