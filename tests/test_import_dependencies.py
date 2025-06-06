@@ -2,6 +2,7 @@ import pytest
 
 # List of dependencies
 dependencies = [
+    "check_distribution",
     "colored_logging",
     "gedi_canopy_height",
     "GEOS5FP",

@@ -15,6 +15,7 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 dependencies = [
+    "check-distribution",
     "colored-logging",
     "gedi-canopy-height",
     "GEOS5FP",

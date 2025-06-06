@@ -15,113 +15,22 @@ from GEOS5FP import GEOS5FP
 from global_forecasting_system import *
 from MODISCI import MODISCI
 from PTJPL import PTJPL
-from NASADEM import NASADEM
 from soil_capacity_wilting import SoilGrids
 from GEOS5FP.downscaling import downscale_air_temperature, downscale_soil_moisture, bias_correct
 from sentinel_tiles import sentinel_tiles
 from solar_apparent_time import solar_to_UTC
 import colored_logging as cl
 from verma_net_radiation import process_verma_net_radiation
-import NASADEM
+from NASADEM import NASADEMConnection
 from check_distribution import check_distribution
 
 from .constants import *
+from .generate_GFS_output_directory import generate_GFS_output_directory
+from .generate_GFS_output_filename import generate_GFS_output_filename
+from .check_GFS_already_processed import check_GFS_already_processed
+from .load_GFS import load_GFS
 
 logger = logging.getLogger(__name__)
-
-
-def generate_GFS_output_directory(
-        GFS_output_directory: str,
-        target_date: Union[date, str],
-        target: str):
-    if isinstance(target_date, str):
-        target_date = parser.parse(target_date).date()
-
-    directory = join(
-        abspath(expanduser(GFS_output_directory)),
-        f"{target_date:%Y-%m-%d}",
-        f"GFS_{target_date:%Y-%m-%d}_{target}",
-    )
-
-    return directory
-
-
-def generate_GFS_output_filename(
-        GFS_output_directory: str,
-        target_date: Union[date, str],
-        time_UTC: Union[datetime, str],
-        target: str,
-        product: str):
-    if isinstance(target_date, str):
-        target_date = parser.parse(target_date).date()
-
-    if isinstance(time_UTC, str):
-        time_UTC = parser.parse(time_UTC)
-
-    directory = generate_GFS_output_directory(
-        GFS_output_directory=GFS_output_directory,
-        target_date=target_date,
-        target=target
-    )
-
-    filename = join(directory, f"GFS_{time_UTC:%Y.%m.%d.%H.%M.%S}_{target}_{product}.tif")
-
-    return filename
-
-
-def check_GFS_already_processed(
-        GFS_output_directory: str,
-        target_date: Union[date, str],
-        time_UTC: Union[datetime, str],
-        target: str,
-        products: List[str]):
-    already_processed = True
-    logger.info(f"checking if GFS VIIRS has previously been processed at {colored_logging.place(target)} on {colored_logging.time(target_date)}")
-
-    for product in products:
-        filename = generate_GFS_output_filename(
-            GFS_output_directory=GFS_output_directory,
-            target_date=target_date,
-            time_UTC=time_UTC,
-            target=target,
-            product=product
-        )
-
-        if exists(filename):
-            logger.info(
-                f"found previous GFS VIIRS {colored_logging.name(product)} at {colored_logging.place(target)} on {colored_logging.time(target_date)}: {colored_logging.file(filename)}")
-        else:
-            logger.info(
-                f"did not find previous GFS VIIRS {colored_logging.name(product)} at {colored_logging.place(target)} on {colored_logging.time(target_date)}")
-            already_processed = False
-
-    return already_processed
-
-
-def load_GFS(GFS_output_directory: str, target_date: Union[date, str], target: str, products: List[str] = None):
-    dataset = {}
-
-    directory = generate_GFS_output_directory(
-        GFS_output_directory=GFS_output_directory,
-        target_date=target_date,
-        target=target
-    )
-
-    pattern = join(directory, "*.tif")
-    logger.info(f"searching for GFS products: {colored_logging.val(pattern)}")
-    filenames = glob(pattern)
-
-    for filename in filenames:
-        logger.info(f"loading GFS VIIRS file: {colored_logging.file(filename)}")
-        product = splitext(basename(filename))[0].split("_")[-1]
-
-        if products is not None and product not in products:
-            continue
-
-        image = Raster.open(filename)
-        dataset[product] = image
-
-    return dataset
 
 def VIIRS_GFS_forecast(
         target_date: Union[date, str],
@@ -147,7 +56,7 @@ def VIIRS_GFS_forecast(
         GFS_output_directory: str = None,
         VNP21A1D_download_directory: str = VNP21A1D_DOWNLOAD_DIRECTORY,
         VNP09GA_download_directory: str = VNP09GA_DOWNLOAD_DIRECTORY,
-        SRTM_connection: NASADEM = None,
+        SRTM_connection: NASADEMConnection = None,
         SRTM_download: str = None,
         GEOS5FP_connection: GEOS5FP = None,
         GEOS5FP_download: str = None,
@@ -182,11 +91,11 @@ def VIIRS_GFS_forecast(
     if isinstance(target_date, str):
         target_date = parser.parse(target_date).date()
 
-    logger.info(f"GFS-VIIRS target date: {colored_logging.time(target_date)}")
+    logger.info(f"GFS-VIIRS target date: {cl.time(target_date)}")
     time_solar = datetime(target_date.year, target_date.month, target_date.day, 13, 30)
-    logger.info(f"GFS-VIIRS target time solar: {colored_logging.time(time_solar)}")
+    logger.info(f"GFS-VIIRS target time solar: {cl.time(time_solar)}")
     time_UTC = solar_to_UTC(time_solar, geometry.centroid.latlon.x)
-    logger.info(f"GFS-VIIRS target time UTC: {colored_logging.time(time_UTC)}")
+    logger.info(f"GFS-VIIRS target time UTC: {cl.time(time_UTC)}")
     date_UTC= time_UTC.date()
 
     if isinstance(VIIRS_processing_date, str):
@@ -197,20 +106,20 @@ def VIIRS_GFS_forecast(
 
     working_directory = abspath(expanduser(working_directory))
 
-    logger.info(f"GFS-VIIRS working directory: {colored_logging.dir(working_directory)}")
+    logger.info(f"GFS-VIIRS working directory: {cl.dir(working_directory)}")
 
     if GFS_download is None:
         GFS_download = GFS_DOWNLOAD_DIRECTORY
 
-    logger.info(f"GFS download directory: {colored_logging.dir(GFS_download)}")
+    logger.info(f"GFS download directory: {cl.dir(GFS_download)}")
 
     if GFS_output_directory is None:
         GFS_output_directory = join(working_directory, GFS_OUTPUT_DIRECTORY)
 
-    logger.info(f"GFS output directory: {colored_logging.dir(GFS_output_directory)}")
+    logger.info(f"GFS output directory: {cl.dir(GFS_output_directory)}")
 
     if SRTM_connection is None:
-        SRTM_connection = NASADEM.NASADEMConnection(
+        SRTM_connection = NASADEMConnection(
             download_directory=SRTM_download,
         )
 
@@ -253,22 +162,22 @@ def VIIRS_GFS_forecast(
 
     if target_date < earliest_GFS_date:
         raise ValueError(
-            f"target date {colored_logging.time(target_date)} is before earliest GFS date {colored_logging.time(earliest_GFS_date)}")
+            f"target date {cl.time(target_date)} is before earliest GFS date {cl.time(earliest_GFS_date)}")
 
     VIIRS_processing_date = target_date
     VIIRS_processing_time = time_UTC
 
     VIIRS_processing_datetime_solar = datetime(VIIRS_processing_date.year, VIIRS_processing_date.month,
                                                VIIRS_processing_date.day, 13, 30)
-    logger.info(f"VIIRS processing date/time solar: {colored_logging.time(VIIRS_processing_datetime_solar)}")
+    logger.info(f"VIIRS processing date/time solar: {cl.time(VIIRS_processing_datetime_solar)}")
     VIIRS_processing_datetime_UTC = solar_to_UTC(VIIRS_processing_datetime_solar, geometry.centroid.latlon.x)
-    logger.info(f"VIIRS processing date/time UTC: {colored_logging.time(VIIRS_processing_datetime_UTC)}")
+    logger.info(f"VIIRS processing date/time UTC: {cl.time(VIIRS_processing_datetime_UTC)}")
 
     forecast_distance_days = (target_date - VIIRS_processing_date).days
 
     if forecast_distance_days > 0:
         logger.info(
-            f"target date {colored_logging.time(target_date)} is {colored_logging.val(forecast_distance_days)} days past VIIRS processing date {colored_logging.time(VIIRS_processing_date)}")
+            f"target date {cl.time(target_date)} is {cl.val(forecast_distance_days)} days past VIIRS processing date {cl.time(VIIRS_processing_date)}")
 
     VNP21_connection = VNP21A1D_002.VNP21A1D(download_directory=VNP21A1D_download_directory)
     VNP09_connection = VNP09GA_002.VNP09GA(download_directory=VNP09GA_download_directory)
@@ -338,13 +247,13 @@ def VIIRS_GFS_forecast(
 
     logger.info("retrieving water mask from SRTM")
     water = SRTM_connection.swb(geometry)
-    logger.info(f"running PT-JPL-SM ET model forecast at {colored_logging.time(time_UTC)}")
+    logger.info(f"running PT-JPL-SM ET model forecast at {cl.time(time_UTC)}")
 
     if coarse_geometry is None:
         coarse_geometry = sentinel_tiles.grid(target, coarse_cell_size)
 
     if Ta_C is None:
-        logger.info(f"retrieving GFS {colored_logging.name('Ta')} forecast at {colored_logging.time(time_UTC)}")
+        logger.info(f"retrieving GFS {cl.name('Ta')} forecast at {cl.time(time_UTC)}")
         if downscale_air:
             Ta_K_coarse = forecast_Ta_K(time_UTC=time_UTC, geometry=coarse_geometry, resampling="cubic", listing=GFS_listing)
 
@@ -417,7 +326,7 @@ def VIIRS_GFS_forecast(
     results["Ta"] = Ta_C
 
     if SM is None and model_name == "PTJPL":
-        logger.info(f"retrieving GFS {colored_logging.name('SM')} forecast at {colored_logging.time(time_UTC)}")
+        logger.info(f"retrieving GFS {cl.name('SM')} forecast at {cl.time(time_UTC)}")
 
         if downscale_moisture:
             SM_coarse = forecast_SM(time_UTC=time_UTC, geometry=coarse_geometry, resampling="cubic")
@@ -511,7 +420,7 @@ def VIIRS_GFS_forecast(
     results["SM"] = SM
 
     if RH is None:
-        logger.info(f"retrieving GFS {colored_logging.name('RH')} forecast at {colored_logging.time(time_UTC)}")
+        logger.info(f"retrieving GFS {cl.name('RH')} forecast at {cl.time(time_UTC)}")
 
         if downscale_humidity:
             SVP_Pa = 0.6108 * np.exp((17.27 * Ta_C) / (Ta_C + 237.3)) * 1000  # [Pa]
@@ -583,7 +492,7 @@ def VIIRS_GFS_forecast(
     results["RH"] = RH
 
     if wind_speed is None:
-        logger.info(f"retrieving GFS {colored_logging.name('wind_speed')} forecast at {colored_logging.time(time_UTC)}")
+        logger.info(f"retrieving GFS {cl.name('wind_speed')} forecast at {cl.time(time_UTC)}")
 
         if apply_GEOS5FP_GFS_bias_correction:
             matching_wind_speed_GFS = forecast_wind(
@@ -625,7 +534,7 @@ def VIIRS_GFS_forecast(
     results["wind_speed"] = wind_speed
 
     if SWin is None:
-        logger.info(f"retrieving GFS {colored_logging.name('SWin')} forecast at {colored_logging.time(time_UTC)}")
+        logger.info(f"retrieving GFS {cl.name('SWin')} forecast at {cl.time(time_UTC)}")
 
         if apply_GEOS5FP_GFS_bias_correction:
             matching_SWin_GFS = forecast_SWin(
@@ -701,7 +610,7 @@ def VIIRS_GFS_forecast(
             continue
 
         logger.info(
-            f"writing VIIRS GFS {colored_logging.name(product)} at {colored_logging.place(target)} at {colored_logging.time(time_UTC)} to file: {colored_logging.file(filename)}")
+            f"writing VIIRS GFS {cl.name(product)} at {cl.place(target)} at {cl.time(time_UTC)} to file: {cl.file(filename)}")
         image.to_geotiff(filename)
 
     return results
