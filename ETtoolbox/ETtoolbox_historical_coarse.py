@@ -1,3 +1,21 @@
+"""
+ETtoolbox_historical_coarse.py
+
+This module provides functionality to generate historical coarse ET Toolbox products for a given Sentinel tile and date range.
+It orchestrates the download, processing, and storage of various remote sensing and meteorological datasets, including VIIRS, GEOS-5 FP, SRTM, and others.
+The main entry point is `ET_toolbox_historical_coarse_tile`, which can be called directly or via the command line interface.
+
+Functions:
+    - ET_toolbox_historical_coarse_tile: Main processing function for a tile and date range.
+    - main: Command-line interface entry point.
+
+Classes:
+    - BlankOutputError: Custom exception for blank outputs.
+
+Usage:
+    python ETtoolbox_historical_coarse.py <tile> <start_date> <end_date> [--working <dir>] [--static <dir>] [--SRTM <dir>] [--VIIRS <dir>] [--GEOS5FP <dir>]
+"""
+
 import logging
 import sys
 from datetime import datetime, timedelta, date
@@ -17,9 +35,6 @@ from solar_apparent_time import solar_to_UTC
 
 from LandsatL2C2 import LandsatL2C2
 from PTJPL import PTJPL
-from ETtoolbox.VIIRS_GEOS5FP import VIIRS_GEOS5FP, check_VIIRS_GEOS5FP_already_processed, VIIRS_DOWNLOAD_DIRECTORY, \
-    VIIRS_PRODUCTS_DIRECTORY
-from ETtoolbox.daterange import date_range
 
 from check_distribution import check_distribution
 
@@ -30,52 +45,16 @@ from VNP21A1D_002 import VNP21A1D
 import colored_logging as cl
 
 from .constants import *
+from .generate_landsat_ST_C_prior import generate_landsat_ST_C_prior
+from .VIIRS_GEOS5FP import VIIRS_GEOS5FP, check_VIIRS_GEOS5FP_already_processed, VIIRS_DOWNLOAD_DIRECTORY, \
+    VIIRS_PRODUCTS_DIRECTORY
+from .daterange import date_range
 
 logger = logging.getLogger(__name__)
 
-
 class BlankOutputError(ValueError):
+    """Exception raised when an output is unexpectedly blank."""
     pass
-
-def generate_landsat_ST_C_prior(
-        date_UTC: Union[date, str],
-        geometry: RasterGrid,
-        target_name: str,
-        landsat: LandsatL2C2 = None,
-        working_directory: str = None,
-        download_directory: str = None,
-        landsat_initialization_days: int = LANDSAT_INITIALIZATION_DAYS) -> Raster:
-    if isinstance(date_UTC, str):
-        date_UTC = parser.parse(date_UTC).date()
-
-    if landsat is None:
-        landsat = LandsatL2C2(
-            working_directory=working_directory,
-            download_directory=download_directory
-        )
-
-    landsat_start = date_UTC - timedelta(days=landsat_initialization_days)
-    landsat_end = date_UTC - timedelta(days=1)
-    logger.info(f"generating Landsat temperature composite from {colored_logging.time(landsat_start)} to {colored_logging.time(landsat_end)}")
-    landsat_listing = landsat.scene_search(start=landsat_start, end=landsat_end, target_geometry=geometry)
-    landsat_composite_dates = sorted(set(landsat_listing.date_UTC))
-    logger.info(f"found Landsat granules on dates: {', '.join([colored_logging.time(d) for d in landsat_composite_dates])}")
-
-    ST_C_images = []
-
-    for date_UTC in landsat_composite_dates:
-        try:
-            ST_C = landsat.product(acquisition_date=date_UTC, product="ST_C", geometry=geometry,
-                                   target_name=target_name)
-            ST_C_images.append(ST_C)
-        except Exception as e:
-            logger.warning(e)
-            continue
-
-    composite = Raster(np.nanmedian(np.stack(ST_C_images), axis=0), geometry=geometry)
-
-    return composite
-
 
 def ET_toolbox_historical_coarse_tile(
         tile: str,
@@ -116,26 +95,74 @@ def ET_toolbox_historical_coarse_tile(
         show_distribution: bool = SHOW_DISTRIBUTION,
         load_previous: bool = LOAD_PREVIOUS,
         target_variables: List[str] = None):
+    """
+    Generate historical coarse ET Toolbox products for a given Sentinel tile and date range.
+
+    Args:
+        tile (str): Sentinel tile identifier.
+        start_date (date or str): Start date (inclusive).
+        end_date (date or str): End date (inclusive).
+        water (Raster, optional): Water mask raster.
+        ET_model_name (str): Name of the ET model to use.
+        SWin_model_name (str): Name of the shortwave incoming radiation model.
+        Rn_model_name (str): Name of the net radiation model.
+        working_directory (str): Directory for working files.
+        static_directory (str): Directory for static files.
+        VNP09GA_download_directory (str): Directory for VNP09GA downloads.
+        VNP21A1D_download_directory (str): Directory for VNP21A1D downloads.
+        use_VIIRS_composite (bool): Whether to use VIIRS composite.
+        VIIRS_composite_days (int): Number of days for VIIRS composite.
+        VIIRS_GEOS5FP_output_directory (str): Output directory for VIIRS GEOS-5 FP products.
+        SRTM_connection (NASADEMConnection): SRTM connection object.
+        SRTM_download (str): Directory for SRTM downloads.
+        GEOS5FP_connection (GEOS5FP): GEOS5FP connection object.
+        GEOS5FP_download (str): Directory for GEOS5FP downloads.
+        GEOS5FP_products (str): Directory for GEOS5FP products.
+        GEDI_connection (GEDICanopyHeight): GEDI connection object.
+        GEDI_download (str): Directory for GEDI downloads.
+        ORNL_connection (MODISCI): ORNL connection object.
+        CI_directory (str): Directory for canopy index files.
+        soil_grids_connection (SoilGrids): Soil grids connection object.
+        soil_grids_download (str): Directory for soil grids downloads.
+        intermediate_directory (str): Directory for intermediate files.
+        preview_quality (int): Preview quality setting.
+        ANN_model (Callable): Artificial neural network model.
+        ANN_model_filename (str): Filename for ANN model.
+        resampling (str): Resampling method.
+        M_geometry (RasterGrid): Geometry for main grid.
+        M_cell_size (float): Cell size for main grid.
+        GEOS5FP_geometry (RasterGrid): Geometry for GEOS5FP grid.
+        GEOS5FP_cell_size (float): Cell size for GEOS5FP grid.
+        save_intermediate (bool): Whether to save intermediate results.
+        show_distribution (bool): Whether to show distribution plots.
+        load_previous (bool): Whether to load previous results.
+        target_variables (List[str]): List of target variables to process.
+
+    Returns:
+        None
+    """
+    # Parse date strings if necessary
     if isinstance(start_date, str):
         start_date = parser.parse(start_date).date()
-
     if isinstance(end_date, str):
         end_date = parser.parse(end_date).date()
 
     logger.info(
         f"generating ET Toolbox hindcast and forecast at tile {colored_logging.place(tile)} from {colored_logging.time(start_date)} to {colored_logging.time(end_date)}")
 
+    # Set up main and GEOS5FP grid geometries if not provided
     if M_geometry is None:
         logger.info(f"I-band cell size: {colored_logging.val(M_cell_size)}m")
         M_geometry = sentinel_tiles.grid(tile, cell_size=M_cell_size)
-
     if GEOS5FP_geometry is None:
         logger.info(f"GEOS-5 FP cell size: {colored_logging.val(GEOS5FP_cell_size)}m")
         GEOS5FP_geometry = sentinel_tiles.grid(tile, cell_size=GEOS5FP_cell_size)
 
+    # Set default target variables if not provided
     if target_variables is None:
         target_variables = TARGET_VARIABLES
 
+    # Set up GEOS5FP connection if not provided
     if GEOS5FP_connection is None:
         GEOS5FP_connection = GEOS5FP(
             working_directory=working_directory,
@@ -143,6 +170,7 @@ def ET_toolbox_historical_coarse_tile(
             products_directory=GEOS5FP_products
         )
 
+    # Set up SRTM connection if not provided
     if SRTM_connection is None:
         SRTM_connection = NASADEMConnection(
             working_directory=working_directory,
@@ -150,33 +178,32 @@ def ET_toolbox_historical_coarse_tile(
             offline_ok=True
         )
 
+    # Get water mask for main grid
     water_M = SRTM_connection.swb(M_geometry)
 
+    # Set up VNP09GA download directory
     if VNP09GA_download_directory is None:
         VNP09GA_download_directory = VNP09GA_DOWNLOAD_DIRECTORY
-
     logger.info(f"VNP09GA download directory: {cl.dir(VNP09GA_download_directory)}")
 
-    VNP21A1D_connection = VNP21A1D(
-        download_directory=VNP21A1D_download_directory,
-        )
-    
+    # Set up VNP21A1D download directory
     if VNP21A1D_download_directory is None:
         VNP21A1D_download_directory = VNP21A1D_DOWNLOAD_DIRECTORY
-
     logger.info(f"VNP21A1D download directory: {cl.dir(VNP21A1D_download_directory)}")
 
+    # Set up VNP21A1D connection
     VNP21A1D_connection = VNP21A1D(
         download_directory=VNP21A1D_download_directory,
-        )
+    )
 
+    # Set up VIIRS GEOS5FP output directory
     if VIIRS_GEOS5FP_output_directory is None:
         VIIRS_GEOS5FP_output_directory = join(working_directory, VIIRS_GEOS5FP_OUTPUT_DIRECTORY)
-
     logger.info(f"VIIRS GEOS-5 FP output directory: {colored_logging.dir(VIIRS_GEOS5FP_output_directory)}")
 
     VIIRS_dates_processed = set()
 
+    # First pass: check which dates are already processed
     for target_date in date_range(start_date, end_date):
         logger.info(f"ET Toolbox historical fine target date: {colored_logging.time(target_date)}")
         time_solar = datetime(target_date.year, target_date.month, target_date.day, 13, 30)
@@ -196,10 +223,11 @@ def ET_toolbox_historical_coarse_tile(
             VIIRS_dates_processed |= {target_date}
             continue
         else:
-            VIIRS_not_processed = False
+            VIIRS_not_processed = False  # This variable is not used elsewhere
 
     missing_dates = []
 
+    # Second pass: process missing dates
     for target_date in date_range(start_date, end_date):
         logger.info(f"VIIRS GEOS-5 FP target date: {colored_logging.time(target_date)}")
 
@@ -220,6 +248,7 @@ def ET_toolbox_historical_coarse_tile(
                 logger.info(f"VIIRS GEOS-5 FP already processed at tile {colored_logging.place(tile)} for date {target_date}")
                 continue
 
+            # Run the VIIRS_GEOS5FP processing for this date
             VIIRS_GEOS5FP(
                 target_date=target_date,
                 geometry=M_geometry,
@@ -235,7 +264,7 @@ def ET_toolbox_historical_coarse_tile(
                 soil_grids_connection=soil_grids_connection,
                 soil_grids_download=soil_grids_download,
                 VNP09GA_download_directory=VNP09GA_download_directory,
-                VNP21A1D_download_directory=VNP21A1D_download_directory,`
+                VNP21A1D_download_directory=VNP21A1D_download_directory,
                 VIIRS_GEOS5FP_output_directory=VIIRS_GEOS5FP_output_directory,
                 intermediate_directory=intermediate_directory,
                 preview_quality=preview_quality,
@@ -267,12 +296,24 @@ def ET_toolbox_historical_coarse_tile(
 
     logger.info("missing VIIRS GEOS-5 FP dates: " + ", ".join(colored_logging.time(d) for d in missing_dates))
 
-
 def main(argv=sys.argv):
+    """
+    Command-line interface for ETtoolbox_historical_coarse.py.
+
+    Usage:
+        python ETtoolbox_historical_coarse.py <tile> <start_date> <end_date> [--working <dir>] [--static <dir>] [--SRTM <dir>] [--VIIRS <dir>] [--GEOS5FP <dir>]
+
+    Args:
+        argv (list): List of command-line arguments.
+
+    Returns:
+        None
+    """
     tile = argv[1]
     start_date = parser.parse(argv[2]).date()
     end_date = parser.parse(argv[3]).date()
 
+    # Parse optional arguments for directories
     if "--working" in argv:
         working_directory = argv[argv.index("--working") + 1]
     else:
@@ -298,6 +339,7 @@ def main(argv=sys.argv):
     else:
         GEOS5FP_download = join(working_directory, "GEOS5FP_download_directory")
 
+    # Call the main processing function
     ET_toolbox_historical_coarse_tile(
         tile=tile,
         start_date=start_date,
@@ -305,6 +347,11 @@ def main(argv=sys.argv):
         working_directory=working_directory,
         static_directory=static_directory,
         SRTM_download=SRTM_download,
-        VIIRS_download_directory=VIIRS_download_directory,
+        VNP09GA_download_directory=VIIRS_download_directory,  # Corrected argument name
+        VNP21A1D_download_directory=VIIRS_download_directory, # Corrected argument name
         GEOS5FP_download=GEOS5FP_download,
     )
+
+# If this script is run directly, call main()
+if __name__ == "__main__":
+    main()
