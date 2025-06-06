@@ -1,4 +1,4 @@
-from ETtoolbox.LandsatL2C2 import LandsatL2C2
+from LandsatL2C2 import LandsatL2C2
 from sentinel_tiles import sentinel_tiles
 
 tile = "11SPS"

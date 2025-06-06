@@ -15,7 +15,7 @@ from sentinel_tiles import sentinel_tiles
 from soil_capacity_wilting import SoilGrids
 from solar_apparent_time import solar_to_UTC
 
-from ETtoolbox.LandsatL2C2 import LandsatL2C2
+from LandsatL2C2 import LandsatL2C2
 from PTJPL import PTJPL
 from ETtoolbox.VIIRS_GEOS5FP import VIIRS_GEOS5FP, check_VIIRS_GEOS5FP_already_processed, VIIRS_DOWNLOAD_DIRECTORY, \
     VIIRS_PRODUCTS_DIRECTORY

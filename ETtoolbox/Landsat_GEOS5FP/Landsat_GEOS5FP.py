@@ -1,4 +1,4 @@
-from ETtoolbox.LandsatL2C2 import LandsatL2C2
+from LandsatL2C2 import LandsatL2C2
 from PTJPLSM import PTJPLSM
 from datetime import datetime, date, timedelta
 from typing import Union, List
