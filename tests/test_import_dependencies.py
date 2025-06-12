@@ -2,32 +2,22 @@ import pytest
 
 # List of dependencies
 dependencies = [
-    "affine",
-    "bs4",
+    "check_distribution",
     "colored_logging",
-    "ephem",
-    "geopandas",
-    "GEOS5FP",
     "gedi_canopy_height",
+    "GEOS5FP",
+    "global_forecasting_system",
     "harmonized_landsat_sentinel",
-    "h5py",
-    "koppengeiger",
-    "matplotlib",
-    "nose",
-    "numpy",
-    "pycksum",
-    "pygrib",
+    "LandsatL2C2",
+    "MODISCI",
+    "NASADEM",
+    "PTJPL",
     "rasters",
-    "rasterio",
-    "requests",
-    "skimage",
-    "scipy",
-    "shapely",
+    "sentinel_tiles",
+    "soil_capacity_wilting",
     "solar_apparent_time",
-    "spacetrack",
-    "sun_angles",
-    "urllib3",
-    "xmltodict"
+    "VNP09GA_002",
+    "VNP21A1D_002"
 ]
 
 # Generate individual test functions for each dependency

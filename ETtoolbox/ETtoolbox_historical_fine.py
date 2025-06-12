@@ -13,7 +13,7 @@ from gedi_canopy_height import GEDICanopyHeight
 from GEOS5FP import GEOS5FP
 from solar_apparent_time import solar_to_UTC
 from harmonized_landsat_sentinel import HLS2Connection
-from ETtoolbox.LandsatL2C2 import LandsatL2C2
+from LandsatL2C2 import LandsatL2C2
 from MODISCI import MODISCI
 from PTJPL import PTJPL
 from soil_capacity_wilting import SoilGrids
@@ -35,50 +35,13 @@ from check_distribution import check_distribution
 import colored_logging as cl
 
 from .constants import *
+from .generate_landsat_ST_C_prior import generate_landsat_ST_C_prior
 
 logger = logging.getLogger(__name__)
 
 
 class BlankOutputError(ValueError):
     pass
-
-def generate_landsat_ST_C_prior(
-        date_UTC: Union[date, str],
-        geometry: RasterGrid,
-        target_name: str,
-        landsat: LandsatL2C2 = None,
-        working_directory: str = None,
-        download_directory: str = None,
-        landsat_initialization_days: int = LANDSAT_INITIALIZATION_DAYS) -> Raster:
-    if isinstance(date_UTC, str):
-        date_UTC = parser.parse(date_UTC).date()
-
-    if landsat is None:
-        landsat = LandsatL2C2(
-            working_directory=working_directory,
-            download_directory=download_directory
-        )
-
-    landsat_start = date_UTC - timedelta(days=landsat_initialization_days)
-    landsat_end = date_UTC - timedelta(days=1)
-    logger.info(f"generating Landsat temperature composite from {colored_logging.time(landsat_start)} to {colored_logging.time(landsat_end)}")
-    landsat_listing = landsat.scene_search(start=landsat_start, end=landsat_end, target_geometry=geometry)
-    landsat_composite_dates = sorted(set(landsat_listing.date_UTC))
-    logger.info(f"found Landsat granules on dates: {', '.join([colored_logging.time(d) for d in landsat_composite_dates])}")
-
-    ST_C_images = []
-
-    for date_UTC in landsat_composite_dates:
-        try:
-            ST_C = landsat.product(acquisition_date=date_UTC, product="ST_C", geometry=geometry, target_name=target_name)
-            ST_C_images.append(ST_C)
-        except Exception as e:
-            logger.warning(e)
-            continue
-
-    composite = Raster(np.nanmedian(np.stack(ST_C_images), axis=0), geometry=geometry)
-
-    return composite
 
 
 def ET_toolbox_historical_fine_tile(
@@ -113,10 +76,10 @@ def ET_toolbox_historical_fine_tile(
         soil_grids_connection: SoilGrids = None,
         soil_grids_download: str = None,
         intermediate_directory: str = None,
-        preview_quality: int = DEFAULT_PREVIEW_QUALITY,
+        preview_quality: int = PREVIEW_QUALITY,
         ANN_model: Callable = None,
         ANN_model_filename: str = None,
-        resampling: str = DEFAULT_RESAMPLING,
+        resampling: str = RESAMPLING,
         HLS_geometry: RasterGrid = None,
         HLS_cell_size: float = HLS_CELL_SIZE,
         I_geometry: RasterGrid = None,
@@ -176,7 +139,7 @@ def ET_toolbox_historical_fine_tile(
 
     if SRTM_connection is None:
         # FIXME fix handling of credentials here
-        SRTM_connection = SRTM(
+        SRTM_connection = NASADEMConnection(
             working_directory=working_directory,
             download_directory=SRTM_download,
             offline_ok=True

@@ -36,10 +36,10 @@ def main(argv=sys.argv):
     else:
         SRTM_download = join(working_directory, "SRTM_download_directory")
 
-    if "--LANCE" in argv:
-        LANCE_download_directory = argv[argv.index("--LANCE") + 1]
+    if "--VIIRS" in argv:
+        VIIRS_download_directory = argv[argv.index("--VIIRS") + 1]
     else:
-        LANCE_download_directory = join(working_directory, "LANCE_download_directory")
+        VIIRS_download_directory = join(working_directory, "VIIRS_download_directory")
 
     if "--GEOS5FP" in argv:
         GEOS5FP_download = argv[argv.index("--GEOS5FP") + 1]
@@ -52,6 +52,6 @@ def main(argv=sys.argv):
             working_directory=working_directory,
             static_directory=static_directory,
             SRTM_download_directory=SRTM_download,
-            LANCE_download_directory=LANCE_download_directory,
+            VIIRS_download_directory=VIIRS_download_directory,
             GEOS5FP_download_directory=GEOS5FP_download,
         )
