@@ -1,5 +1,5 @@
 from sentinel_tiles import sentinel_tiles
-from ETtoolbox.VIIRS_GEOS5FP_NRT import VIIRS_GEOS5FP_NRT
+from ETtoolbox.VIIRS_GEOS5FP import VIIRS_GEOS5FP_NRT
 
 tile = "11SPS"
 geometry = sentinel_tiles.grid(tile)

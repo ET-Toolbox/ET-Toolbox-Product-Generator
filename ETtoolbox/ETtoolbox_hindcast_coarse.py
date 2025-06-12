@@ -33,7 +33,7 @@ from rasters import Raster, RasterGrid
 from sentinel_tiles import sentinel_tiles
 
 from .constants import *
-from .VIIRS_GEOS5FP_NRT import VIIRS_GEOS5FP_NRT, GEOS5FPNotAvailableError
+from .VIIRS_GEOS5FP import VIIRS_GEOS5FP_NRT, GEOS5FPNotAvailableError
 
 logger = logging.getLogger(__name__)
 
