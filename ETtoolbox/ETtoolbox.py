@@ -11,10 +11,10 @@ from gedi_canopy_height import GEDICanopyHeight
 from GEOS5FP import GEOS5FP
 from global_forecasting_system import forecast_Ta_C, forecast_RH, get_GFS_listing, forecast_SWin
 from harmonized_landsat_sentinel import HLS2Connection
-from .LandsatL2C2 import LandsatL2C2
+from LandsatL2C2 import LandsatL2C2
 from MODISCI import MODISCI
-from PTJPLSM import PTJPLSM
-from ETtoolbox.SRTM import SRTM
+from PTJPL import PTJPL
+from NASADEM import NASADEMConnection
 from soil_capacity_wilting import SoilGrids
 from solar_apparent_time import solar_to_UTC
 from ETtoolbox.daterange import date_range
@@ -23,116 +23,20 @@ from GEOS5FP.downscaling import bias_correct, downscale_soil_moisture, downscale
 from rasters import Raster, RasterGrid
 from sentinel_tiles import sentinel_tiles
 
+from check_distribution import check_distribution
+
+from .constants import *
+
 logger = logging.getLogger(__name__)
-
-ET_MODEL_NAME = "PTJPLSM"
-SWIN_MODEL_NAME = "GEOS5FP"
-RN_MODEL_NAME = "Verma"
-
-DEFAULT_RESAMPLING = "cubic"
-
-DOWNSCALE_AIR = True
-DOWNSCALE_HUMIDITY = True
-DOWNSCALE_MOISTURE = True
-FLOOR_TOPT = True
-
-STATIC_DIRECTORY = "PTJPL_static"
-SRTM_DIRECTORY = "SRTM_download_directory"
-VIIRS_DIRECTORY = "VIIRS_download_directory"
-GEOS5FP_DIRECTORY = "GEOS5FP_download_directory"
-GFS_DIRECTORY = "GFS_download_directory"
-
-HLS_CELL_SIZE = 30
-I_CELL_SIZE = 500
-M_CELL_SIZE = 1000
-GEOS5FP_CELL_SIZE = 27375
-# GFS_CELL_SIZE = 54750
-GFS_CELL_SIZE = 27375
-LANDSAT_INITIALIZATION_DAYS = 16
-HLS_INITIALIZATION_DAYS = 10
-
-TARGET_VARIABLES = [
-    "Rn",
-    "LE",
-    "ET",
-    "ESI",
-    "SM",
-    "ST",
-    "Ta",
-    "RH",
-    "SWin"
-]
-
 
 class BlankOutputError(ValueError):
     pass
-
-
-def check_distribution(
-        image: Raster,
-        variable: str,
-        date_UTC: date or str,
-        target: str):
-    unique = np.unique(image)
-    nan_proportion = np.count_nonzero(np.isnan(image)) / np.size(image)
-
-    if len(unique) < 10:
-        logger.info(
-            "variable " + colored_logging.name(variable) + " on " + colored_logging.time(f"{date_UTC:%Y-%m-%d}") + " at " + colored_logging.place(
-                target))
-
-        for value in unique:
-            count = np.count_nonzero(image == value)
-
-            if value == 0:
-                logger.info(f"* {colored_logging.colored(value, 'red')}: {colored_logging.colored(count, 'red')}")
-            else:
-                logger.info(f"* {colored_logging.val(value)}: {colored_logging.val(count)}")
-    else:
-        minimum = np.nanmin(image)
-
-        if minimum < 0:
-            minimum_string = colored_logging.colored(f"{minimum:0.3f}", "red")
-        else:
-            minimum_string = colored_logging.val(f"{minimum:0.3f}")
-
-        maximum = np.nanmax(image)
-
-        if maximum <= 0:
-            maximum_string = colored_logging.colored(f"{maximum:0.3f}", "red")
-        else:
-            maximum_string = colored_logging.val(f"{maximum:0.3f}")
-
-        if nan_proportion > 0.5:
-            nan_proportion_string = colored_logging.colored(f"{(nan_proportion * 100):0.2f}%", "yellow")
-        elif nan_proportion == 1:
-            nan_proportion_string = colored_logging.colored(f"{(nan_proportion * 100):0.2f}%", "red")
-        else:
-            nan_proportion_string = colored_logging.val(f"{(nan_proportion * 100):0.2f}%")
-
-        message = "variable " + colored_logging.name(variable) + \
-                  " on " + colored_logging.time(f"{date_UTC:%Y-%m-%d}") + \
-                  " at " + colored_logging.place(target) + \
-                  " min: " + minimum_string + \
-                  " mean: " + colored_logging.val(f"{np.nanmean(image):0.3f}") + \
-                  " max: " + maximum_string + \
-                  " nan: " + nan_proportion_string + f" ({colored_logging.val(image.nodata)})"
-
-        if np.all(image == 0):
-            message += " all zeros"
-            logger.warning(message)
-        else:
-            logger.info(message)
-
-    if nan_proportion == 1:
-        raise BlankOutputError(f"variable {variable} on {date_UTC:%Y-%m-%d} at {target} is a blank image")
-
 
 def ET_toolbox_hindcast_forecast_tile(
         tile: str,
         present_date: Union[date, str] = None,
         water: Raster = None,
-        model: PTJPLSM = None,
+        model: PTJPL = None,
         ET_model_name: str = ET_MODEL_NAME,
         SWin_model_name: str = SWIN_MODEL_NAME,
         Rn_model_name: str = RN_MODEL_NAME,
@@ -145,7 +49,7 @@ def ET_toolbox_hindcast_forecast_tile(
         GFS_download_directory: str = None,
         VIIRS_download_directory: str = None,
         VIIRS_output_directory: str = None,
-        SRTM_connection: SRTM = None,
+        SRTM_connection: NASADEMConnection = None,
         SRTM_download_directory: str = None,
         GEOS5FP_connection: GEOS5FP = None,
         GEOS5FP_download_directory: str = None,

@@ -1,7 +1,7 @@
 import sys
 
-from ETtoolbox.ERS_credentials import get_ERS_credentials
-from ETtoolbox.spacetrack_credentials import get_spacetrack_credentials
+from LandsatL2C2.ERS_credentials import get_ERS_credentials
+from VIIRS_orbits.spacetrack_credentials import get_spacetrack_credentials
 
 def main(argv=sys.argv):
     print("checking EROS Registration System credentials")
