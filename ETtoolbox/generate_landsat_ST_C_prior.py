@@ -50,6 +50,7 @@ def generate_landsat_ST_C_prior(
         date_UTC = parser.parse(date_UTC).date()
 
     # Initialize LandsatL2C2 object if not provided
+
     if landsat is None:
         landsat = LandsatL2C2(
             working_directory=working_directory,
