@@ -1,27 +1,17 @@
-from fnmatch import fnmatch
-import os
-from os import makedirs, system
+import shutil, time, os, posixpath, pygrib
 from typing import List
 from matplotlib.colors import LinearSegmentedColormap
-import requests
 from bs4 import BeautifulSoup
-import posixpath
-import re
 import pandas as pd
-from os.path import exists
-from os.path import splitext
-from os.path import join
-from os.path import expanduser
-import pygrib
-from shutil import move
-from datetime import datetime
-from datetime import timedelta
-from datetime import date
+from datetime import datetime, timedelta, date, timezone
 from dateutil import parser
 import rasters as rt
 import numpy as np
 import logging
 import colored_logging
+import boto3
+from botocore import UNSIGNED
+from botocore.client import Config
 
 logger = logging.getLogger(__name__)
 
@@ -32,172 +22,259 @@ GFS_U_WIND_MESSAGE = 588
 GFS_V_WIND_MESSAGE = 589
 GFS_SWIN_MESSAGE = 653
 
-REMOTE = "https://www.ncei.noaa.gov/data/global-forecast-system/access/grid-004-0.5-degree/forecast"
 
-SM_CMAP = LinearSegmentedColormap.from_list("SM", [
-    "#f6e8c3",
-    "#d8b365",
-    "#99894a",
-    "#2d6779",
-    "#6bdfd2",
-    "#1839c5"
-])
 
-def generate_GFS_date_URL(date_UTC: date) -> str:
-    if isinstance(date_UTC, str):
-        date_UTC = parser.parse(date_UTC).date()
+SM_CMAP = LinearSegmentedColormap.from_list("SM", ["#f6e8c3", "#d8b365", "#99894a", "#2d6779", "#6bdfd2", "#1839c5"])
 
-    URL = f"https://www.ncei.noaa.gov/data/global-forecast-system/access/grid-004-0.5-degree/forecast/202109/"
 
-    return URL
+def create_gfs_urls(o_target_datetime) -> tuple[List, datetime]:
+    """
+    Finds the most recent GFS forecast within a UTC date and constructs the filenames for it. If forecasts aren't available, then it returns a None as the list values.
 
-def GFS_month_addresses(URL: str = None) -> List[str]:
-    if URL is None:
-        URL = REMOTE    
+    Parameters
+    ----------
+    o_target_datetime: datetime
+        Target datetime for the GFS forecast
 
-    response = requests.get(URL)
-    soup = BeautifulSoup(response.text, "html.parser")
-    links = [link.get("href") for link in soup.find_all("a")]
-    directories = [link for link in links if re.compile("[0-9]{6}").match(link)]
-    addresses = sorted([posixpath.join(URL, directory) for directory in directories])
-    
-    return addresses
+    Returns
+    -------
+    sl_urls: list
+        Contains the paths to the GFS forecast objects
+    o_datetime_utc: datetime
+        Contains the time in UTC of the forecast issuance being utilized
 
-def GFS_most_recent_month_address(year: int = None, month: int = None) -> str:
-    addresses = GFS_month_addresses()
+    """
 
-    if year is not None and month is not None:
-        addresses = [address for address in addresses if datetime.strptime(posixpath.basename(address.strip("/")), "%Y%m") <= datetime(year, month, 1)]
 
-    most_recent_address = addresses[-1]
+    # Define the AWS URL
+    s_url = "https://noaa-gfs-bdp-pds.s3.amazonaws.com/"
 
-    return most_recent_address
+    # Get the current datetime in utc format to match the issuance
+    o_datetime_utc = o_target_datetime
+    o_date_utc_previous = o_datetime_utc - timedelta(days=1)
 
-def GFS_date_addresses_from_URL(month_URL: str = None) -> List[str]:
-    if month_URL is None:
-        month_URL = GFS_most_recent_month_address()
-        
-    response = requests.get(month_URL)
-    soup = BeautifulSoup(response.text, "html.parser")
-    links = [link.get("href") for link in soup.find_all("a")]
-    directories = [link for link in links if re.compile("[0-9]{8}").match(link)]
-    addresses = sorted([posixpath.join(month_URL, directory) for directory in directories])
-    
-    return addresses
+    # Set a variable to control the loop
+    b_continue = True
 
-def GFS_date_addresses(year: int = None, month: int = None) -> List[str]:
-    month_URL = GFS_most_recent_month_address(year=year, month=month)
-    addresses = GFS_date_addresses_from_URL(month_URL)
+    # Default to having no filenames
+    sl_urls = None
 
-    return addresses
+    # Attempt to request the filenames
+    while b_continue and o_datetime_utc > o_date_utc_previous:
 
-def GFS_most_recent_date_address(date_UTC: date = None) -> str:
-    if date_UTC is None:
-        date_UTC = datetime.utcnow()
-    
-    if isinstance(date_UTC, str):
-        date_UTC = parser.parse(date_UTC).date()
-    
-    if isinstance(date_UTC, datetime):
-        date_UTC = date_UTC.date()
-    
-    addresses = GFS_date_addresses(year=date_UTC.year, month=date_UTC.month)
-    addresses = [address for address in addresses if datetime.strptime(posixpath.basename(address.strip("/")), "%Y%m%d").date() <= date_UTC]
-    address = addresses[-1]
+        # Calculate the hour
+        i_request_hour = int(np.floor((o_datetime_utc.hour / 6)) * 6)
 
-    return address
+        # Convert the request hour to a string to create the URL
+        s_request_hour = str(i_request_hour)
+        if len(s_request_hour) < 2:
+            s_request_hour = '0' + s_request_hour
 
-def GFS_file_addresses(date_URL: str = None, pattern: str = None) -> List[str]:
-    if date_URL is None:
-        date_URL = GFS_most_recent_date_address()
-    
-    if pattern is None:
-        pattern = "*.grb2"
-    
-    response = requests.get(date_URL)
-    soup = BeautifulSoup(response.text, "html.parser")
-    links = [link.get("href") for link in soup.find_all("a")]
-    filenames = [link for link in links if fnmatch(link, pattern)]
-    addresses = [posixpath.join(date_URL, filename) for filename in filenames]
-    
-    return addresses
+        # Construct the path to the folder within the bucket
+        s_prefix = 'gfs.' + o_datetime_utc.strftime("%Y%m%d") + "/" + s_request_hour + "/atmos/gfs.t" + s_request_hour + "z.pgrb2.0p25"
 
-def get_GFS_listing(date_URL: str = None) -> pd.DataFrame:
-    if date_URL is None:
-        date_URL = GFS_most_recent_date_address()
-    
-    addresses = GFS_file_addresses(date_URL)
-    address_df = pd.DataFrame({"address": addresses})
-    address_df["basename"] = address_df.address.apply(lambda address: posixpath.basename(address))
-    address_df["source_date_UTC"] = address_df.basename.apply(lambda basename: datetime.strptime(basename.split("_")[2], "%Y%m%d"))
-    address_df["source_hour"] = address_df.basename.apply(lambda basename: int(basename.split("_")[3][:2]))
-    address_df["source_datetime_UTC"] = address_df.apply(lambda row: row.source_date_UTC + timedelta(hours=row.source_hour), axis=1)
-    address_df["forecast_hours"] = address_df.basename.apply(lambda basename: int(splitext(basename)[0].split("_")[-1]))
-    address_df["forecast_time_UTC"] = address_df.apply(lambda row: row.source_datetime_UTC + timedelta(hours=row.forecast_hours), axis=1)
-    address_df.sort_values(by=["forecast_time_UTC", "source_hour"], inplace=True)
-    address_df.drop_duplicates(subset="forecast_time_UTC", keep="last", inplace=True)
-    address_df = address_df[["forecast_time_UTC", "address"]]
-    
-    return address_df
+        # Create the client and query the AWS bucket to determine if the date/issuance is valid
+        o_s3_client = boto3.client('s3', config=Config(signature_version=UNSIGNED), region_name='us-east-1')
+        o_response = o_s3_client.list_objects(Bucket='noaa-gfs-bdp-pds', Prefix=s_prefix)
 
-def GFS_before_after_addresses(time_UTC: datetime, listing: pd.DataFrame = None) -> pd.DataFrame:
-    if not isinstance(time_UTC, datetime):
-        time_UTC = parser.parse(time_UTC)
+        # Process the request results based on the contents of the response
+        if "Contents" in o_response:
+            # The response contains contents, indicating that it's valid. Parse the filename from the contents to construct the URLS
+            # Find the correct files in the bucket
+            sl_files = [x['Key'] for x in o_response['Contents'] if '.idx' not in x['Key'] and '.anl' not in x['Key']]
 
-    if listing is None:
-        listing = get_GFS_listing()
+            # Construct the urls
+            sl_urls = [s_url + x for x in sl_files]
 
-    # if len(listing) == 0:
-    #     raise ValueError(f"zero-length GFS listing at time {time_UTC} UTC")
-    #
-    # min_time = min(listing.forecast_time_UTC)
-    # max_time = max(listing.forecast_time_UTC)
+            # Break from the look
+            b_continue = False
 
-    # logger.info(f"selecting GFS files for time {time_UTC} UTC between {min_time} UTC and {max_time} UTC")
+            # Return the correct forecast datetime
+            o_forecast_datetime = datetime(year=o_datetime_utc.year, month=o_datetime_utc.month, day=o_datetime_utc.day, hour=i_request_hour)
 
-    # before = listing[listing.forecast_time_UTC <= time_UTC].iloc[[-1]]
+        else:
+            # Forecast is not available for this issuance yet. Decrement by 6 hours and try again
+            o_datetime_utc = o_datetime_utc - timedelta(hours=6)
+            o_forecast_datetime = None
 
-    before = listing[listing.forecast_time_UTC.apply(lambda forecast_time_UTC: str(forecast_time_UTC) <= str(time_UTC))].iloc[[-1]]
-    after = listing[listing.forecast_time_UTC.apply(lambda forecast_time_UTC: str(forecast_time_UTC) > str(time_UTC))].iloc[[0]]
-    before_after = pd.concat([before, after])
+    # Return to the calling function
+    return sl_urls, o_forecast_datetime
 
-    return before_after
 
-def GFS_download(URL: str, filename: str = None, directory: str = None) -> str:
-    if directory is None:
-        directory = "."
+def get_gfs_listing(o_target_datetime) -> pd.DataFrame:
+    """
+    Requests the GFS forecast and formats the information for subsequent use, sorting the forecast files by date
 
-    date_UTC = datetime.strptime(posixpath.basename(URL).split("_")[2], "%Y%m%d").date()
-    directory = expanduser(directory)
+    Parameters
+    ----------
+    o_target_datetime: datetime
+        Target datetime for the GFS forecast
 
-    target_directory = join(directory, date_UTC.strftime("%Y-%m-%d"))
-    makedirs(target_directory, exist_ok=True)
+    Returns
+    -------
+    df_address: pd.DataFrame
+        Contains the URLs and the dates to the GFS forecast files
 
-    if filename is None:
-        filename = join(target_directory, posixpath.basename(URL))
-    
-    if exists(filename):
-        logger.info(f"file already downloaded: {colored_logging.file(filename)}")
-        return filename
-    
-    logger.info(f"downloading URL: {colored_logging.URL(URL)}")
+    """
 
-    partial_filename = filename + ".download"
+    ### Request the most recentURLS and the forecast dates ###
+    sl_urls, o_source_datetime = create_gfs_urls(o_target_datetime)
 
-    command = f'wget -c -O "{partial_filename}" "{URL}"'
-    logger.info(command)
-    system(command)
+    ### Process the files ###
+    # Set the URLs into the dataframe
+    df_address = pd.DataFrame({"address": sl_urls})
 
-    move(partial_filename, filename)
+    # Ensure that data is available to process
+    if sl_urls is not None:
+        # A valid forecast is available for the current day. Process it.
 
-    if not exists(filename):
-        raise ConnectionError(f"unable to download URL: {URL}")
+        # Extract out just the filename portion
+        df_address["basename"] = df_address.address.apply(lambda address: posixpath.basename(address))
 
-    logger.info(f"downloaded file: {colored_logging.file(filename)}")
-    
-    return filename
+        # Set the initial date information
+        df_address["source_date_UTC"] = o_source_datetime.date()
+        df_address["source_hour"] = o_source_datetime.hour
+        df_address["source_datetime_UTC"] = o_source_datetime.replace(tzinfo=None)
 
-def read_GFS(filename: str, message: int, geometry: rt.RasterGeometry = None, resampling = "cubic") -> rt.Raster:
+        # Set the forecast times into the dataframe
+        df_address["forecast_hours"] = df_address.basename.apply(lambda basename: int(basename.split(".")[4][1:]))
+        df_address["forecast_time_UTC"] = df_address.apply(lambda row: o_source_datetime.replace(tzinfo=None) + timedelta(hours=row.forecast_hours), axis=1)
+
+        # Sort the values by time
+        df_address.sort_values(by=["forecast_time_UTC", "source_hour"], inplace=True)
+
+        # Remove any duplicates
+        df_address.drop_duplicates(subset="forecast_time_UTC", keep="last", inplace=True)
+
+        # Keep just the urls and the forecast time in UTC
+        df_address = df_address[["forecast_time_UTC", "address"]]
+
+    else:
+        # A valid forecast is not available for the current day. Set the forecast dates as None into the dataframe as a flag.
+        df_address['forecast_time_UTC'] = None
+
+    ### Return to the calling function ###
+    return df_address
+
+
+def gfs_download(s_url: str, o_datetime: datetime , s_filename: str = None, s_directory: str = None) -> str:
+    """
+    Downloads a GEFS forecast file given by the input URL
+
+    Parameters
+    ----------
+    s_url: str
+        URL to the target download file
+    o_datetime: str
+        Forecast issuance date of the file being downloaded
+    s_filename: str
+        Local filename for the file
+    s_directory: str
+        Local directory into which the file should be saved
+
+    Returns
+    -------
+    s_filename: str
+        Local path to the downloaded file
+
+    """
+
+    ### Set the default directory ###
+    if s_directory is None:
+        s_directory = "."
+
+    ### Parse the date from the target URL ###
+    o_date_utc = o_datetime.date()
+
+    ### Create the download directory ###
+    # Get the full path from the input path
+    s_directory = os.path.expanduser(s_directory)
+
+    # Construct the path by concatenating with the date
+    s_target_directory = os.path.join(s_directory, o_date_utc.strftime("%Y-%m-%d"))
+
+    # Make the nested directory
+    os.makedirs(s_target_directory, exist_ok=True)
+
+    ### Construct the filename ###
+    # Construct the filename
+    if s_filename is None:
+        s_filename = os.path.join(s_target_directory, posixpath.basename(s_url))
+
+    # Handle an existing file
+    if os.path.exists(s_filename) and os.path.getsize(s_filename) > 0:
+        # File exists and has nonzero size. It is likely good, so keep it assuming the download is complete
+        logger.info(f"file already downloaded: {colored_logging.file(s_filename)} Assuming valid and skipping redownload.")
+        return s_filename
+
+    elif os.path.exists(s_filename) and os.path.getsize(s_filename) == 0:
+        # File exists and is of zero size. Assume it's bad and redownload
+        # Remove the file
+        logger.info(f"file already downloaded but likely corrupted: {colored_logging.file(s_filename)} Likely not valid and redownloading.")
+        os.remove(s_filename)
+
+    # Log the filename
+    logger.info(f"downloading URL: {colored_logging.URL(s_url)}")
+
+    ### Attempt the download ###
+    # Create a temporary filename
+    s_partial_filename = s_filename + ".download"
+
+    # Create the control variables for the download loop
+    i_attempts = 3
+    i_attempt_counter = 0
+
+    # Loop on the download
+    while i_attempt_counter < i_attempts:
+        # Attempt the download. If the download fails, pause in case it's a server issue which can be resolved by waiting a bit
+        try:
+            # Construct the download command
+            command = "curl -o " + s_partial_filename + " " + s_url
+
+            # Log the command
+            logger.info(command)
+
+            # Issue the command to the system for download
+            os.system(command)
+
+            # Download successful. Break from the loop as further calls are not required.
+            break
+
+        except:
+            # Log the error
+            logger.info(f"error downloading file: {colored_logging.file(s_filename)} Attempting reentry.")
+
+            # Increment the counter
+            i_attempt_counter += 1
+
+            # Pause a bit to let the server clear. Hopefully the next time works...
+            time.sleep(10)
+
+            # If a partial download occurred, remove it to allow for another download attempt
+            if os.path.exists(s_partial_filename):
+                os.remove(s_partial_filename)
+
+    # Handle download results
+    if os.path.exists(s_partial_filename):
+        # File exists continue
+        # Move the file from the temporary filename to the final filename
+        shutil.move(s_partial_filename, s_filename)
+
+        # Log the file status
+        logger.info(f"downloaded file: {colored_logging.file(s_filename)}")
+
+    else:
+        # Raise an issue if the download failed
+        logger.error(f"unable to download URL: {s_url}")
+
+        # Set the filename to None to indicate failure
+        s_filename = None
+
+    ### Return to the calling function ###
+    return s_filename
+
+
+def read_gfs(filename: str, message: int, geometry: rt.RasterGeometry = None, resampling ="cubic") -> rt.Raster:
     with pygrib.open(filename) as file:
         data = file.message(message).values
 
@@ -211,100 +288,129 @@ def read_GFS(filename: str, message: int, geometry: rt.RasterGeometry = None, re
     
     return image
 
-def GFS_interpolate(
-        message: int,
-        time_UTC: datetime,
-        geometry: rt.RasterGeometry = None,
-        resampling: str = "cubic",
-        directory: str = None,
-        listing: pd.DataFrame = None) -> rt.Raster:
-    before_after = GFS_before_after_addresses(time_UTC, listing=listing)
+def gfs_interpolate(i_message: int, o_datetime_utc: datetime, o_geometry: rt.RasterGeometry = None, s_resampling: str = "cubic", s_directory: str = None,
+                    df_forecast: pd.DataFrame = None) -> rt.Raster:
+    """
+    Determines which files are between the target time, downloads the associated files, and interpolates between the timesteps
+
+    Parameters
+    ----------
+    i_message: int
+        Variable/band to pull from the GFS file
+    o_datetime_utc: datetime
+        Time as which to download and parse the data
+    o_geometry: rt.RasterGeometry
+        Domain extents
+    s_resampling: str
+        Resampling approach
+    s_directory: str
+        Working directory into which to download the files
+    df_forecast: pd.DateFrame
+        List of forecast files with associated times from forecast issuance
+
+    Returns
+    -------
+    o_interpolated_image: rt.Raster
+        Raster product interpolated between the bounding timestamps
+
+    """
+
+    ### Find and download the forecast file before the current time ###
+    # Find the most recent timestamp before the current time
+    i_before_index = np.max(np.argwhere(df_forecast['forecast_time_UTC'] <= o_datetime_utc).flatten())
+
+    # Log what file will be used
+    logger.info(f"before URL: {colored_logging.URL(df_forecast['address'].iloc[i_before_index])}")
+    s_before_time = parser.parse(str(df_forecast['forecast_time_UTC'].iloc[i_before_index]))
+
+    # Attempt to download the file. Error handling is done within the download function
+    s_before_filename = gfs_download(s_url=df_forecast['address'].iloc[i_before_index], o_datetime=df_forecast['forecast_time_UTC'].iloc[0], s_directory=s_directory)
     
-    before_address = before_after.iloc[0].address
-    logger.info(f"before URL: {colored_logging.URL(before_address)}")
-    before_time = parser.parse(str(before_after.iloc[0].forecast_time_UTC))
-    before_filename = GFS_download(URL=before_address, directory=directory)
-    
-    try:
-        before_image = read_GFS(filename=before_filename, message=message, geometry=geometry, resampling=resampling)
-    except Exception as e:
-        logger.warning(e)
-        os.remove(before_filename)
+    # Read in the file
+    if s_before_filename is not None:
+        # Download is successful. Read the file.
+        try:
+            # Attempt to read the file from disk.
+            o_before_image = read_gfs(filename=s_before_filename, message=i_message, geometry=o_geometry, resampling=s_resampling)
 
-    before_filename = GFS_download(URL=before_address, directory=directory)
-    before_image = read_GFS(filename=before_filename, message=message, geometry=geometry, resampling=resampling)
+        except:
+            # Read has failed. Flag the failure
+            o_before_image = None
 
-    after_address = before_after.iloc[-1].address
-    logger.info(f"after URL: {colored_logging.URL(after_address)}")
-    after_time = parser.parse(str(before_after.iloc[-1].forecast_time_UTC))
-    after_filename = GFS_download(URL=after_address, directory=directory)
-    
-    try:
-        after_image = read_GFS(filename=after_filename, message=message, geometry=geometry, resampling=resampling)
-    except Exception as e:
-        logger.warning(e)
-        os.remove(after_filename)
+    else:
+        # File has not downloaded correctly and read will not be successful. Flag the failure
+        o_before_image = None
 
-    after_filename = GFS_download(URL=after_address, directory=directory)
-    after_image = read_GFS(filename=after_filename, message=message, geometry=geometry, resampling=resampling)
-    
-    source_diff = after_image - before_image
-    time_fraction = (parser.parse(str(time_UTC)) - parser.parse(str(before_time))) / (parser.parse(str(after_time)) - parser.parse(str(before_time)))
-    interpolated_image = before_image + source_diff * time_fraction
+    ### Find and download the forecast file after the current time ###
+    # Find the first timestamp after the current time
+    i_after_index = np.min(np.argwhere(df_forecast['forecast_time_UTC'] > o_datetime_utc).flatten())
 
-    return interpolated_image
+    # Log what file will be used
+    logger.info(f"after URL: {colored_logging.URL(df_forecast['address'].iloc[i_after_index])}")
+    s_after_time = parser.parse(str(df_forecast['forecast_time_UTC'].iloc[i_after_index]))
 
-def forecast_Ta_K(
-        time_UTC: datetime,
-        geometry: rt.RasterGeometry = None,
-        resampling: str = "cubic",
-        directory: str = None,
-        listing: pd.DataFrame = None) -> rt.Raster:
-    return GFS_interpolate(message=GFS_TA_MESSAGE, time_UTC=time_UTC, geometry=geometry, resampling=resampling, directory=directory, listing=listing)
+    # Attempt to download the file. Error handling is done within the download function
+    s_after_filename = gfs_download(s_url=df_forecast['address'].iloc[i_after_index], o_datetime=df_forecast['forecast_time_UTC'].iloc[0], s_directory=s_directory)
 
-def forecast_Ta_C(
-        time_UTC: datetime,
-        geometry: rt.RasterGeometry = None,
-        resampling: str = "cubic",
-        directory: str = None,
-        listing: pd.DataFrame = None) -> rt.Raster:
+    # Read in the file
+    if s_before_filename is not None:
+        # Download is successful. Read the file.
+        try:
+            # Attempt to read the file from disk.
+            o_after_image = read_gfs(filename=s_after_filename, message=i_message, geometry=o_geometry, resampling=s_resampling)
+
+        except:
+            # Read has failed. Flag the failure
+            o_after_image = None
+
+    else:
+        # File has not downloaded correctly and read will not be successful. Flag the failure
+        o_after_image = None
+
+    ### Do the math on the forecasts ###
+    if o_before_image is not None and o_after_image is not None:
+        # Data is available and valid.
+        # Difference the files based on teh timestamp
+        o_source_diff = o_after_image - o_before_image
+
+        # Calculate the fractional time of the current time between the files
+        s_time_fraction = (parser.parse(str(o_datetime_utc)) - parser.parse(str(s_before_time))) / (parser.parse(str(s_after_time)) - parser.parse(str(s_before_time)))
+
+        # Linearly interpolate between the timestamps using the current time
+        o_interpolated_image = o_before_image + o_source_diff * s_time_fraction
+
+    else:
+        # Data is not available. Set none into the image to flag an issue.
+        o_interpolated_image = None
+
+    ### Return to the calling function ###
+    return o_interpolated_image
+
+
+def forecast_Ta_K(time_UTC: datetime, geometry: rt.RasterGeometry = None, resampling: str = "cubic", directory: str = None, listing: pd.DataFrame = None) -> rt.Raster:
+    return gfs_interpolate(i_message=GFS_TA_MESSAGE, o_datetime_utc=time_UTC, o_geometry=geometry, s_resampling=resampling, s_directory=directory, df_forecast=listing)
+
+
+def forecast_Ta_C(time_UTC: datetime, geometry: rt.RasterGeometry = None, resampling: str = "cubic", directory: str = None, listing: pd.DataFrame = None) -> rt.Raster:
     return forecast_Ta_K(time_UTC=time_UTC, geometry=geometry, resampling=resampling, directory=directory, listing=listing) - 273.15
 
-def forecast_RH(
-        time_UTC: datetime,
-        geometry: rt.RasterGeometry = None,
-        resampling: str = "cubic",
-        directory: str = None,
-        listing: pd.DataFrame = None) -> rt.Raster:
-    return rt.clip(GFS_interpolate(message=GFS_RH_MESSAGE, time_UTC=time_UTC, geometry=geometry, resampling=resampling, directory=directory, listing=listing) / 100, 0, 1)
 
-def forecast_SM(
-        time_UTC: datetime,
-        geometry: rt.RasterGeometry = None,
-        resampling: str = "cubic",
-        directory: str = None,
-        listing: pd.DataFrame = None) -> rt.Raster:
-    SM = rt.clip(GFS_interpolate(message=GFS_SM_MESSAGE, time_UTC=time_UTC, geometry=geometry, resampling=resampling, directory=directory, listing=listing) / 10000, 0, 1)
+def forecast_RH(time_UTC: datetime, geometry: rt.RasterGeometry = None, resampling: str = "cubic", directory: str = None, listing: pd.DataFrame = None) -> rt.Raster:
+    return rt.clip(gfs_interpolate(i_message=GFS_RH_MESSAGE, o_datetime_utc=time_UTC, o_geometry=geometry, s_resampling=resampling, s_directory=directory, df_forecast=listing) / 100, 0, 1)
+
+
+def forecast_SM(time_UTC: datetime, geometry: rt.RasterGeometry = None, resampling: str = "cubic", directory: str = None, listing: pd.DataFrame = None) -> rt.Raster:
+    SM = rt.clip(gfs_interpolate(i_message=GFS_SM_MESSAGE, o_datetime_utc=time_UTC, o_geometry=geometry, s_resampling=resampling, s_directory=directory, df_forecast=listing) / 10000, 0, 1)
     SM.cmap = SM_CMAP
 
     return SM
 
-def forecast_SWin(
-        time_UTC: datetime,
-        geometry: rt.RasterGeometry = None,
-        resampling: str = "cubic",
-        directory: str = None,
-        listing: pd.DataFrame = None) -> rt.Raster:
-    return rt.clip(GFS_interpolate(message=GFS_SWIN_MESSAGE, time_UTC=time_UTC, geometry=geometry, resampling=resampling, directory=directory, listing=listing), 0, None)
+def forecast_SWin(time_UTC: datetime, geometry: rt.RasterGeometry = None, resampling: str = "cubic", directory: str = None, listing: pd.DataFrame = None) -> rt.Raster:
+    return rt.clip(gfs_interpolate(i_message=GFS_SWIN_MESSAGE, o_datetime_utc=time_UTC, o_geometry=geometry, s_resampling=resampling, s_directory=directory, df_forecast=listing), 0, None)
 
-def forecast_wind(
-        time_UTC: datetime,
-        geometry: rt.RasterGeometry = None,
-        resampling: str = "cubic",
-        directory: str = None,
-        listing: pd.DataFrame = None) -> rt.Raster:
-    U = GFS_interpolate(message=GFS_U_WIND_MESSAGE, time_UTC=time_UTC, geometry=geometry, resampling=resampling, directory=directory, listing=listing)
-    V = GFS_interpolate(message=GFS_V_WIND_MESSAGE, time_UTC=time_UTC, geometry=geometry, resampling=resampling, directory=directory, listing=listing)
+def forecast_wind(time_UTC: datetime, geometry: rt.RasterGeometry = None, resampling: str = "cubic", directory: str = None, listing: pd.DataFrame = None) -> rt.Raster:
+    U = gfs_interpolate(i_message=GFS_U_WIND_MESSAGE, o_datetime_utc=time_UTC, o_geometry=geometry, s_resampling=resampling, s_directory=directory, df_forecast=listing)
+    V = gfs_interpolate(i_message=GFS_V_WIND_MESSAGE, o_datetime_utc=time_UTC, o_geometry=geometry, s_resampling=resampling, s_directory=directory, df_forecast=listing)
     wind_speed = rt.clip(np.sqrt(U ** 2.0 + V ** 2.0), 0.0, None)
 
     return wind_speed

@@ -20,7 +20,7 @@ from ETtoolbox.FLiES import FLiES
 from geos5fp import GEOS5FP
 from ETtoolbox.MCD12 import MCD12C1
 from ETtoolbox.SRTM import SRTM
-from ETtoolbox.model.model import DEFAULT_PREVIEW_QUALITY, DEFAULT_RESAMPLING
+from ..model import DEFAULT_PREVIEW_QUALITY, DEFAULT_RESAMPLING
 from rasters import Raster, RasterGrid, RasterGeometry
 from solar_apparent_time import solar_day_of_year_for_area, solar_hour_of_day_for_area
 
@@ -31,14 +31,7 @@ logger = logging.getLogger(__name__)
 DEFAULT_WORKING_DIRECTORY = "."
 DEFAULT_MOD16_INTERMEDIATE = "MOD16_intermediate"
 
-DEFAULT_OUTPUT_VARIABLES = [
-    'LEi',
-    'LEc',
-    'LEs',
-    'LE',
-    'LE_daily',
-    'ET_daily_kg'
-]
+DEFAULT_OUTPUT_VARIABLES = ['LEi', 'LEc', 'LEs', 'LE', 'LE_daily', 'ET_daily_kg']
 
 # TODO need to defend picking arbitrary maximum to avoid extreme values
 MAXIMUM_RESISTANCE = 2000.0
@@ -212,14 +205,7 @@ def tmin_factor(Tmin, tmin_open, tmin_close, IGBP, water):
     # calculate minimum temperature factor using queried open and closed minimum temperatures
     mTmin = where(Tmin >= tmin_open, 1.0, nan)
 
-    mTmin = where(
-        logical_and(
-            tmin_close < Tmin,
-            Tmin < tmin_open
-        ),
-        (Tmin - tmin_close) / (tmin_open - tmin_close),
-        mTmin
-    )
+    mTmin = where(logical_and(tmin_close < Tmin, Tmin < tmin_open), (Tmin - tmin_close) / (tmin_open - tmin_close), mTmin)
 
     mTmin = where(Tmin <= tmin_close, 0.0, mTmin)
 
@@ -253,11 +239,7 @@ def canopy_conductance(LAI, fwet, gl_sh, gs1, Gcu, water):
     :return: canopy conductance
     """
     # noinspection PyTypeChecker
-    Cc = where(
-        logical_and(LAI > 0.0, (1.0 - fwet) > 0.0),
-        gl_sh * (gs1 + Gcu) / (gs1 + gl_sh + Gcu) * LAI * (1.0 - fwet),
-        0.0
-    )
+    Cc = where(logical_and(LAI > 0.0, (1.0 - fwet) > 0.0), gl_sh * (gs1 + Gcu) / (gs1 + gl_sh + Gcu) * LAI * (1.0 - fwet), 0.0)
 
     Cc = clip(Cc, 1.0 / MAXIMUM_RESISTANCE, None)
 
@@ -297,11 +279,7 @@ def canopy_aerodynamic_resistance(VPD, vpd_open, vpd_close, rbl_max, rbl_min):
     """
     rtotc = where(VPD <= vpd_open, rbl_max, nan)
     rtotc = where(VPD >= vpd_close, rbl_min, rtotc)
-    rtotc = where(
-        logical_and(vpd_open < VPD, VPD < vpd_close),
-        rbl_min + (rbl_max - rbl_min) * (vpd_close - VPD) / (vpd_close - vpd_open),
-        rtotc
-    )
+    rtotc = where(logical_and(vpd_open < VPD, VPD < vpd_close), rbl_min + (rbl_max - rbl_min) * (vpd_close - VPD) / (vpd_close - vpd_open), rtotc)
 
     return rtotc
 
@@ -411,27 +389,15 @@ def calculate_vapor(LE_daily, daylight_hours):
 
 
 class MOD16(FLiES):
-    def __init__(
-            self,
-            working_directory: str = None,
-            static_directory: str = None,
-            SRTM_connection: SRTM = None,
-            SRTM_download: str = None,
-            GEOS5FP_connection: GEOS5FP = None,
-            GEOS5FP_download: str = None,
-            GEOS5FP_products: str = None,
-            MCD12_connnection: MCD12C1 = None,
-            MCD12_download: str = None,
-            intermediate_directory=None,
-            preview_quality: int = DEFAULT_PREVIEW_QUALITY,
-            ANN_model: Callable = None,
-            ANN_model_filename: str = None,
-            resampling: str = DEFAULT_RESAMPLING,
-            downscale_air: bool = True,
-            downscale_vapor: bool = True,
-            save_intermediate: bool = False,
-            include_preview: bool = True,
-            show_distribution: bool = True):
+    def __init__(self, working_directory: str = None, static_directory: str = None,
+                 SRTM_connection: SRTM = None, SRTM_download: str = None,
+                 GEOS5FP_connection: GEOS5FP = None, GEOS5FP_download: str = None, GEOS5FP_products: str = None,
+                 MCD12_connnection: MCD12C1 = None, MCD12_download: str = None,
+                 intermediate_directory=None, preview_quality: int = DEFAULT_PREVIEW_QUALITY,
+                 ANN_model: Callable = None, ANN_model_filename: str = None,
+                 resampling: str = DEFAULT_RESAMPLING, downscale_air: bool = True, downscale_vapor: bool = True, save_intermediate: bool = False,
+                 include_preview: bool = True, show_distribution: bool = True):
+
         if working_directory is None:
             working_directory = DEFAULT_WORKING_DIRECTORY
 
@@ -445,29 +411,15 @@ class MOD16(FLiES):
         if intermediate_directory is None:
             intermediate_directory = join(working_directory, DEFAULT_MOD16_INTERMEDIATE)
 
-        super(MOD16, self).__init__(
-            working_directory=working_directory,
-            static_directory=static_directory,
-            SRTM_connection=SRTM_connection,
-            SRTM_download=SRTM_download,
-            GEOS5FP_connection=GEOS5FP_connection,
-            GEOS5FP_download=GEOS5FP_download,
-            GEOS5FP_products=GEOS5FP_products,
-            intermediate_directory=intermediate_directory,
-            preview_quality=preview_quality,
-            ANN_model=ANN_model,
-            ANN_model_filename=ANN_model_filename,
-            resampling=resampling,
-            save_intermediate=save_intermediate,
-            show_distribution=show_distribution,
-            include_preview=include_preview
-        )
+        super(MOD16, self).__init__(working_directory=working_directory, static_directory=static_directory,
+                                    SRTM_connection=SRTM_connection, SRTM_download=SRTM_download,
+                                    GEOS5FP_connection=GEOS5FP_connection, GEOS5FP_download=GEOS5FP_download, GEOS5FP_products=GEOS5FP_products,
+                                    intermediate_directory=intermediate_directory, preview_quality=preview_quality,
+                                    ANN_model=ANN_model, ANN_model_filename=ANN_model_filename,
+                                    resampling=resampling, save_intermediate=save_intermediate, show_distribution=show_distribution, include_preview=include_preview)
 
         if MCD12_connnection is None:
-            MCD12_connnection = MCD12C1(
-                working_directory=static_directory,
-                download_directory=MCD12_download
-            )
+            MCD12_connnection = MCD12C1(working_directory=static_directory, download_directory=MCD12_download)
 
         self.MCD12 = MCD12_connnection
         self.downscale_air = downscale_air
@@ -490,8 +442,7 @@ class MOD16(FLiES):
         if IGBP is None:
             IGBP = self.IGBP_subset(geometry)
 
-        image = Raster(float32(array(LUT['gl_sh'])[IGBP]), geometry=IGBP.geometry).to_geometry(geometry,
-                                                                                               resampling=resampling)
+        image = Raster(float32(array(LUT['gl_sh'])[IGBP]), geometry=IGBP.geometry).to_geometry(geometry, resampling=resampling)
 
         return image
 
@@ -506,8 +457,7 @@ class MOD16(FLiES):
         if IGBP is None:
             IGBP = self.IGBP_subset(geometry)
 
-        image = Raster(float32(array(LUT['gl_e_wv'])[IGBP]), geometry=IGBP.geometry).to_geometry(geometry,
-                                                                                                 resampling=resampling)
+        image = Raster(float32(array(LUT['gl_e_wv'])[IGBP]), geometry=IGBP.geometry).to_geometry(geometry, resampling=resampling)
 
         return image
 
@@ -522,8 +472,7 @@ class MOD16(FLiES):
         if IGBP is None:
             IGBP = self.IGBP_subset(geometry)
 
-        image = Raster(float32(array(LUT['colored_logging'])[IGBP]), geometry=IGBP.geometry).to_geometry(geometry,
-                                                                                            resampling=resampling)
+        image = Raster(float32(array(LUT['colored_logging'])[IGBP]), geometry=IGBP.geometry).to_geometry(geometry, resampling=resampling)
 
         return image
 
@@ -537,8 +486,7 @@ class MOD16(FLiES):
         if IGBP is None:
             IGBP = self.IGBP_subset(geometry)
 
-        image = Raster(float32(array(LUT['tmin_open'])[IGBP]), geometry=IGBP.geometry).to_geometry(geometry,
-                                                                                                   resampling=resampling)
+        image = Raster(float32(array(LUT['tmin_open'])[IGBP]), geometry=IGBP.geometry).to_geometry(geometry, resampling=resampling)
 
         return image
 
@@ -552,8 +500,7 @@ class MOD16(FLiES):
         if IGBP is None:
             IGBP = self.IGBP_subset(geometry)
 
-        image = Raster(float32(array(LUT['tmin_close'])[IGBP]), geometry=IGBP.geometry).to_geometry(geometry,
-                                                                                                    resampling=resampling)
+        image = Raster(float32(array(LUT['tmin_close'])[IGBP]), geometry=IGBP.geometry).to_geometry(geometry, resampling=resampling)
 
         return image
 
@@ -567,8 +514,7 @@ class MOD16(FLiES):
         if IGBP is None:
             IGBP = self.IGBP_subset(geometry)
 
-        image = Raster(float32(array(LUT['vpd_open'])[IGBP]), geometry=IGBP.geometry).to_geometry(geometry,
-                                                                                                  resampling=resampling)
+        image = Raster(float32(array(LUT['vpd_open'])[IGBP]), geometry=IGBP.geometry).to_geometry(geometry, resampling=resampling)
 
         return image
 
@@ -582,8 +528,7 @@ class MOD16(FLiES):
         if IGBP is None:
             IGBP = self.IGBP_subset(geometry)
 
-        image = Raster(float32(array(LUT['vpd_close'])[IGBP]), geometry=IGBP.geometry).to_geometry(geometry,
-                                                                                                   resampling=resampling)
+        image = Raster(float32(array(LUT['vpd_close'])[IGBP]), geometry=IGBP.geometry).to_geometry(geometry, resampling=resampling)
 
         return image
 
@@ -597,8 +542,7 @@ class MOD16(FLiES):
         if IGBP is None:
             IGBP = self.IGBP_subset(geometry)
 
-        image = Raster(float32(array(LUT['rbl_max'])[IGBP]), geometry=IGBP.geometry).to_geometry(geometry,
-                                                                                                 resampling=resampling)
+        image = Raster(float32(array(LUT['rbl_max'])[IGBP]), geometry=IGBP.geometry).to_geometry(geometry, resampling=resampling)
 
         return image
 
@@ -612,38 +556,15 @@ class MOD16(FLiES):
         if IGBP is None:
             IGBP = self.IGBP_subset(geometry)
 
-        image = Raster(float32(array(LUT['rbl_min'])[IGBP]), geometry=IGBP.geometry).to_geometry(geometry,
-                                                                                                 resampling=resampling)
+        image = Raster(float32(array(LUT['rbl_min'])[IGBP]), geometry=IGBP.geometry).to_geometry(geometry, resampling=resampling)
 
         return image
 
     # TODO check units of minimum temperature
-    def MOD16(
-            self,
-            geometry: RasterGrid,
-            target: str,
-            time_UTC: datetime or str,
-            ST_K: Raster,
-            emissivity: Raster,
-            NDVI: Raster,
-            albedo: Raster,
-            LAI: Raster = None,
-            FVC: Raster = None,
-            IGBP: Raster = None,
-            Ta_K: Raster = None,
-            Tmin_K: Raster = None,
-            Ea_Pa: Raster = None,
-            elevation_km: Raster = None,
-            Ps_Pa: Raster = None,
-            SWin: Raster = None,
-            Rn: Raster = None,
-            Rn_daily: Raster = None,
-            G: Raster = None,
-            water=None,
-            cloud_mask=None,
-            output_variables=DEFAULT_OUTPUT_VARIABLES,
-            results=None,
-            diagnostic=False):
+    def MOD16(self, geometry: RasterGrid, target: str, time_UTC: datetime or str, ST_K: Raster, emissivity: Raster, NDVI: Raster, albedo: Raster, LAI: Raster = None,
+              FVC: Raster = None, IGBP: Raster = None, Ta_K: Raster = None, Tmin_K: Raster = None, Ea_Pa: Raster = None, elevation_km: Raster = None,
+              Ps_Pa: Raster = None, SWin: Raster = None, Rn: Raster = None, Rn_daily: Raster = None, G: Raster = None, water=None, cloud_mask=None,
+              output_variables=DEFAULT_OUTPUT_VARIABLES, results=None, diagnostic=False):
         """
         calculate MOD16 evapotranspiration.
         :param Rn: net radiation in watts per square meter
@@ -756,12 +677,7 @@ class MOD16(FLiES):
         if Rn is None:
             if SWin is None:
                 # SWin = self.SWin(time_UTC=time_UTC, geometry=geometry)
-                Ra, Rg, UV, VIS, NIR, VISdiff, NIRdiff, VISdir, NIRdir = self.FLiES(
-                    geometry=geometry,
-                    target=target,
-                    time_UTC=time_UTC,
-                    albedo=albedo
-                )
+                Ra, Rg, UV, VIS, NIR, VISdiff, NIRdiff, VISdir, NIRdir = self.FLiES(geometry=geometry, target=target, time_UTC=time_UTC, albedo=albedo)
 
                 SWin = Rg
 
@@ -783,11 +699,7 @@ class MOD16(FLiES):
                 LWin = atmospheric_emissivity * STEFAN_BOLTZMAN_CONSTANT * Ta_K ** 4
             else:
                 # calculate incoming longwave for clear sky and cloudy
-                LWin = rt.where(
-                    ~cloud_mask,
-                    atmospheric_emissivity * STEFAN_BOLTZMAN_CONSTANT * Ta_K ** 4,
-                    STEFAN_BOLTZMAN_CONSTANT * Ta_K ** 4
-                )
+                LWin = rt.where(~cloud_mask, atmospheric_emissivity * STEFAN_BOLTZMAN_CONSTANT * Ta_K ** 4, STEFAN_BOLTZMAN_CONSTANT * Ta_K ** 4)
 
             self.diagnostic(LWin, "LWin", date_UTC, target)
 
@@ -808,12 +720,7 @@ class MOD16(FLiES):
 
         if Rn_daily is None:
             # integrate net radiation to daily value
-            Rn_daily = self.Rn_daily(
-                Rn,
-                hour_of_day,
-                sunrise_hour,
-                daylight_hours
-            )
+            Rn_daily = self.Rn_daily(Rn, hour_of_day, sunrise_hour, daylight_hours)
 
             # constrain negative values of daily integrated net radiation
             Rn_daily = rt.clip(Rn_daily, 0, None)

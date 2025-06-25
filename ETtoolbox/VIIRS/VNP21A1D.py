@@ -17,21 +17,12 @@ import colored_logging
 import rasters
 import rasters as rt
 from modland.indices import parsehv, generate_modland_grid
-from ETtoolbox.daterange import date_range
+from ..daterange import date_range
 from rasters import Raster, RasterGrid, RasterGeometry
 from .VIIRSDataPool import VIIRSDataPool, parse_VIIRS_tile, find_modland_tiles, VIIRSGranule
 
-NDVI_COLORMAP = LinearSegmentedColormap.from_list(
-    name="NDVI",
-    colors=[
-        "#0000ff",
-        "#000000",
-        "#745d1a",
-        "#e1dea2",
-        "#45ff01",
-        "#325e32"
-    ]
-)
+NDVI_COLORMAP = LinearSegmentedColormap.from_list(name="NDVI",
+                                                  colors=["#0000ff", "#000000", "#745d1a", "#e1dea2", "#45ff01","#325e32"])
 
 ALBEDO_COLORMAP = "gray"
 
@@ -54,10 +45,7 @@ class VNP21A1DGranule(VIIRSGranule):
 
             logger.info("opening VIIRS file: " + colored_logging.file(self.filename))
 
-            logger.info(
-                f"loading {colored_logging.val(dataset_name)} " +
-                "at " + colored_logging.val(f"{grid.cell_size:0.2f} m") + " resolution"
-            )
+            logger.info(f"loading {colored_logging.val(dataset_name)} at " + colored_logging.val(f"{grid.cell_size:0.2f} m") + " resolution")
 
             QC = Raster(QC, geometry=grid)
 
@@ -91,19 +79,8 @@ class VNP21A1DGranule(VIIRSGranule):
 
     cloud_mask = property(get_cloud_mask)
 
-    def dataset(
-            self,
-            filename: str,
-            dataset_name: str,
-            scale_factor: float = 1,
-            offset: float = 0,
-            fill: float = None,
-            lower_range: float = None,
-            upper_range: float = None,
-            cloud_mask: Raster = None,
-            apply_cloud_mask: bool = True,
-            geometry: RasterGeometry = None,
-            resampling: str = None) -> Raster:
+    def dataset(self, filename: str, dataset_name: str, scale_factor: float = 1, offset: float = 0, fill: float = None, lower_range: float = None,
+                upper_range: float = None, cloud_mask: Raster = None, apply_cloud_mask: bool = True, geometry: RasterGeometry = None, resampling: str = None) -> Raster:
 
         with h5py.File(filename, "r") as f:
             DN = np.array(f[dataset_name])
@@ -112,10 +89,7 @@ class VNP21A1DGranule(VIIRSGranule):
 
             logger.info("opening VIIRS file: " + colored_logging.file(self.filename))
 
-            logger.info(
-                f"loading {colored_logging.val(dataset_name)} " +
-                "at " + colored_logging.val(f"{grid.cell_size:0.2f} m") + " resolution"
-            )
+            logger.info(f"loading {colored_logging.val(dataset_name)} at " + colored_logging.val(f"{grid.cell_size:0.2f} m") + " resolution")
 
             DN = Raster(DN, geometry=grid)
 
@@ -147,12 +121,7 @@ class VNP21A1DGranule(VIIRSGranule):
     def geometry(self) -> RasterGrid:
         return generate_modland_grid(*self.hv, 1200)
 
-    def get_Emis_14(
-            self,
-            geometry: RasterGeometry = None,
-            save_data: bool = True,
-            save_preview: bool = True,
-            product_filename: str = None) -> Raster:
+    def get_Emis_14(self, geometry: RasterGeometry = None, save_data: bool = True, save_preview: bool = True, product_filename: str = None) -> Raster:
         if product_filename is None:
             product_filename = self.product_filename(f"Emis_14")
 
@@ -160,14 +129,8 @@ class VNP21A1DGranule(VIIRSGranule):
             logger.info("loading VIIRS emissivity band 14: " + colored_logging.file(product_filename))
             image = Raster.open(product_filename)
         else:
-            image = self.dataset(
-                self.filename,
-                f"HDFEOS/GRIDS/VIIRS_Grid_Daily_1km_LST21/Data Fields/Emis_14",
-                scale_factor=0.002,
-                offset=0.49,
-                cloud_mask=None,
-                apply_cloud_mask=False
-            )
+            image = self.dataset(self.filename,f"HDFEOS/GRIDS/VIIRS_Grid_Daily_1km_LST21/Data Fields/Emis_14", scale_factor=0.002, offset=0.49,
+                                 cloud_mask=None, apply_cloud_mask=False)
 
         if np.all(np.isnan(image)):
             raise ValueError("blank emissivity band 14 image")
@@ -186,12 +149,7 @@ class VNP21A1DGranule(VIIRSGranule):
 
     Emis_14 = property(get_Emis_14)
 
-    def get_Emis_15(
-            self,
-            geometry: RasterGeometry = None,
-            save_data: bool = True,
-            save_preview: bool = True,
-            product_filename: str = None) -> Raster:
+    def get_Emis_15(self, geometry: RasterGeometry = None, save_data: bool = True, save_preview: bool = True, product_filename: str = None) -> Raster:
         if product_filename is None:
             product_filename = self.product_filename(f"Emis_15")
 
@@ -199,14 +157,8 @@ class VNP21A1DGranule(VIIRSGranule):
             logger.info("loading VIIRS emissivity band 15: " + colored_logging.file(product_filename))
             image = Raster.open(product_filename)
         else:
-            image = self.dataset(
-                self.filename,
-                f"HDFEOS/GRIDS/VIIRS_Grid_Daily_1km_LST21/Data Fields/Emis_15",
-                scale_factor=0.002,
-                offset=0.49,
-                cloud_mask=None,
-                apply_cloud_mask=False
-            )
+            image = self.dataset(self.filename,f"HDFEOS/GRIDS/VIIRS_Grid_Daily_1km_LST21/Data Fields/Emis_15", scale_factor=0.002, offset=0.49,
+                                 cloud_mask=None, apply_cloud_mask=False)
 
         if np.all(np.isnan(image)):
             raise ValueError("blank emissivity band 15 image")
@@ -225,12 +177,7 @@ class VNP21A1DGranule(VIIRSGranule):
 
     Emis_15 = property(get_Emis_15)
 
-    def get_Emis_16(
-            self,
-            geometry: RasterGeometry = None,
-            save_data: bool = True,
-            save_preview: bool = True,
-            product_filename: str = None) -> Raster:
+    def get_Emis_16(self, geometry: RasterGeometry = None, save_data: bool = True, save_preview: bool = True, product_filename: str = None) -> Raster:
         if product_filename is None:
             product_filename = self.product_filename(f"Emis_16")
 
@@ -238,14 +185,8 @@ class VNP21A1DGranule(VIIRSGranule):
             logger.info("loading VIIRS emissivity band 16: " + colored_logging.file(product_filename))
             image = Raster.open(product_filename)
         else:
-            image = self.dataset(
-                self.filename,
-                f"HDFEOS/GRIDS/VIIRS_Grid_Daily_1km_LST21/Data Fields/Emis_16",
-                scale_factor=0.002,
-                offset=0.49,
-                cloud_mask=None,
-                apply_cloud_mask=False
-            )
+            image = self.dataset(self.filename, f"HDFEOS/GRIDS/VIIRS_Grid_Daily_1km_LST21/Data Fields/Emis_16", scale_factor=0.002, offset=0.49,
+                                 cloud_mask=None, apply_cloud_mask=False)
 
         if np.all(np.isnan(image)):
             raise ValueError("blank emissivity band 16 image")
@@ -264,12 +205,7 @@ class VNP21A1DGranule(VIIRSGranule):
 
     Emis_16 = property(get_Emis_16)
 
-    def get_LST_1KM(
-            self,
-            geometry: RasterGeometry = None,
-            save_data: bool = True,
-            save_preview: bool = True,
-            product_filename: str = None) -> Raster:
+    def get_LST_1KM(self, geometry: RasterGeometry = None, save_data: bool = True, save_preview: bool = True, product_filename: str = None) -> Raster:
         if product_filename is None:
             product_filename = self.product_filename(f"LST_1KM")
 
@@ -277,17 +213,8 @@ class VNP21A1DGranule(VIIRSGranule):
             logger.info("loading VIIRS LST 1km: " + colored_logging.file(product_filename))
             image = Raster.open(product_filename)
         else:
-            image = self.dataset(
-                self.filename,
-                f"HDFEOS/GRIDS/VIIRS_Grid_Daily_1km_LST21/Data Fields/LST_1KM",
-                scale_factor=0.02,
-                offset=0.0,
-                fill=0,
-                lower_range=7500,
-                upper_range=65535,
-                cloud_mask=None,
-                apply_cloud_mask=True
-            )
+            image = self.dataset(self.filename, f"HDFEOS/GRIDS/VIIRS_Grid_Daily_1km_LST21/Data Fields/LST_1KM", scale_factor=0.02, offset=0.0, fill=0,
+                                 lower_range=7500, upper_range=65535, cloud_mask=None, apply_cloud_mask=True)
 
         if np.all(np.isnan(image)):
             raise ValueError("blank LST 1km image")
@@ -312,12 +239,7 @@ class VNP21A1DGranule(VIIRSGranule):
     def ST_C(self):
         return self.ST_K - 273.15
 
-    def get_View_Angle(
-            self,
-            geometry: RasterGeometry = None,
-            save_data: bool = True,
-            save_preview: bool = True,
-            product_filename: str = None) -> Raster:
+    def get_View_Angle(self, geometry: RasterGeometry = None, save_data: bool = True, save_preview: bool = True, product_filename: str = None) -> Raster:
         if product_filename is None:
             product_filename = self.product_filename(f"View_Angle")
 
@@ -325,14 +247,8 @@ class VNP21A1DGranule(VIIRSGranule):
             logger.info("loading VIIRS view angle: " + colored_logging.file(product_filename))
             image = Raster.open(product_filename)
         else:
-            image = self.dataset(
-                self.filename,
-                f"HDFEOS/GRIDS/VIIRS_Grid_Daily_1km_LST21/Data Fields/View_Angle",
-                scale_factor=1.0,
-                offset=-65.0,
-                cloud_mask=None,
-                apply_cloud_mask=False
-            )
+            image = self.dataset(self.filename, f"HDFEOS/GRIDS/VIIRS_Grid_Daily_1km_LST21/Data Fields/View_Angle", scale_factor=1.0, offset=-65.0,
+                                 cloud_mask=None, apply_cloud_mask=False)
 
         if np.all(np.isnan(image)):
             raise ValueError("blank view angle image")
@@ -358,68 +274,26 @@ class VNP21A1D(VIIRSDataPool):
     DEFAULT_MOSAIC_DIRECTORY = "VNP21A1D_mosaics"
     DEFAULT_RESAMPLING = "nearest"
 
-    def __init__(
-            self,
-            *args,
-            username: str = None,
-            password: str = None,
-            remote: str = None,
-            working_directory: str = None,
-            download_directory: str = None,
-            products_directory: str = None,
-            mosaic_directory: str = None,
-            resampling: str = None,
-            **kwargs):
-        super(VNP21A1D, self).__init__(
-            *args,
-            username=username,
-            password=password,
-            remote=remote,
-            working_directory=working_directory,
-            download_directory=download_directory,
-            products_directory=products_directory,
-            mosaic_directory=mosaic_directory,
-            **kwargs
-        )
+    def __init__(self, *args, username: str = None, password: str = None, remote: str = None, working_directory: str = None, download_directory: str = None,
+                 products_directory: str = None, mosaic_directory: str = None, resampling: str = None, **kwargs):
+        super(VNP21A1D, self).__init__(*args, username=username, password=password, remote=remote, working_directory=working_directory,
+                                       download_directory=download_directory, products_directory=products_directory, mosaic_directory=mosaic_directory, **kwargs)
 
         if resampling is None:
             resampling = self.DEFAULT_RESAMPLING
 
         self.resampling = resampling
 
-    def search(
-            self,
-            start_date: date or datetime or str,
-            end_date: date or datetime or str = None,
-            build: str = None,
-            tiles: List[str] or str = None,
-            target_geometry: Point or Polygon or RasterGrid = None,
-            *args,
-            **kwargs) -> pd.DataFrame:
-        return super(VNP21A1D, self).search(
-            product="VNP21A1D",
-            start_date=start_date,
-            end_date=end_date,
-            build=build,
-            tiles=tiles,
-            target_geometry=target_geometry,
-            *args,
-            **kwargs
-        )
+    def search(self, start_date: date or datetime or str, end_date: date or datetime or str = None, build: str = None, tiles: List[str] or str = None,
+               target_geometry: Point or Polygon or RasterGrid = None, *args, **kwargs) -> pd.DataFrame:
+        return super(VNP21A1D, self).search(product="VNP21A1D", start_date=start_date, end_date=end_date, build=build, tiles=tiles, target_geometry=target_geometry,
+                                      *args, **kwargs)
 
-    def granule(
-            self,
-            date_UTC: date or str,
-            tile: str,
-            build: str = None) -> VNP21A1DGranule:
+    def granule(self, date_UTC: date or str, tile: str, build: str = None) -> VNP21A1DGranule:
         if isinstance(date_UTC, str):
             date_UTC = parser.parse(date_UTC).date()
 
-        download_location = join(
-            self.download_directory,
-            "VNP21A1D",
-            f"{date_UTC:%Y.%m.%d}"
-        )
+        download_location = join(self.download_directory, "VNP21A1D", f"{date_UTC:%Y.%m.%d}")
 
         if exists(download_location):
             filenames = glob(join(download_location, f"VNP21A1D.A{date_UTC:%Y%j}.{tile}.*.h5"))
@@ -428,19 +302,11 @@ class VNP21A1D(VIIRSDataPool):
                 filename = sorted(filenames)[0]
                 logger.info(f"found previously retrieved VNP21A1D file: {filename}")
 
-                granule = VNP21A1DGranule(
-                    filename=filename,
-                    products_directory=self.products_directory
-                )
+                granule = VNP21A1DGranule(filename=filename, products_directory=self.products_directory)
 
                 return granule
 
-        listing = self.search(
-            start_date=date_UTC,
-            end_date=date_UTC,
-            build=build,
-            tiles=[tile]
-        )
+        listing = self.search(start_date=date_UTC, end_date=date_UTC, build=build, tiles=[tile])
 
         if len(listing) > 0:
             URL = listing.iloc[0].URL
@@ -449,15 +315,9 @@ class VNP21A1D(VIIRSDataPool):
 
         makedirs(download_location, exist_ok=True)
 
-        filename = self.download_URL(
-            URL=URL,
-            download_location=download_location
-        )
+        filename = self.download_URL(URL=URL, download_location=download_location)
 
-        granule = VNP21A1DGranule(
-            filename=filename,
-            products_directory=self.products_directory
-        )
+        granule = VNP21A1DGranule(filename=filename, products_directory=self.products_directory)
 
         return granule
 
@@ -483,24 +343,15 @@ class VNP21A1D(VIIRSDataPool):
 
     cloud_mask = property(get_cloud_mask)
 
-    def dataset(
-            self,
-            filename: str,
-            dataset_name: str,
-            scale_factor: float,
-            cloud_mask: Raster = None,
-            apply_cloud_mask: bool = True) -> Raster:
+    def dataset(self, filename: str, dataset_name: str, scale_factor: float, cloud_mask: Raster = None, apply_cloud_mask: bool = True) -> Raster:
         tile = parse_VIIRS_tile(filename)
         h, v = parsehv(tile)
 
         with h5py.File(filename, "r") as f:
             DN = np.array(f[dataset_name])
             grid = generate_modland_grid(h, v, DN.shape[0])
-            logger.info(
-                "loading " + colored_logging.val(dataset_name) +
-                "at " + colored_logging.val(f"{grid.cell_size} m") + " resolution " +
-                "from " + colored_logging.file(filename)
-            )
+            logger.info("loading " + colored_logging.val(dataset_name) + "at " + colored_logging.val(f"{grid.cell_size} m") + " resolution from " +
+                        colored_logging.file(filename))
 
             DN = Raster(DN, geometry=grid)
 
@@ -514,12 +365,7 @@ class VNP21A1D(VIIRSDataPool):
 
         return data
 
-    def ST_C(
-            self,
-            date_UTC: date or str,
-            geometry: RasterGeometry,
-            filename: str = None,
-            resampling: str = None) -> Raster:
+    def ST_C(self, date_UTC: date or str, geometry: RasterGeometry, filename: str = None, resampling: str = None) -> Raster:
         if isinstance(date_UTC, str):
             date_UTC = parser.parse(date_UTC).date()
 
@@ -557,13 +403,8 @@ class VNP21A1D(VIIRSDataPool):
 
         return ST_C
 
-    def process(
-            self,
-            start: date or str,
-            target_geometry: RasterGeometry,
-            target: str,
-            end: date or str = None,
-            product_names: List[str] = None) -> pd.DataFrame:
+    def process(self, start: date or str, target_geometry: RasterGeometry, target: str, end: date or str = None, product_names: List[str] = None) -> pd.DataFrame:
+
         if product_names is None:
             product_names = ["ST_C"]
 
@@ -595,29 +436,18 @@ class VNP21A1D(VIIRSDataPool):
 
             for product in product_names:
 
-                product_filename = join(
-                    self.mosaic_directory,
-                    product,
-                    f"{acquisition_date:%Y.%m.%d}",
-                    f"{acquisition_date:%Y.%m.%d}_{target}_{product}_{int(target_geometry.cell_size)}m.tif"
-                )
+                product_filename = join(self.mosaic_directory, product, f"{acquisition_date:%Y.%m.%d}",
+                                        f"{acquisition_date:%Y.%m.%d}_{target}_{product}_{int(target_geometry.cell_size)}m.tif")
 
                 if exists(product_filename):
                     logger.info(f"VIIRS {colored_logging.val(product)} already exists: {colored_logging.file(product_filename)}")
                 else:
-                    logger.info(
-                        f"generating VIIRS {colored_logging.val(product)} mosaic " +
-                        "at " + colored_logging.place(target) +
-                        "on " + colored_logging.time(f"{acquisition_date:%Y-%m-%d}")
-                    )
+                    logger.info(f"generating VIIRS {colored_logging.val(product)} mosaic at " + colored_logging.place(target) +
+                                "on " + colored_logging.time(f"{acquisition_date:%Y-%m-%d}"))
 
                     if product == "ST_C":
-                        self.ST_C(
-                            date_UTC=acquisition_date,
-                            geometry=target_geometry,
-                            filename=product_filename
-                            # return_raster=False
-                        )
+                        self.ST_C(date_UTC=acquisition_date, geometry=target_geometry, filename=product_filename # return_raster=False
+                                 )
                     else:
                         raise ValueError(f"unrecognized product: {product}")
 

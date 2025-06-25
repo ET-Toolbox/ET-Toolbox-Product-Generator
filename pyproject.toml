@@ -7,91 +7,19 @@ name = "ETtoolbox"
 version = "1.0.0"
 description = "Evapotranspiration Product Generator for the USBR-JPL Second Generation ET Toolbox"
 readme = "README.md"
-authors = [
-    { name = "Gregory H. Halverson", email = "gregory.h.halverson@jpl.nasa.gov" },
-]
+
 classifiers = [
     "Programming Language :: Python :: 3",
     "Operating System :: OS Independent",
 ]
-dependencies = [
-    "affine",
-    "astropy",
-    "beautifulsoup4",
-    "boto3",
-    "colored_logging",
-    "descartes",
-    "ephem",
-    "gdal>3.1",
-    "geopandas",
-    "geos5fp",
-    "gedi_canopy_height",
-    "harmonized-landsat-sentinel",
-    "h5py",
-    "imageio",
-    "imageio-ffmpeg",
-    "jdcal",
-    "jupyter",
-    "keras",
-    "koppengeiger",
-    "matplotlib",
-    "mgrs",
-    "msgpack",
-    "msgpack_numpy",
-    "netcdf4",
-    "nose",
-    "numpy",
-    "pybind11",
-    "pybind11_cmake",
-    "pycksum",
-    "pygeos",
-    "pygrib",
-    "pykdtree",
-    "pyresample",
-    "pillow",
-    "pysolar",
-    "pytest",
-    "rasters>=1.0.5",
-    "rasterio>1.0.0",
-    "requests",
-    "scikit-image",
-    "scipy",
-    "sentinelsat",
-    "six",
-    "shapely",
-    "solar-apparent-time",
-    "spacetrack",
-    "termcolor",
-    "tensorflow",
-    "untangle",
-    "urllib3",
-    "wget",
-    "xmltodict",
-]
 requires-python = ">=3.11"
-
-[project.optional-dependencies]
-dev = [
-    "pytest>=6.0",
-    "pytest-cov",
-]
 
 [tool.setuptools.package-data]
 ETtoolbox = ["*.txt"]
 
 [project.urls]
-Homepage = "https://github.com/ET-Toolbox/ET-Toolbox-Product-Generator"
-
-[project.scripts]
-LANCE-VIIRS-Dates = "ETtoolbox.available_lance_dates:main"
-ET-Toolbox-Credentials = "ETtoolbox.check_credentials:main"
-ET-Toolbox-Tile = "ETtoolbox.ETtoolbox_tile:main"
-ET-Toolbox-Rio-Grande = "ETtoolbox.ETtoolbox_riogrande:main"
-ET-Toolbox-Historical-Fine = "ETtoolbox.ETtoolbox_historical_fine:main"
-ET-Toolbox-Historical-Coarse = "ETtoolbox.ETtoolbox_historical_coarse:main"
-ET-Toolbox-Hindcast-Coarse = "ETtoolbox.ETtoolbox_hindcast_coarse:main"
-New-Mexico-VIIRS-Server = "new_mexico.new_mexico:main"
+Homepage = "https://gitlab.bor.doi.net/aao-et-toolbox/aao-et-calculation"
 
 [tool.setuptools.packages.find]
 include = ["ETtoolbox"]
-exclude = ["calval", "testing"]
+exclude = ["calval"]

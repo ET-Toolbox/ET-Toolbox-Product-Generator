@@ -36,17 +36,7 @@ DEFAULT_PTJPL_INTERMEDIATE = "PTJPL_intermediate"
 DEFAULT_RESAMPLING = "cubic"
 DEFAULT_PREVIEW_QUALITY = 20
 
-DEFAULT_OUTPUT_VARIABLES = [
-    "Rn",
-    "LE",
-    "ETc",
-    "ETi",
-    "ETs",
-    "ET",
-    "ESI",
-    "WUE",
-    "SM"
-]
+DEFAULT_OUTPUT_VARIABLES = ["Rn", "LE", "ETc", "ETi", "ETs", "ET", "ESI", "WUE", "SM"]
 
 FLOOR_TOPT = True
 
@@ -74,33 +64,18 @@ class GEOS5FPNotAvailableError(IOError):
 class PTJPLSM(PTJPL):
     logger = logging.getLogger(__name__)
 
-    def __init__(
-            self,
-            working_directory: str = None,
-            static_directory: str = None,
-            SRTM_connection: SRTM = None,
-            SRTM_download: str = None,
-            GEOS5FP_connection: GEOS5FP = None,
-            GEOS5FP_download: str = None,
-            GEOS5FP_products: str = None,
-            GEDI_connection: GEDICanopyHeight = None,
-            GEDI_download: str = None,
-            ORNL_connection: MODISCI = None,
-            CI_directory: str = None,
-            soil_grids_connection: SoilGrids = None,
-            soil_grids_download: str = None,
-            intermediate_directory=None,
-            preview_quality: int = DEFAULT_PREVIEW_QUALITY,
-            ANN_model: Callable = None,
-            ANN_model_filename: str = None,
-            resampling: str = DEFAULT_RESAMPLING,
-            downscale_air: bool = DEFAULT_DOWNSCALE_AIR,
-            downscale_humidity: bool = DEFAULT_DOWNSCALE_HUMIDITY,
-            downscale_moisture: bool = DEFAULT_DOWNSCALE_MOISTURE,
-            floor_Topt: bool = FLOOR_TOPT,
-            save_intermediate: bool = False,
-            include_preview: bool = True,
-            show_distribution: bool = True):
+    def __init__(self, working_directory: str = None, static_directory: str = None,
+                 SRTM_connection: SRTM = None, SRTM_download: str = None,
+                 GEOS5FP_connection: GEOS5FP = None, GEOS5FP_download: str = None, GEOS5FP_products: str = None,
+                 GEDI_connection: GEDICanopyHeight = None, GEDI_download: str = None,
+                 ORNL_connection: MODISCI = None, CI_directory: str = None,
+                 soil_grids_connection: SoilGrids = None, soil_grids_download: str = None,
+                 intermediate_directory=None, preview_quality: int = DEFAULT_PREVIEW_QUALITY,
+                 ANN_model: Callable = None, ANN_model_filename: str = None,
+                 resampling: str = DEFAULT_RESAMPLING, downscale_air: bool = DEFAULT_DOWNSCALE_AIR, downscale_humidity: bool = DEFAULT_DOWNSCALE_HUMIDITY,
+                 downscale_moisture: bool = DEFAULT_DOWNSCALE_MOISTURE, floor_Topt: bool = FLOOR_TOPT,
+                 save_intermediate: bool = False, include_preview: bool = True, show_distribution: bool = True):
+
         if working_directory is None:
             working_directory = DEFAULT_WORKING_DIRECTORY
 
@@ -120,31 +95,16 @@ class PTJPLSM(PTJPL):
                 source_directory=soil_grids_download
             )
 
-        super(PTJPLSM, self).__init__(
-            working_directory=working_directory,
-            static_directory=static_directory,
-            SRTM_connection=SRTM_connection,
-            SRTM_download=SRTM_download,
-            GEOS5FP_connection=GEOS5FP_connection,
-            GEOS5FP_download=GEOS5FP_download,
-            GEOS5FP_products=GEOS5FP_products,
-            GEDI_connection=GEDI_connection,
-            GEDI_download=GEDI_download,
-            ORNL_connection=ORNL_connection,
-            CI_directory=CI_directory,
-            intermediate_directory=intermediate_directory,
-            preview_quality=preview_quality,
-            ANN_model=ANN_model,
-            ANN_model_filename=ANN_model_filename,
-            resampling=resampling,
-            save_intermediate=save_intermediate,
-            show_distribution=show_distribution,
-            include_preview=include_preview,
-            downscale_air=downscale_air,
-            downscale_humidity=downscale_humidity,
-            downscale_moisture=downscale_moisture,
-            floor_Topt=floor_Topt
-        )
+        super(PTJPLSM, self).__init__(working_directory=working_directory, static_directory=static_directory,
+                                      SRTM_connection=SRTM_connection, SRTM_download=SRTM_download,
+                                      GEOS5FP_connection=GEOS5FP_connection, GEOS5FP_download=GEOS5FP_download, GEOS5FP_products=GEOS5FP_products,
+                                      GEDI_connection=GEDI_connection, GEDI_download=GEDI_download,
+                                      ORNL_connection=ORNL_connection, CI_directory=CI_directory,
+                                      intermediate_directory=intermediate_directory, preview_quality=preview_quality,
+                                      ANN_model=ANN_model, ANN_model_filename=ANN_model_filename,
+                                      resampling=resampling, save_intermediate=save_intermediate, show_distribution=show_distribution,
+                                      include_preview=include_preview, downscale_air=downscale_air, downscale_humidity=downscale_humidity,
+                                      downscale_moisture=downscale_moisture, floor_Topt=floor_Topt)
 
         self.soil_grids = soil_grids_connection
 
@@ -164,29 +124,10 @@ class PTJPLSM(PTJPL):
 
         return fREW
 
-    def PTJPL(
-            self,
-            geometry: RasterGeometry,
-            target: str,
-            time_UTC: datetime or str,
-            ST_C: Raster,
-            emissivity: Raster,
-            NDVI: Raster,
-            albedo: Raster,
-            water: Raster = None,
-            cloud_mask: Raster = None,
-            SWin: Raster = None,
-            Ta_C: Raster = None,
-            RH: Raster = None,
-            Ea_kPa: Raster = None,
-            Topt: Raster = None,
-            fAPARmax: Raster = None,
-            Rn: Raster = None,
-            Rn_daily: Raster = None,
-            G: Raster = None,
-            SM: Raster = None,
-            wind_speed: Raster = None,
-            output_variables: List[str] = DEFAULT_OUTPUT_VARIABLES) -> Dict[str, Raster]:
+    def PTJPL(self, geometry: RasterGeometry, target: str, time_UTC: datetime or str, ST_C: Raster, emissivity: Raster, NDVI: Raster, albedo: Raster, water: Raster = None,
+              cloud_mask: Raster = None, SWin: Raster = None, Ta_C: Raster = None, RH: Raster = None, Ea_kPa: Raster = None, Topt: Raster = None, fAPARmax: Raster = None,
+              Rn: Raster = None, Rn_daily: Raster = None, G: Raster = None, SM: Raster = None, wind_speed: Raster = None,
+              output_variables: List[str] = DEFAULT_OUTPUT_VARIABLES) -> Dict[str, Raster]:
 
         STEFAN_BOLTZMAN_CONSTANT = 5.67036713e-8  # SI units watts per square meter per kelvin to the fourth
         warnings.filterwarnings('ignore')
@@ -239,12 +180,7 @@ class PTJPLSM(PTJPL):
 
         if SWin is None:
             # SWin = self.SWin(time_UTC=time_UTC, geometry=geometry)
-            Ra, Rg, UV, VIS, NIR, VISdiff, NIRdiff, VISdir, NIRdir = self.FLiES(
-                geometry=geometry,
-                target=target,
-                time_UTC=time_UTC,
-                albedo=albedo
-            )
+            Ra, Rg, UV, VIS, NIR, VISdiff, NIRdiff, VISdir, NIRdir = self.FLiES(geometry=geometry, target=target, time_UTC=time_UTC, albedo=albedo)
 
             SWin = Rg
 
@@ -265,17 +201,7 @@ class PTJPLSM(PTJPL):
         self.diagnostic(SWnet, "SWnet", date_UTC, target)
 
         if Rn is None:
-            Rn = self.Rn(
-                date_UTC=date_UTC,
-                target=target,
-                SWin=SWin,
-                albedo=albedo,
-                ST_C=ST_C,
-                emissivity=emissivity,
-                Ea_kPa=Ea_kPa,
-                Ta_C=Ta_C,
-                cloud_mask=cloud_mask
-            )
+            Rn = self.Rn(date_UTC=date_UTC, target=target, SWin=SWin, albedo=albedo, ST_C=ST_C, emissivity=emissivity, Ea_kPa=Ea_kPa, Ta_C=Ta_C, cloud_mask=cloud_mask)
 
         self.diagnostic(Rn, "Rn", date_UTC, target)
 
@@ -284,12 +210,7 @@ class PTJPLSM(PTJPL):
 
         if Rn_daily is None:
             # integrate net radiation to daily value
-            Rn_daily = self.Rn_daily(
-                Rn,
-                hour_of_day,
-                sunrise_hour,
-                daylight_hours
-            )
+            Rn_daily = self.Rn_daily(Rn, hour_of_day, sunrise_hour, daylight_hours)
 
             # constrain negative values of daily integrated net radiation
             Rn_daily = rt.clip(Rn_daily, 0, None)
@@ -349,13 +270,7 @@ class PTJPLSM(PTJPL):
             results["fM"] = fM
 
         if SM is None:
-            SM = self.SM(
-                time_UTC=time_UTC,
-                geometry=geometry,
-                ST_fine=ST_C.mask(~water),
-                NDVI_fine=NDVI.mask(~water),
-                water=water
-            )
+            SM = self.SM(time_UTC=time_UTC, geometry=geometry, ST_fine=ST_C.mask(~water), NDVI_fine=NDVI.mask(~water), water=waters)
 
             # # calculate soil moisture constraint from mean relative humidity and vapor pressure deficit,
             # # constrained between zero and one
@@ -432,12 +347,7 @@ class PTJPLSM(PTJPL):
             wind_speed = self.wind_speed(time_UTC=time_UTC, geometry=geometry)
 
         # water heat flux
-        W = self.water_heat_flux(
-            ST_C,
-            Td_C,
-            wind_speed,
-            SWnet
-        )
+        W = self.water_heat_flux(ST_C, Td_C, wind_speed, SWnet)
 
         W = rt.clip(W, 0, W_MAX_PROPORTION * Rn)
         W = W.mask(water)
@@ -462,11 +372,7 @@ class PTJPLSM(PTJPL):
         PET_land = PT_ALPHA * epsilon * (Rn - G)
         self.diagnostic(PET_land, "PET_land", date_UTC, target)
 
-        PET = rt.where(
-            water,
-            PET_water,
-            PET_land
-        )
+        PET = rt.where(water, PET_water, PET_land)
 
         if "PET" in output_variables:
             results["PET"] = PET

@@ -24,14 +24,8 @@ class FailedDownload(ConnectionError):
 
 
 class MCD12C1(LPDAACDataPool):
-    def __init__(
-            self,
-            username: str = None,
-            password: str = None,
-            working_directory: str = None,
-            download_directory: str = None,
-            remote: str = None,
-            offline_ok: bool = False):
+    def __init__(self, username: str = None, password: str = None, working_directory: str = None, download_directory: str = None, remote: str = None,
+                 offline_ok: bool = False):
         if working_directory is None:
             working_directory = DEFAULT_WORKING_DIRECTORY
 
@@ -45,12 +39,7 @@ class MCD12C1(LPDAACDataPool):
         if remote is None:
             remote = URL
 
-        super(MCD12C1, self).__init__(
-            username=username,
-            password=password,
-            remote=remote,
-            offline_ok=offline_ok
-        )
+        super(MCD12C1, self).__init__(username=username, password=password, remote=remote, offline_ok=offline_ok)
 
         self.working_directory = working_directory
         self.download_directory = download_directory

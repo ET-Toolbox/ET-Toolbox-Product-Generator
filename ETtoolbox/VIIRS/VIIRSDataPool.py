@@ -18,7 +18,7 @@ import rasters as rt
 from ETtoolbox.LPDAAC import LPDAACDataPool
 from modland import find_modland_tiles
 from modland.indices import generate_modland_grid, parsehv
-from ETtoolbox.daterange import date_range
+from ..daterange import date_range
 from rasters import RasterGrid, Raster
 
 logger = logging.getLogger(__name__)
@@ -64,10 +64,7 @@ class VIIRSGranule:
         self.products_directory = products_directory
 
     def __repr__(self):
-        display_dict = {
-            "filename": self.filename,
-            "products_directory": self.products_directory
-        }
+        display_dict = {"filename": self.filename, "products_directory": self.products_directory}
 
         display_string = json.dumps(display_dict, indent=2)
 
@@ -114,12 +111,7 @@ class VIIRSGranule:
         with h5py.File(self.filename, "r") as file:
             return list(file[f"HDFEOS/GRIDS/{grid}/Data Fields/"].keys())
 
-    def dataset(
-            self,
-            filename: str,
-            dataset_name: str,
-            fill_value: int,
-            scale_factor: float) -> Raster:
+    def dataset(self, filename: str, dataset_name: str, fill_value: int, scale_factor: float) -> Raster:
         tile = parse_VIIRS_tile(filename)
         h, v = parsehv(tile)
 
@@ -129,10 +121,7 @@ class VIIRSGranule:
 
             logger.info("opening VIIRS file: " + colored_logging.file(self.filename))
 
-            logger.info(
-                f"loading {colored_logging.val(dataset_name)} " +
-                "at " + colored_logging.val(f"{grid.cell_size:0.2f} m") + " resolution"
-            )
+            logger.info(f"loading {colored_logging.val(dataset_name)} at " + colored_logging.val(f"{grid.cell_size:0.2f} m") + " resolution")
 
             DN = Raster(DN, geometry=grid)
 
@@ -150,10 +139,7 @@ class VIIRSGranule:
         if self.product_directory(product) is None:
             raise ValueError("no product directory given")
 
-        return join(
-            self.product_directory(product),
-            f"{self.filename_stem}_{product}.tif"
-        )
+        return join(self.product_directory(product), f"{self.filename_stem}_{product}.tif")
 
 
 class VIIRSDataPool(LPDAACDataPool):
@@ -162,24 +148,10 @@ class VIIRSDataPool(LPDAACDataPool):
     DEFAULT_PRODUCTS_DIRECTORY = "VIIRS_products"
     DEFAULT_MOSAIC_DIRECTORY = "VIIRS_mosaics"
 
-    def __init__(
-            self,
-            username: str = None,
-            password: str = None,
-            remote: str = None,
-            working_directory: str = None,
-            download_directory: str = None,
-            products_directory: str = None,
-            mosaic_directory: str = None,
-            *args,
-            **kwargs):
-        super(VIIRSDataPool, self).__init__(
-            username=username,
-            password=password,
-            remote=remote,
-            *args,
-            **kwargs
-        )
+    def __init__(self, username: str = None, password: str = None, remote: str = None, working_directory: str = None, download_directory: str = None,
+                 products_directory: str = None, mosaic_directory: str = None, *args, **kwargs):
+
+        super(VIIRSDataPool, self).__init__(username=username, password=password, remote=remote, *args, **kwargs)
 
         if working_directory is None:
             working_directory = self.DEFAULT_WORKING_DIRECTORY
@@ -207,26 +179,15 @@ class VIIRSDataPool(LPDAACDataPool):
         self.mosaic_directory = mosaic_directory
 
     def __repr__(self):
-        display_dict = {
-            "download_directory": self.download_directory,
-            "products_directory": self.products_directory,
-            "mosaic_directory": self.mosaic_directory
-        }
+        display_dict = {"download_directory": self.download_directory, "products_directory": self.products_directory, "mosaic_directory": self.mosaic_directory}
 
         display_string = json.dumps(display_dict, indent=2)
 
         return display_string
 
-    def search(
-            self,
-            product: str,
-            start_date: date or datetime or str,
-            end_date: date or datetime or str = None,
-            build: str = None,
-            tiles: List[str] or str = None,
-            target_geometry: Point or Polygon or RasterGrid = None,
-            *args,
-            **kwargs) -> pd.DataFrame:
+    def search(self, product: str, start_date: date or datetime or str, end_date: date or datetime or str = None, build: str = None, tiles: List[str] or str = None,
+               target_geometry: Point or Polygon or RasterGrid = None, *args, **kwargs) -> pd.DataFrame:
+
         if tiles is None and target_geometry is not None:
             tiles = find_modland_tiles(target_geometry)
 
@@ -244,12 +205,7 @@ class VIIRSDataPool(LPDAACDataPool):
         rows = []
 
         for acquisition_date in date_range(start_date, end_date):
-            date_URL = self.date_URL(
-                "VIIRS",
-                product,
-                acquisition_date,
-                build
-            )
+            date_URL = self.date_URL("VIIRS", product, acquisition_date, build)
 
             if tiles is None:
                 listing = self.get_HTTP_listing(date_URL, pattern="*.h5")
@@ -259,11 +215,7 @@ class VIIRSDataPool(LPDAACDataPool):
                 for tile in tiles:
                     listing.extend(self.get_HTTP_listing(date_URL, pattern=f"*.{tile}.*.h5"))
 
-            URLs = sorted([
-                posixpath.join(date_URL, item)
-                for item
-                in listing
-            ])
+            URLs = sorted([posixpath.join(date_URL, item) for item in listing])
 
             for URL in URLs:
                 tile = parse_VIIRS_tile(posixpath.basename(URL))

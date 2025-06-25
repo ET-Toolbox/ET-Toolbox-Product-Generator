@@ -7,20 +7,13 @@ import colored_logging
 from ETtoolbox.sentinel import Sentinel
 
 
-def find_sentinel(
-        start: Union[date, str],
-        end: Union[date, str],
-        tile: str):
+def find_sentinel(start: Union[date, str], end: Union[date, str], tile: str):
     logger = logging.getLogger(__name__)
 
     logger.info(f"searching Sentinel L2A at {colored_logging.place(tile)}")
 
     sentinel = Sentinel()
-    listing = sentinel.search_L2A(
-        start_date=start,
-        end_date=end,
-        tile=tile
-    )
+    listing = sentinel.search_L2A(start_date=start, end_date=end, tile=tile)
 
     listing = listing.sort_values(by="date")
     logger.info(f"found {colored_logging.val(len(listing))} Sentinel scenes")
@@ -52,11 +45,7 @@ def main(argv=sys.argv):
     else:
         tile = None
 
-    find_sentinel(
-        start=start_date_UTC,
-        end=end_date_UTC,
-        tile=tile
-    )
+    find_sentinel(start=start_date_UTC, end=end_date_UTC, tile=tile)
 
 
 if __name__ == "__main__":

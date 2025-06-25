@@ -19,7 +19,7 @@ import shapely.ops
 from rasters import RasterGeometry
 from solar_apparent_time import UTC_to_solar, solar_to_UTC
 
-from ETtoolbox.spacetrack_credentials import get_spacetrack_credentials
+from ..credentials import get_spacetrack_credentials
 
 logger = logging.getLogger(__name__)
 
@@ -32,7 +32,7 @@ def get_TLE(datetime_UTC: datetime = None, username: str = None, password: str =
         datetime_UTC = parser.parse(datetime_UTC)
 
     if username is None or password is None:
-        credentials = get_spacetrack_credentials(filename=spacetrack_credentials_filename)
+        credentials = get_spacetrack_credentials()
         username = credentials.username
         password = credentials.password
 
@@ -42,22 +42,14 @@ def get_TLE(datetime_UTC: datetime = None, username: str = None, password: str =
 
     if not exists(filename) or (time.time() - os.path.getmtime(abspath(expanduser(filename)))) > 86400:
         # connect to Space Track
-        st = SpaceTrackClient(
-            identity=username,
-            password=password
-        )
+        st = SpaceTrackClient(identity=username, password=password)
 
         epoch = f">{datetime_UTC - timedelta(hours=12)}"
 
         # print(f"searching TLE for NORAD ID {norad_cat_id} at epoch: {epoch}")
 
         # query all TLEs for satellite
-        tle_query_text = st.tle(
-            norad_cat_id=norad_cat_id,
-            epoch=epoch,
-            orderby='epoch',
-            format='3le'
-        )
+        tle_query_text = st.tle(norad_cat_id=norad_cat_id, epoch=epoch, orderby='epoch', format='3le')
 
         with open(filename, "w") as file:
             file.write(tle_query_text)
@@ -101,10 +93,7 @@ def get_satellite_position(datetime_UTC: date = None, TLE: str = None, spacetrac
     return point
 
 def center_aeqd_proj4(center_coord: Point) -> str:
-    return '+proj=aeqd +lat_0=%f +lon_0=%f' % (
-        center_coord.y,
-        center_coord.x
-    )
+    return '+proj=aeqd +lat_0=%f +lon_0=%f' % (center_coord.y, center_coord.x)
 
 def is_day(datetime_UTC: datetime, point_latlon: Point) -> bool:
     solar_time = datetime_UTC + timedelta(hours=(np.radians(point_latlon.x) / np.pi * 12))
@@ -172,14 +161,8 @@ def split_geometry(geometry):
 
     # logger.verbose('forming anti-meridian wedge')
 
-    antimeridian_wedge = shapely.geometry.Polygon([
-        (epsilon, -np.pi),
-        (epsilon ** 2, -epsilon),
-        (0, epsilon),
-        (-epsilon ** 2, -epsilon),
-        (-epsilon, -np.pi),
-        (epsilon, -np.pi)
-    ])
+    antimeridian_wedge = shapely.geometry.Polygon([(epsilon, -np.pi), (epsilon ** 2, -epsilon), (0, epsilon), (-epsilon ** 2, -epsilon), (-epsilon, -np.pi),
+                                                   (epsilon, -np.pi)])
 
     feature_shape = shapely.geometry.shape(geometry)
     sign = 2. * (0.5 * (feature_shape.bounds[1] + feature_shape.bounds[3]) >= 0.) - 1.
@@ -198,16 +181,9 @@ def split_geometry(geometry):
 
     return output_shape
 
-def get_swaths(
-        start_datetime_UTC: datetime = None,
-        end_datetime_UTC: datetime = None, 
-        target: Polygon = None, 
-        TLE: str = None,
-        spacetrack_credentials_filename: str = None,
-        swath_duration_minutes: int = 6,
-        day_only: bool = True,
-        filter_geometry: bool = True,
-        filter_poles: bool = True) -> gpd.GeoDataFrame:
+def get_swaths(start_datetime_UTC: datetime = None, end_datetime_UTC: datetime = None,  target: Polygon = None,  TLE: str = None,
+               spacetrack_credentials_filename: str = None, swath_duration_minutes: int = 6, day_only: bool = True, filter_geometry: bool = True,
+               filter_poles: bool = True) -> gpd.GeoDataFrame:
     if start_datetime_UTC is None:
         start_datetime_UTC = datetime.utcnow().date()
     
@@ -308,7 +284,8 @@ def get_swaths(
 
     return gdf
 
-def find_VIIRS_swaths(date_solar: Union[date, str], geometry: Union[Polygon, RasterGeometry] = None, filter_geometry: bool = True, spacetrack_credentials_filename: str = None):
+def find_VIIRS_swaths(date_solar: Union[date, str], geometry: Union[Polygon, RasterGeometry] = None, filter_geometry: bool = True,
+                      spacetrack_credentials_filename: str = None):
     if isinstance(date_solar, str):
         date_solar = parser.parse(date_solar)
 
@@ -321,6 +298,7 @@ def find_VIIRS_swaths(date_solar: Union[date, str], geometry: Union[Polygon, Ras
     datetime_UTC = datetime(datetime_UTC.year, datetime_UTC.month, datetime_UTC.day, datetime_UTC.hour, int(datetime_UTC.minute / 6) * 6)
     start_datetime_UTC = datetime_UTC - timedelta(minutes=radius_minutes)
     end_datetime_UTC = datetime_UTC + timedelta(minutes=radius_minutes)
-    swaths = get_swaths(start_datetime_UTC, end_datetime_UTC, target=geometry, filter_geometry=filter_geometry, spacetrack_credentials_filename=spacetrack_credentials_filename)
+    swaths = get_swaths(start_datetime_UTC, end_datetime_UTC, target=geometry, filter_geometry=filter_geometry,
+                        spacetrack_credentials_filename=spacetrack_credentials_filename)
 
     return swaths

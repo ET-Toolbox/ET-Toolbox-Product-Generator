@@ -90,22 +90,10 @@ class TileNotAvailable(ValueError):
 class SRTM(LPDAACDataPool):
     # logger = logging.getLogger(__name__)
 
-    def __init__(
-            self,
-            username: str = None,
-            password: str = None,
-            remote: str = None,
-            working_directory: str = None,
-            download_directory: str = None,
-            ERS_credentials_filename: str = None,
-            offline_ok: bool = False):
-        super(SRTM, self).__init__(
-            username=username,
-            password=password,
-            remote=remote,
-            ERS_credentials_filename=ERS_credentials_filename,
-            offline_ok=offline_ok
-        )
+    def __init__(self, username: str = None, password: str = None, remote: str = None, working_directory: str = None, download_directory: str = None,
+                 offline_ok: bool = False):
+
+        super(SRTM, self).__init__(username=username, password=password, remote=remote, offline_ok=offline_ok)
 
         if working_directory is None:
             working_directory = DEFAULT_WORKING_DIRECTORY
@@ -127,10 +115,7 @@ class SRTM(LPDAACDataPool):
         self._filenames = None
 
     def __repr__(self):
-        display_dict = {
-            "URL": self.remote,
-            "download_directory": self.download_directory
-        }
+        display_dict = {"URL": self.remote, "download_directory": self.download_directory}
 
         display_string = json.dumps(display_dict, indent=2)
 
@@ -144,13 +129,7 @@ class SRTM(LPDAACDataPool):
         return self._filenames
 
     def tile_URL(self, tile):
-        return posixpath.join(
-            self.remote,
-            "MEASURES",
-            "NASADEM_HGT.001",
-            "2000.02.11",
-            f"NASADEM_HGT_{tile.lower()}.zip"
-        )
+        return posixpath.join(self.remote, "MEASURES", "NASADEM_HGT.001", "2000.02.11", f"NASADEM_HGT_{tile.lower()}.zip")
 
     def tiles_intersecting_bbox(self, lon_min, lat_min, lon_max, lat_max):
         tiles = []

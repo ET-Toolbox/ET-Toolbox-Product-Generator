@@ -41,36 +41,8 @@ def calculate_vapor(LE_daily, daylight_hours):
     return ET
 
 
-def TSEB(
-        Tr_K,
-        Ta_K,
-        U,
-        LAI,
-        Vza,
-        Sdn,
-        Ldn,
-        P,
-        DoY,
-        Lat,
-        Lon,
-        Time_t,
-        Albedo,
-        Rn,
-        Rnd,
-        daylight_hours,
-        Z_u=2.0,
-        Z_t=2.0,
-        KB=2.0,
-        F_c=1.0,
-        Alpha_PT=1.26,
-        Leaf_width=0.2,
-        F_g=1.0,
-        EmisVeg=0.98,
-        EmisGrd=0.93,
-        Hc=0.3,
-        Mask=1,
-        Mask_Val=-9999,
-        logger=None):
+def TSEB(Tr_K, Ta_K, U, LAI, Vza, Sdn, Ldn, P, DoY, Lat, Lon, Time_t, Albedo, Rn, Rnd, daylight_hours, Z_u=2.0, Z_t=2.0, KB=2.0, F_c=1.0, Alpha_PT=1.26,
+         Leaf_width=0.2, F_g=1.0, EmisVeg=0.98, EmisGrd=0.93, Hc=0.3, Mask=1, Mask_Val=-9999, logger=None):
     """
     Priestley-Taylor Two Source Model. Calculates TSEB energy fluxes using
     a single observation of composite radiometric temperature using
@@ -251,8 +223,7 @@ def TSEB(
     i = LEs < 0
 
     # Perform first Ts and Tc estimates using the PT-Equation
-    Tc = np.minimum(Tr_K, Ta_K) + ((Rn * Ra) / (rho * cp)) * (
-            1 - Alpha_PT * F_g * s_gama)  # Nieto + Adjustment of Colazzi
+    Tc = np.minimum(Tr_K, Ta_K) + ((Rn * Ra) / (rho * cp)) * (1 - Alpha_PT * F_g * s_gama)  # Nieto + Adjustment of Colazzi
     LEc = alpha_PT_loop * F_g * s * Rnc / (s + s_gama)
     # LEc[LEc < 0] = 0.0
     H_c = Rnc - LEc
@@ -323,8 +294,7 @@ def TSEB(
         u_d_zm[i] = U_C[i] * np.exp(-1 * a[i] * (1 - ((D_0[i] + Z_0M[i]) / Hc[i])))
         Rx[i] = (C / LAI[i]) * ((Leaf_width / u_d_zm[i]) ** 0.5)
         psih[i] = compute_psi_h(Z_t, Z_0H[i], L[i])
-        Ra[i] = (np.log((Z_u - D_0[i]) / Z_0M[i]) - psim[i]) * (np.log((Z_t - D_0[i]) / Z_0M[i]) - psih[i]) / (
-                0.16 * U[i])
+        Ra[i] = (np.log((Z_u - D_0[i]) / Z_0M[i]) - psim[i]) * (np.log((Z_t - D_0[i]) / Z_0M[i]) - psih[i]) / (0.16 * U[i])
 
         alpha_PT_loop[i] -= ALPHA_DEC
 
@@ -362,10 +332,8 @@ def TSEB(
             LEs[neg_LE_S] = 0.0
             Hs[neg_LE_S] = Rns[neg_LE_S] - G[neg_LE_S]  # - LEs[neg_LE_S]
 
-            Ts[neg_LE_S] = (Hs[neg_LE_S] * (Rs[neg_LE_S] + Ra[neg_LE_S]) / (rho[neg_LE_S] * cp[neg_LE_S])) + Ta_K[
-                neg_LE_S]
-            Tc[neg_LE_S] = (((Tr_K[neg_LE_S] ** 4) - (1 - f_theta[neg_LE_S]) * (Ts[neg_LE_S] ** 4)) / f_theta[
-                neg_LE_S]) ** 0.25
+            Ts[neg_LE_S] = (Hs[neg_LE_S] * (Rs[neg_LE_S] + Ra[neg_LE_S]) / (rho[neg_LE_S] * cp[neg_LE_S])) + Ta_K[neg_LE_S]
+            Tc[neg_LE_S] = (((Tr_K[neg_LE_S] ** 4) - (1 - f_theta[neg_LE_S]) * (Ts[neg_LE_S] ** 4)) / f_theta[neg_LE_S]) ** 0.25
 
             H_c[neg_LE_S] = rho[neg_LE_S] * cp[neg_LE_S] * (Tc[neg_LE_S] - Ta_K[neg_LE_S]) / Ra[neg_LE_S]
             LEc[neg_LE_S] = Rnc[neg_LE_S] - H_c[neg_LE_S]
@@ -379,10 +347,8 @@ def TSEB(
                 LEc[hc_gt_rnc] = 0
                 H_c[hc_gt_rnc] = Rnc[hc_gt_rnc]
                 Tc[hc_gt_rnc] = H_c[hc_gt_rnc] * Ra[hc_gt_rnc] / (rho[hc_gt_rnc] * cp[hc_gt_rnc]) + Ta_K[hc_gt_rnc]
-                Ts[hc_gt_rnc] = (((Tr_K[hc_gt_rnc] ** 4) - f_theta[hc_gt_rnc] * (Tc[hc_gt_rnc] ** 4)) / (
-                        1 - f_theta[hc_gt_rnc])) ** 0.25
-                Hs[hc_gt_rnc] = rho[hc_gt_rnc] * cp[hc_gt_rnc] * (Ts[hc_gt_rnc] - Ta_K[hc_gt_rnc]) / (
-                        Rs[hc_gt_rnc] + Ra[hc_gt_rnc])
+                Ts[hc_gt_rnc] = (((Tr_K[hc_gt_rnc] ** 4) - f_theta[hc_gt_rnc] * (Tc[hc_gt_rnc] ** 4)) / (1 - f_theta[hc_gt_rnc])) ** 0.25
+                Hs[hc_gt_rnc] = rho[hc_gt_rnc] * cp[hc_gt_rnc] * (Ts[hc_gt_rnc] - Ta_K[hc_gt_rnc]) / (Rs[hc_gt_rnc] + Ra[hc_gt_rnc])
                 G[hc_gt_rnc] = Rns[hc_gt_rnc] - Hs[hc_gt_rnc]
 
                 # Calculate total fluxes
@@ -412,21 +378,6 @@ def TSEB(
     LE_daily = np.clip(LE_daily, 0.0, None)
     ET = calculate_vapor(LE_daily, daylight_hours)
 
-    results = {
-        'LE': LE,
-        'ET': ET,
-        'H': H,
-        'G': G,
-        'LEc': LEc,
-        'LEs': LEs,
-        'Hs': Hs,
-        'Hc': H_c,
-        'Rs': Rs,
-        'Rx': Rx,
-        'Ra': Ra,
-        'Ts': Ts,
-        'Tc': Tc,
-        'Tw': Tw
-    }
+    results = {'LE': LE, 'ET': ET, 'H': H, 'G': G, 'LEc': LEc, 'LEs': LEs, 'Hs': Hs, 'Hc': H_c, 'Rs': Rs, 'Rx': Rx, 'Ra': Ra, 'Ts': Ts, 'Tc': Tc, 'Tw': Tw}
 
     return results

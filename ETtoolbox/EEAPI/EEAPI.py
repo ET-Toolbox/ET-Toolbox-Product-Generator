@@ -24,11 +24,10 @@ from dateutil import parser
 from shapely.geometry import Point, Polygon, shape
 
 import colored_logging
-from ETtoolbox.ERS_credentials import get_ERS_credentials
 from rasters import RasterGrid
 from time import sleep
 
-from ETtoolbox.M2M_credentials.M2M_credentials import get_M2M_credentials
+from ..credentials import get_ers_credentials
 
 class M2MAPIUnavailableError(Exception):
     pass
@@ -47,24 +46,18 @@ class EEAPI:
     _DOWNLOAD_RETRIEVE_ENDPOINT = "download-retrieve"
     _DEFAULT_DOWNLOAD_DIRECTORY = "earth_explorer_download"
 
-    def __init__(
-            self,
-            username: str = None,
-            password: str = None,
-            API_key: str = None,
-            host_URL: str = None,
-            download_directory: str = None):
+    def __init__(self, username: str = None, password: str = None, API_key: str = None, host_URL: str = None, download_directory: str = None):
         if host_URL is None:
             host_URL = self._M2MHOST
 
         if username is None or password is None:
-            credentials = get_M2M_credentials()
+            credentials = get_ers_credentials()
             username = credentials["username"]
             password = credentials["password"]
 
         self._username = username
         self._password = password
-        self._API_key = API_key
+        self._API_key = os.environ["EROS_BEARER"]
 
         self.host_URL = host_URL
 
@@ -81,14 +74,7 @@ class EEAPI:
         self.logout()
 
     def __repr__(self):
-        return json.dumps(
-            {
-                "host": self.host_URL,
-                # "key": self.API_key,
-                "download_directory": self.download_directory
-            },
-            indent=2
-        )
+        return json.dumps({"host": self.host_URL, "key": self.API_key, "download_directory": self.download_directory}, indent=2)
 
     def request(self, URL: str, request_dict: dict, retries: int = 3, wait_seconds: int = 30) -> dict:
         while retries > 0:
@@ -100,7 +86,7 @@ class EEAPI:
                 if self._API_key is None:
                     response = requests.post(URL, request_JSON)
                 else:
-                    headers = {'X-Auth-Token': self.API_key}
+                    headers = {'X-Auth-Token': self._API_key}
                     response = requests.post(URL, request_JSON, headers=headers)
 
                 if response is None:
@@ -154,7 +140,8 @@ class EEAPI:
                 return result
             except Exception as e:
                 if retries == 0:
-                    raise e
+                    result = None
+                    return result
 
                 self.logger.warning(e)
                 self.logger.warning(f"waiting {wait_seconds} for M2M retry")
@@ -166,10 +153,7 @@ class EEAPI:
         return urljoin(self.host_URL, self._LOGIN_ENDPOINT)
 
     def login(self):
-        request_dict = {
-            "username": self._username,
-            "password": self._password
-        }
+        request_dict = {"username": self._username, "password": self._password}
 
         URL = self.login_URL
         self._API_key = self.request(URL, request_dict)
@@ -198,16 +182,8 @@ class EEAPI:
     def scene_search_API(self, request_dict: dict) -> dict:
         return self.request(self.scene_search_URL, request_dict)
 
-    def scene_search(
-            self,
-            start_date: date or datetime or str,
-            target_geometry: Point or Polygon or RasterGrid,
-            datasets: str or list,
-            end_date: date or datetime or str = None,
-            max_results: int = None,
-            cloud_percent_min: float = 0,
-            cloud_percent_max: float = 100,
-            ascending: bool = True):
+    def scene_search(self, start_date: date or datetime or str, target_geometry: Point or Polygon or RasterGrid, datasets: str or list,
+                     end_date: date or datetime or str = None, max_results: int = None, cloud_percent_min: float = 0, cloud_percent_max: float = 100, ascending: bool = True):
         if isinstance(start_date, str):
             start_date = parser.parse(start_date).date()
 
@@ -233,93 +209,51 @@ class EEAPI:
             lon = target_geometry.x
             lat = target_geometry.y
 
-            lower_left = {
-                "latitude": lat,
-                "longitude": lon
-            }
-
-            upper_right = {
-                "latitude": lat,
-                "longitude": lon
-            }
+            lower_left = {"latitude": lat, "longitude": lon}
+            upper_right = {"latitude": lat, "longitude": lon}
 
         elif isinstance(target_geometry, Polygon):
             x_min, y_min, x_max, y_max = target_geometry.bounds
 
-            lower_left = {
-                "latitude": y_min,
-                "longitude": x_min
-            }
+            lower_left = {"latitude": y_min, "longitude": x_min}
+            upper_right = {"latitude": y_max, "longitude": x_max}
 
-            upper_right = {
-                "latitude": y_max,
-                "longitude": x_max
-            }
         elif isinstance(target_geometry, RasterGrid):
             x_min, y_min, x_max, y_max = target_geometry.bbox_latlon
 
-            lower_left = {
-                "latitude": y_min,
-                "longitude": x_min
-            }
+            lower_left = {"latitude": y_min, "longitude": x_min}
+            upper_right = {"latitude": y_max, "longitude": x_max}
 
-            upper_right = {
-                "latitude": y_max,
-                "longitude": x_max
-            }
         else:
             raise ValueError("invalid target geometry for EE search")
 
         results_dict_list = []
 
-        spatial_filter = {
-            "filterType": "mbr",
-            "lowerLeft": lower_left,
-            "upperRight": upper_right
-        }
+        spatial_filter = {"filterType": "mbr", "lowerLeft": lower_left, "upperRight": upper_right}
 
-        cloud_cover_filter = {
-            "max": cloud_percent_max,
-            "min": cloud_percent_min,
-            "includeUnknown": True
-        }
+        cloud_cover_filter = {"max": cloud_percent_max, "min": cloud_percent_min, "includeUnknown": True}
 
-        acquisition_filter = {
-            "start": start_date.strftime("%Y-%m-%d"),
-            "end": end_date.strftime("%Y-%m-%d")
-        }
+        acquisition_filter = {"start": start_date.strftime("%Y-%m-%d"), "end": end_date.strftime("%Y-%m-%d")}
 
         for dataset in datasets:
-            request_dict = {
-                "maxResults": max_results,
-                "datasetName": dataset,
-                "node": "EE",
-                "apiKey": self.API_key,
-                "sceneFilter": {
-                    "spatialFilter": spatial_filter,
-                    "metadataFilter": None,
-                    "cloudCoverFilter": cloud_cover_filter,
-                    "acquisitionFilter": acquisition_filter
-                },
-                "metadataType": "summary",
-                "sortDirection": "ASC" if ascending else "DESC",
-                "sortField": "displayId",
-                "startingNumber": 1
-            }
+            request_dict = {"maxResults": max_results, "datasetName": dataset, "node": "EE", "apiKey": self.API_key,
+                            "sceneFilter": {"spatialFilter": spatial_filter, "metadataFilter": None, "cloudCoverFilter": cloud_cover_filter,
+                                            "acquisitionFilter": acquisition_filter},
+                            "metadataType": "summary", "sortDirection": "ASC" if ascending else "DESC", "sortField": "displayId", "startingNumber": 1}
 
             response_dict = self.scene_search_API(request_dict)
 
-            for results_dict in response_dict["results"]:
-                if len(results_dict.keys()) > 0:
-                    results_dict_list.append(results_dict)
+            if response_dict is not None:
+                for results_dict in response_dict["results"]:
+                    if len(results_dict.keys()) > 0:
+                        results_dict_list.append(results_dict)
 
         listing = pd.DataFrame(results_dict_list)
 
         if len(listing) == 0:
             return listing
 
-        listing["date_UTC"] = listing["temporalCoverage"].apply(
-            lambda temporal_coverage: parser.parse(temporal_coverage["startDate"]).date())
+        listing["date_UTC"] = listing["temporalCoverage"].apply(lambda temporal_coverage: parser.parse(temporal_coverage["startDate"]).date())
         listing["display_ID"] = listing["displayId"]
         listing["sensor"] = listing["display_ID"].apply(lambda display_ID: display_ID.split("_")[0])
         listing["entity_ID"] = listing["entityId"]
@@ -327,12 +261,7 @@ class EEAPI:
 
         geometry = listing["spatialCoverage"].apply(lambda spatial_coverage: shape(spatial_coverage))
 
-        listing = listing[[
-            "date_UTC",
-            "display_ID",
-            "entity_ID",
-            "cloud"
-        ]]
+        listing = listing[["date_UTC", "display_ID", "entity_ID", "cloud"]]
 
         listing = gpd.GeoDataFrame(listing, geometry=geometry, crs="EPSG:4326")
         listing = listing.sort_values(by=["date_UTC", "display_ID"], ascending=ascending)
@@ -346,12 +275,8 @@ class EEAPI:
     def download_options_API(self, request_dict: dict) -> dict:
         return self.request(self.download_options_URL, request_dict)
 
-    def download_options(
-            self,
-            dataset: str,
-            entity_IDs: List[str] or str,
-            granule_systems: str = None,
-            band_systems: str = None):
+    def download_options(self, dataset: str, entity_IDs: List[str] or str, granule_systems: str = None, band_systems: str = None):
+
         if isinstance(entity_IDs, str):
             entity_IDs = [entity_IDs]
 
@@ -361,71 +286,49 @@ class EEAPI:
         if isinstance(band_systems, str):
             band_systems = [band_systems]
 
-        request_dict = {
-            "datasetName": dataset,
-            "entityIds": entity_IDs
-        }
-
-        # print("request_dict")
-        # print(request_dict)
-
+        request_dict = {"datasetName": dataset, "entityIds": entity_IDs}
         response_dict = self.download_options_API(request_dict)
 
-        # print("response_dict")
-        # print(response_dict)
+        if response_dict is not None:
+            # Data is available to parse. Loop and convert it to dataframes
 
-        granule_item_dict_list = []
-        band_item_dict_list = []
+            granule_item_dict_list = []
+            band_item_dict_list = []
 
-        for granule_item_dict in response_dict:
-            # print("granule_item_dict")
-            # print(granule_item_dict)
+            for granule_item_dict in response_dict:
 
-            if not granule_item_dict["available"]:
-                # print("unavailable")
-                continue
-
-            if granule_systems is not None and granule_item_dict["downloadSystem"] not in granule_systems:
-                # print(f'granule system {granule_item_dict["downloadSystem"]} not in {", ".join(granule_systems)}')
-                continue
-
-            band_items = granule_item_dict.pop("secondaryDownloads")
-            granule_item_dict_list.append(granule_item_dict)
-            granule_ID = granule_item_dict["displayId"]
-
-            for band_item_dict in band_items:
-                if band_systems is not None and band_item_dict["downloadSystem"] not in band_systems:
+                if not granule_item_dict["available"]:
                     continue
 
-                del (band_item_dict["secondaryDownloads"])
-                band_item_dict["granule_ID"] = granule_ID
-                band_item_dict_list.append(band_item_dict)
+                if granule_systems is not None and granule_item_dict["downloadSystem"] not in granule_systems:
+                    continue
 
-        # print(granule_item_dict_list)
+                band_items = granule_item_dict.pop("secondaryDownloads")
+                granule_item_dict_list.append(granule_item_dict)
+                granule_ID = granule_item_dict["displayId"]
 
-        granule_items = pd.DataFrame(granule_item_dict_list)
+                for band_item_dict in band_items:
+                    if band_systems is not None and band_item_dict["downloadSystem"] not in band_systems:
+                        continue
 
-        # print(granule_items)
+                    del (band_item_dict["secondaryDownloads"])
+                    band_item_dict["granule_ID"] = granule_ID
+                    band_item_dict_list.append(band_item_dict)
 
-        granule_items = granule_items.rename(columns={
-            "id": "product_ID",
-            "displayId": "display_ID",
-            "entityId": "entity_ID",
-            "datasetId": "dataset_ID"
-        })
 
-        # print(granule_items)
+            granule_items = pd.DataFrame(granule_item_dict_list)
+            granule_items = granule_items.rename(columns={"id": "product_ID", "displayId": "display_ID", "entityId": "entity_ID", "datasetId": "dataset_ID"})
+            granule_items["granule_ID"] = granule_items["display_ID"]
 
-        granule_items["granule_ID"] = granule_items["display_ID"]
-        band_items = pd.DataFrame(band_item_dict_list)
+            band_items = pd.DataFrame(band_item_dict_list)
+            band_items = band_items.rename(columns={"id": "product_ID", "displayId": "display_ID", "entityId": "entity_ID", "datasetId": "dataset_ID"})
 
-        band_items = band_items.rename(columns={
-            "id": "product_ID",
-            "displayId": "display_ID",
-            "entityId": "entity_ID",
-            "datasetId": "dataset_ID"
-        })
+        else:
+            # Request to the API failed. Return None to signify the failures.
+            granule_items = None
+            band_items = None
 
+        # Return to the calling function
         return granule_items, band_items
 
     @property
@@ -436,18 +339,8 @@ class EEAPI:
         return self.request(self.download_request_URL, request_dict)
 
     def download_request(self, downloads: pd.DataFrame):
-        return self.download_request_API({
-            "downloads": [
-                {
-                    "label": f"{item.entity_ID}-{item.product_ID}",
-                    "productId": item.product_ID,
-                    "entityId": item.entity_ID
-                }
-                for i, item
-                in downloads.iterrows()
-            ],
-            "downloadApplication": "EE"
-        })
+        return self.download_request_API({"downloads": [{"label": f"{item.entity_ID}-{item.product_ID}", "productId": item.product_ID, "entityId": item.entity_ID}
+                                          for i, item in downloads.iterrows()], "downloadApplication": "EE"})
 
     @property
     def download_retrieve_URL(self):
@@ -457,69 +350,45 @@ class EEAPI:
         return self.request(self.download_request_URL, request_dict)
 
     def download_URL(self, product_ID: str, entity_ID: str) -> str or None:
-        request_dict = {
-            "downloads": [
-                {
-                    "productId": product_ID,
-                    "entityId": entity_ID
-                }
-            ]
-        }
+        request_dict = {"downloads": [{"productId": product_ID, "entityId": entity_ID}]}
 
         response_dict = self.download_request_API(request_dict)
 
-        if "availableDownloads" in response_dict and len(response_dict["availableDownloads"]) > 0:
-            downloads = response_dict["availableDownloads"]
-        elif "preparingDownloads" in response_dict and len(response_dict["preparingDownloads"]) > 0:
-            downloads = response_dict["preparingDownloads"]
+        if response_dict is not None:
+            if "availableDownloads" in response_dict and len(response_dict["availableDownloads"]) > 0:
+                downloads = response_dict["availableDownloads"]
+            elif "preparingDownloads" in response_dict and len(response_dict["preparingDownloads"]) > 0:
+                downloads = response_dict["preparingDownloads"]
+            else:
+                return None
+
+            if len(downloads) == 0:
+                return None
+
+            if "url" not in downloads[0]:
+                return None
+
+            URL = downloads[0]["url"]
+
         else:
-            return None
-
-        if len(downloads) == 0:
-            return None
-
-        if "url" not in downloads[0]:
-            return None
-
-        URL = downloads[0]["url"]
+            # Data is not available to parse. Set the url to none to signify a failure.
+            URL = None
 
         return URL
 
-    def granule_URLs(
-            self,
-            dataset: str,
-            entity_IDs: List[str],
-            granule_systems: str = None,
-            band_systems: str = None):
+    def granule_URLs(self, dataset: str, entity_IDs: List[str], granule_systems: str = None, band_systems: str = None):
 
-        granules, bands = self.download_options(
-            dataset=dataset,
-            entity_IDs=entity_IDs,
-            granule_systems=granule_systems,
-            band_systems=band_systems
-        )
+        granules, bands = self.download_options(dataset=dataset, entity_IDs=entity_IDs, granule_systems=granule_systems, band_systems=band_systems)
 
-        granules["URL"] = granules.apply(
-            lambda item: self.download_URL(product_ID=item.product_ID, entity_ID=item.entity_ID), axis=1)
+        granules["URL"] = granules.apply(lambda item: self.download_URL(product_ID=item.product_ID, entity_ID=item.entity_ID), axis=1)
 
         return granules
 
-    def band_URLs(
-            self,
-            dataset: str,
-            entity_IDs: List[str] or str,
-            band_names: List[str] = None,
-            granule_system: str = None,
-            band_system: str = None):
+    def band_URLs(self, dataset: str, entity_IDs: List[str] or str, band_names: List[str] = None, granule_system: str = None, band_system: str = None):
         if isinstance(entity_IDs, str):
             entity_IDs = [entity_IDs]
 
-        granules, bands = self.download_options(
-            dataset=dataset,
-            entity_IDs=entity_IDs,
-            granule_systems=granule_system,
-            band_systems=band_system
-        )
+        granules, bands = self.download_options(dataset=dataset, entity_IDs=entity_IDs, granule_systems=granule_system, band_systems=band_system)
 
         if len(bands) == 0:
             return None
@@ -535,14 +404,10 @@ class EEAPI:
             bands["band"] = bands.entity_ID.apply(lambda entity_ID: identify_band(entity_ID, band_names))
             bands = bands[bands.band.apply(lambda band: band is not None)]
 
-        bands["URL"] = bands.apply(
-            lambda item: self.download_URL(product_ID=item.product_ID, entity_ID=item.entity_ID),
-            axis=1
-        )
+        bands["URL"] = bands.apply(lambda item: self.download_URL(product_ID=item.product_ID, entity_ID=item.entity_ID), axis=1)
 
         bands = bands[bands.URL.apply(lambda URL: URL is not None)]
-        bands["filename"] = bands.display_ID.apply(
-            lambda display_ID: f"{splitext(display_ID)[0]}{splitext(display_ID)[1].lower()}")
+        bands["filename"] = bands.display_ID.apply(lambda display_ID: f"{splitext(display_ID)[0]}{splitext(display_ID)[1].lower()}")
 
         return bands
 
@@ -560,8 +425,7 @@ class EEAPI:
         system(command)
         download_end = perf_counter()
         download_duration = download_end - download_start
-        self.logger.info(
-            "completed download in " + colored_logging.val(f"{download_duration:0.2f}") + " seconds: " + colored_logging.file(filename))
+        self.logger.info("completed download in " + colored_logging.val(f"{download_duration:0.2f}") + " seconds: " + colored_logging.file(filename))
 
         if not exists(partial_filename):
             raise IOError(f"unable to download URL: {URL}")
@@ -579,23 +443,14 @@ class EEAPI:
     def granule_directory(self, dataset: str, date_UTC: date, granule_ID: str) -> str:
         return join(self.date_directory(dataset, date_UTC), granule_ID)
 
-    def download_bands(
-            self,
-            dataset: str,
-            date_UTC: date or str,
-            entity_ID: str,
-            bands: List[str] or str = None) -> pd.DataFrame or None:
+    def download_bands(self, dataset: str, date_UTC: date or str, entity_ID: str, bands: List[str] or str = None) -> pd.DataFrame or None:
         if isinstance(date_UTC, str):
             date_UTC = parser.parse(date_UTC).date()
 
         if isinstance(bands, str):
             bands = [bands]
 
-        band_listing = self.band_URLs(
-            dataset=dataset,
-            entity_IDs=entity_ID,
-            band_names=bands
-        )
+        band_listing = self.band_URLs(dataset=dataset, entity_IDs=entity_ID, band_names=bands)
 
         if band_listing is None:
             return None
@@ -643,23 +498,13 @@ class EEAPI:
 
         return results
 
-    def retrieve_granule(
-            self,
-            dataset: str,
-            date_UTC: date or str,
-            granule_ID: str,
-            entity_ID: str,
-            bands: List[str] = None) -> str or None:
+    def retrieve_granule(self, dataset: str, date_UTC: date or str, granule_ID: str, entity_ID: str, bands: List[str] = None) -> str or None:
         if isinstance(date_UTC, str):
             date_UTC = parser.parse(date_UTC).date()
 
         granule_directory = self.granule_directory(dataset=dataset, date_UTC=date_UTC, granule_ID=granule_ID)
 
-        if self.validate_granule_retrieval(
-                dataset=dataset,
-                date_UTC=date_UTC,
-                granule_ID=granule_ID,
-                band_names=bands):
+        if self.validate_granule_retrieval(dataset=dataset, date_UTC=date_UTC, granule_ID=granule_ID, band_names=bands):
             self.logger.info(f"granule {colored_logging.val(granule_ID)} already retrieved: {colored_logging.dir(granule_directory)}")
 
             return granule_directory
@@ -667,25 +512,12 @@ class EEAPI:
         band_listing = None
 
         if bands is not None:
-            self.logger.info(
-                "attempting to download" +
-                " bands: " + colored_logging.val(', '.join(bands)) +
-                " entity ID: " + colored_logging.val(entity_ID)
-            )
+            self.logger.info("attempting to download bands: " + colored_logging.val(', '.join(bands)) + " entity ID: " + colored_logging.val(entity_ID))
 
-            band_listing = self.download_bands(
-                dataset=dataset,
-                date_UTC=date_UTC,
-                entity_ID=entity_ID,
-                bands=bands
-            )
+            band_listing = self.download_bands(dataset=dataset, date_UTC=date_UTC, entity_ID=entity_ID, bands=bands)
 
         if bands is not None and band_listing is None:
-            self.logger.info(
-                "unable to directly download" +
-                " bands: " + colored_logging.val(', '.join(bands)) +
-                " entity ID: " + colored_logging.val(entity_ID)
-            )
+            self.logger.info("unable to directly download bands: " + colored_logging.val(', '.join(bands)) + " entity ID: " + colored_logging.val(entity_ID))
 
         if bands is None or band_listing is None:
             granule_listing = self.granule_URLs(dataset=dataset, entity_IDs=[entity_ID])
@@ -703,11 +535,7 @@ class EEAPI:
             filename = f"{granule_ID}.tar"
             tarfile_filename = join(tarfile_directory, filename)
 
-            if self.validate_granule_retrieval(
-                    dataset=dataset,
-                    date_UTC=date_UTC,
-                    granule_ID=granule_ID,
-                    band_names=bands):
+            if self.validate_granule_retrieval(dataset=dataset, date_UTC=date_UTC, granule_ID=granule_ID, band_names=bands):
                 self.logger.info(f"granule {colored_logging.val(granule_ID)} already retrieved: {colored_logging.dir(granule_directory)}")
 
                 if exists(tarfile_filename):
@@ -749,6 +577,7 @@ class EEAPI:
 
                 self.logger.info("removing archive: " + colored_logging.file(tarfile_filename))
                 os.remove(tarfile_filename)
+
             except Exception as e:
                 self.logger.exception(e)
                 raise IOError(f"unable to extract {tarfile_filename} to {granule_directory}")
@@ -759,48 +588,22 @@ class EEAPI:
 
         return granule_directory
 
-    def dates_available(
-            self,
-            start_date: date or datetime or str,
-            end_date: date or datetime or str,
-            target_geometry: Point or Polygon or RasterGrid,
-            datasets: str or list = None,
-            sensor_names: List[str] or str = None,
-            max_results: int = None,
-            cloud_percent_min: float = 0,
-            cloud_percent_max: float = 100):
-        scenes = self.scene_search(
-            start_date=start_date,
-            end_date=end_date,
-            target_geometry=target_geometry,
-            datasets=datasets,
-            sensor_names=sensor_names,
-            max_results=max_results,
-            cloud_percent_min=cloud_percent_min,
-            cloud_percent_max=cloud_percent_max
-        )
+    def dates_available(self, start_date: date or datetime or str, end_date: date or datetime or str, target_geometry: Point or Polygon or RasterGrid,
+                        datasets: str or list = None, sensor_names: List[str] or str = None, max_results: int = None, cloud_percent_min: float = 0,
+                        cloud_percent_max: float = 100):
+
+        scenes = self.scene_search(start_date=start_date, end_date=end_date, target_geometry=target_geometry, datasets=datasets, sensor_names=sensor_names,
+                                   max_results=max_results, cloud_percent_min=cloud_percent_min, cloud_percent_max=cloud_percent_max)
 
         dates = sorted(set(scenes.date_UTC))
 
         return dates
 
-    def download(
-            self,
-            start: date or datetime or str,
-            end: date or datetime or str,
-            geometry: Point or Polygon or RasterGrid,
-            datasets: str or list = None,
-            sensors: List[str] or str = None,
-            bands: List[str] or str = None,
-            max_results: int = None,
-            cloud_percent_min: float = 0,
-            cloud_percent_max: float = 100) -> pd.DataFrame:
+    def download(self, start: date or datetime or str, end: date or datetime or str, geometry: Point or Polygon or RasterGrid, datasets: str or list = None,
+                 sensors: List[str] or str = None, bands: List[str] or str = None, max_results: int = None, cloud_percent_min: float = 0,
+                 cloud_percent_max: float = 100) -> pd.DataFrame:
 
-        self.logger.info(
-            "searching scenes" +
-            " from " + colored_logging.time(f"{start:%Y-%m-%d}") +
-            " to " + colored_logging.time(f"{end:%Y-%m-%d}")
-        )
+        self.logger.info("searching scenes from " + colored_logging.time(f"{start:%Y-%m-%d}") + " to " + colored_logging.time(f"{end:%Y-%m-%d}"))
 
         # if datasets is not None:
         #     self.logger.info(f"datasets: {', '.join(datasets)}")
@@ -811,16 +614,8 @@ class EEAPI:
         # if bands is not None:
         #     self.logger.info(f"bands: {', '.join(bands)}")
 
-        scenes = self.scene_search(
-            start_date=start,
-            end_date=end,
-            target_geometry=geometry,
-            datasets=datasets,
-            sensor_names=sensors,
-            max_results=max_results,
-            cloud_percent_min=cloud_percent_min,
-            cloud_percent_max=cloud_percent_max
-        )
+        scenes = self.scene_search(start_date=start, end_date=end, target_geometry=geometry, datasets=datasets, sensor_names=sensors, max_results=max_results,
+                                   cloud_percent_min=cloud_percent_min, cloud_percent_max=cloud_percent_max)
 
         self.logger.info(f"found {colored_logging.val(len(scenes))} scenes")
 
@@ -833,13 +628,7 @@ class EEAPI:
             entity_ID = scene.entity_ID
 
             try:
-                download = self.retrieve_granule(
-                    dataset=dataset,
-                    date_UTC=date_UTC,
-                    granule_ID=granule_ID,
-                    entity_ID=entity_ID,
-                    bands=bands
-                )
+                download = self.retrieve_granule(dataset=dataset, date_UTC=date_UTC, granule_ID=granule_ID, entity_ID=entity_ID, bands=bands)
             except Exception as e:
                 download = None
                 self.logger.exception(e)
@@ -852,8 +641,7 @@ class EEAPI:
 
         return scenes
 
-    def validate_granule_retrieval(self, dataset: str, date_UTC: date, granule_ID: str,
-                                   band_names: List[str] = None) -> bool:
+    def validate_granule_retrieval(self, dataset: str, date_UTC: date, granule_ID: str, band_names: List[str] = None) -> bool:
         directory = self.granule_directory(dataset=dataset, date_UTC=date_UTC, granule_ID=granule_ID)
         filenames = glob(join(directory, "*"))
 

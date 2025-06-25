@@ -18,7 +18,7 @@ from dateutil import parser
 from scipy.stats import zscore
 from sun_angles import day_angle_rad_from_DOY, solar_dec_deg_from_day_angle_rad, SZA_deg_from_lat_dec_hour
 
-from ETtoolbox.model.model import Model
+from ..model import Model
 
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
@@ -68,24 +68,13 @@ class BlankOutputError(Exception):
 class FLiES(Model):
     logger = logging.getLogger(__name__)
 
-    def __init__(
-            self,
-            working_directory: str = None,
-            static_directory: str = None,
-            SRTM_connection: SRTM = None,
-            SRTM_download: str = None,
-            GEOS5FP_connection: GEOS5FP = None,
-            GEOS5FP_download: str = None,
-            GEOS5FP_products: str = None,
-            intermediate_directory: str = None,
-            preview_quality: int = DEFAULT_PREVIEW_QUALITY,
-            ANN_model: Callable = None,
-            ANN_model_filename: str = MODEL_FILENAME,
-            resampling: str = DEFAULT_RESAMPLING,
-            save_intermediate: bool = DEFAULT_SAVE_INTERMEDIATE,
-            show_distribution: bool = DEFAULT_SHOW_DISTRIBUTION,
-            include_preview: bool = DEFAULT_INCLUDE_PREVIEW,
-            dynamic_atype_ctype: bool = DEFAULT_DYNAMIC_ATYPE_CTYPE):
+    def __init__(self, working_directory: str = None,
+                 static_directory: str = None, SRTM_connection: SRTM = None, SRTM_download: str = None,
+                 GEOS5FP_connection: GEOS5FP = None, GEOS5FP_download: str = None, GEOS5FP_products: str = None,
+                 intermediate_directory: str = None, preview_quality: int = DEFAULT_PREVIEW_QUALITY,
+                 ANN_model: Callable = None, ANN_model_filename: str = MODEL_FILENAME,
+                 resampling: str = DEFAULT_RESAMPLING, save_intermediate: bool = DEFAULT_SAVE_INTERMEDIATE, show_distribution: bool = DEFAULT_SHOW_DISTRIBUTION,
+                 include_preview: bool = DEFAULT_INCLUDE_PREVIEW, dynamic_atype_ctype: bool = DEFAULT_DYNAMIC_ATYPE_CTYPE):
 
         if working_directory is None:
             working_directory = DEFAULT_WORKING_DIRECTORY
@@ -102,11 +91,7 @@ class FLiES(Model):
         if SRTM_connection is None:
             try:
                 self.logger.info("connecting to SRTM")
-                SRTM_connection = SRTM(
-                    working_directory=static_directory,
-                    download_directory=SRTM_download,
-                    offline_ok=True
-                )
+                SRTM_connection = SRTM(working_directory=static_directory, download_directory=SRTM_download, offline_ok=True)
             except Exception as e:
                 self.logger.exception(e)
                 raise SRTMNotAvailableError()
@@ -116,11 +101,8 @@ class FLiES(Model):
         if GEOS5FP_connection is None:
             try:
                 self.logger.info(f"connecting to GEOS-5 FP")
-                GEOS5FP_connection = GEOS5FP(
-                    working_directory=working_directory,
-                    download_directory=GEOS5FP_download,
-                    products_directory=GEOS5FP_products
-                )
+                GEOS5FP_connection = GEOS5FP(working_directory=working_directory, download_directory=GEOS5FP_download, products_directory=GEOS5FP_products)
+
             except Exception as e:
                 self.logger.exception(e)
                 raise GEOS5FPNotAvailableError()
@@ -140,16 +122,9 @@ class FLiES(Model):
         if ANN_model is None:
             ANN_model = load_model(ANN_model_filename)
 
-        super(FLiES, self).__init__(
-            working_directory=working_directory,
-            static_directory=static_directory,
-            intermediate_directory=intermediate_directory,
-            preview_quality=preview_quality,
-            resampling=resampling,
-            save_intermediate=save_intermediate,
-            show_distribution=show_distribution,
-            include_preview=include_preview
-        )
+        super(FLiES, self).__init__(working_directory=working_directory, static_directory=static_directory, intermediate_directory=intermediate_directory,
+                                    preview_quality=preview_quality, resampling=resampling, save_intermediate=save_intermediate, show_distribution=show_distribution,
+                                    include_preview=include_preview)
 
         self.ANN_model = ANN_model
         self.dynamic_atype_ctype = dynamic_atype_ctype
@@ -238,18 +213,8 @@ class FLiES(Model):
 
         return atype, ctype
 
-    def FLiES_ANN(
-            self,
-            geometry: RasterGeometry,
-            atype: Raster,
-            ctype: Raster,
-            COT: Raster,
-            AOT: Raster,
-            vapor_gccm: Raster,
-            ozone_cm: Raster,
-            albedo: Raster,
-            elevation_km: Raster,
-            SZA: Raster) -> (Raster, Raster, Raster, Raster, Raster, Raster, Raster):
+    def FLiES_ANN(self, geometry: RasterGeometry, atype: Raster, ctype: Raster, COT: Raster, AOT: Raster, vapor_gccm: Raster, ozone_cm: Raster, albedo: Raster,
+                  elevation_km: Raster, SZA: Raster) -> (Raster, Raster, Raster, Raster, Raster, Raster, Raster):
 
         ctype_flat = np.array(ctype).flatten()
         atype_flat = np.array(atype).flatten()
@@ -261,17 +226,8 @@ class FLiES(Model):
         elevation_km_flat = np.array(elevation_km).flatten()
         SZA_flat = np.array(SZA).flatten()
 
-        inputs = pd.DataFrame({
-            "ctype": ctype_flat,
-            "atype": atype_flat,
-            "COT": COT_flat,
-            "AOT": AOT_flat,
-            "vapor_gccm": vapor_gccm_flat,
-            "ozone_cm": ozone_cm_flat,
-            "albedo": albedo_flat,
-            "elevation_km": elevation_km_flat,
-            "SZA": SZA_flat
-        })
+        inputs = pd.DataFrame({"ctype": ctype_flat, "atype": atype_flat, "COT": COT_flat, "AOT": AOT_flat, "vapor_gccm": vapor_gccm_flat, "ozone_cm": ozone_cm_flat,
+                               "albedo": albedo_flat, "elevation_km": elevation_km_flat, "SZA": SZA_flat})
 
         inputs["ctype0"] = np.float32(inputs.ctype == 0)
         inputs["ctype1"] = np.float32(inputs.ctype == 1)
@@ -281,9 +237,7 @@ class FLiES(Model):
         inputs["atype4"] = np.float32(inputs.ctype == 4)
         inputs["atype5"] = np.float32(inputs.ctype == 5)
 
-        inputs = inputs[
-            ["ctype0", "ctype1", "ctype3", "atype1", "atype2", "atype4", "atype5", "COT", "AOT", "vapor_gccm",
-             "ozone_cm", "albedo", "elevation_km", "SZA"]]
+        inputs = inputs[["ctype0", "ctype1", "ctype3", "atype1", "atype2", "atype4", "atype5", "COT", "AOT", "vapor_gccm", "ozone_cm", "albedo", "elevation_km", "SZA"]]
         outputs = self.ANN_model.predict(inputs)
         shape = COT.shape
         tm = Raster(np.clip(outputs[:, 0].reshape(shape), 0, 1).astype(np.float32), geometry=geometry, nodata=np.nan)
@@ -316,19 +270,9 @@ class FLiES(Model):
         self.logger.info("retrieving SRTM elevation raster in kilometers")
         return self.SRTM_connection.elevation_km(geometry)
 
-    def FLiES(
-            self,
-            geometry: RasterGeometry,
-            target: str,
-            time_UTC: datetime or str,
-            albedo: Raster,
-            COT: Raster = None,
-            AOT: Raster = None,
-            vapor_gccm: Raster = None,
-            ozone_cm: Raster = None,
-            elevation_km: Raster = None,
-            SZA: Raster = None,
-            KG_climate: Raster = None):
+    def FLiES(self, geometry: RasterGeometry, target: str, time_UTC: datetime or str, albedo: Raster, COT: Raster = None, AOT: Raster = None, vapor_gccm: Raster = None,
+              ozone_cm: Raster = None, elevation_km: Raster = None, SZA: Raster = None, KG_climate: Raster = None):
+
         self.logger.info(f"processing FLiES tile {colored_logging.place(target)} {colored_logging.val(geometry.shape)} at " + colored_logging.time(
             f"{time_UTC:%Y-%m-%d} UTC"))
 
@@ -382,25 +326,12 @@ class FLiES(Model):
         self.diagnostic(atype, "atype", date_UTC, target)
         self.diagnostic(ctype, "ctype", date_UTC, target)
 
-        self.logger.info(
-            "started neural network processing " +
-            f"at tile {colored_logging.place(target)} {colored_logging.val(geometry.shape)} " +
-            "at " + colored_logging.time(f"{time_UTC:%Y-%m-%d} UTC")
-        )
+        self.logger.info("started neural network processing at tile {colored_logging.place(target)} {colored_logging.val(geometry.shape)} " +
+                         "at " + colored_logging.time(f"{time_UTC:%Y-%m-%d} UTC"))
 
         prediction_start_time = process_time()
-        tm, puv, pvis, pnir, fduv, fdvis, fdnir = self.FLiES_ANN(
-            geometry=geometry,
-            atype=atype,
-            ctype=ctype,
-            COT=COT,
-            AOT=AOT,
-            vapor_gccm=vapor_gccm,
-            ozone_cm=ozone_cm,
-            albedo=albedo,
-            elevation_km=elevation_km,
-            SZA=SZA
-        )
+        tm, puv, pvis, pnir, fduv, fdvis, fdnir = self.FLiES_ANN(geometry=geometry, atype=atype, ctype=ctype, COT=COT, AOT=AOT, vapor_gccm=vapor_gccm, ozone_cm=ozone_cm,
+                                                                 albedo=albedo, elevation_km=elevation_km, SZA=SZA)
 
         prediction_end_time = process_time()
         prediction_duration = prediction_end_time - prediction_start_time
@@ -559,12 +490,7 @@ class FLiES(Model):
             3 * day_angle_rad) + 0.00148 * np.sin(
             3 * day_angle_rad)) * (180 / np.pi)
 
-    def Rn_daily(
-            self,
-            Rn: Raster,
-            hour_of_day: Raster,
-            sunrise_hour: Raster,
-            daylight_hours: Raster) -> Raster:
+    def Rn_daily(self, Rn: Raster, hour_of_day: Raster, sunrise_hour: Raster, daylight_hours: Raster) -> Raster:
         """
         calculate daily net radiation using solar parameters
         this is the average rate of energy transfer from sunrise to sunset

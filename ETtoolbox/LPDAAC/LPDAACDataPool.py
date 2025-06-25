@@ -24,7 +24,7 @@ from dateutil import parser
 from pycksum import cksum
 
 import colored_logging
-from ETtoolbox.ERS_credentials import get_ERS_credentials
+from ..credentials import get_ers_credentials
 
 DEFAULT_REMOTE = "https://e4ftl01.cr.usgs.gov"
 RETRIES = 6
@@ -51,18 +51,12 @@ class LPDAACDataPool:
     DATE_REGEX = re.compile('^(19|20)\d\d[- /.](0[1-9]|1[012])[- /.](0[1-9]|[12][0-9]|3[01])$')
     DEFAULT_REMOTE = DEFAULT_REMOTE
 
-    def __init__(
-            self,
-            username: str = None,
-            password: str = None,
-            remote: str = None,
-            ERS_credentials_filename: str = None,
-            offline_ok: bool = False):
+    def __init__(self, username: str = None, password: str = None, remote: str = None, offline_ok: bool = False):
         if remote is None:
             remote = DEFAULT_REMOTE
 
         if username is None or password is None:
-            credentials = get_ERS_credentials(filename=ERS_credentials_filename)
+            credentials = get_ers_credentials()
             username = credentials["username"]
             password = credentials["password"]
 
@@ -88,25 +82,15 @@ class LPDAACDataPool:
 
             password_manager = urllib.request.HTTPPasswordMgrWithDefaultRealm()
 
-            password_manager.add_password(
-                realm=None,
-                uri="https://urs.earthdata.nasa.gov",
-                user=self._username,
-                passwd=self._password
-            )
+            password_manager.add_password(realm=None, uri="https://urs.earthdata.nasa.gov", user=self._username, passwd=self._password)
 
             cookie_jar = CookieJar()
 
             # Install all the handlers.
-
-            opener = urllib.request.build_opener(
-                urllib.request.HTTPBasicAuthHandler(password_manager),
-                # urllib2.HTTPHandler(debuglevel=1),    # Uncomment these two lines to see
-                # urllib2.HTTPSHandler(debuglevel=1),   # details of the requests/responses
-                urllib.request.HTTPCookieProcessor(cookie_jar)
-            )
+            opener = urllib.request.build_opener(urllib.request.HTTPBasicAuthHandler(password_manager), urllib.request.HTTPCookieProcessor(cookie_jar))
 
             urllib.request.install_opener(opener)
+
         except Exception as e:
             message = "unable to authenticate with LP-DAAC data pool"
             if self.offline_ok:
@@ -132,10 +116,8 @@ class LPDAACDataPool:
                 raise LPDAACServerUnreachable(message)
 
         if status == 200:
-            logger.info(
-                "remote verified with status " + colored_logging.val(200) +
-                " in " + colored_logging.time(f"{duration:0.2f}") +
-                " seconds: " + colored_logging.URL(self.remote))
+            logger.info("remote verified with status " + colored_logging.val(200) + " in " + colored_logging.time(f"{duration:0.2f}") + " seconds: " +
+                        colored_logging.URL(self.remote))
         else:
             message = f"status: {status} URL: {self.remote}"
 
@@ -172,22 +154,12 @@ class LPDAACDataPool:
             self._listings[URL] = listing
 
         if pattern is not None:
-            listing = sorted([
-                item
-                for item
-                in listing
-                if fnmatch(item, pattern)
-            ])
+            listing = sorted([item for item in listing if fnmatch(item, pattern)])
 
         return listing
 
     def get_HTTP_date_listing(self, URL: str) -> List[date]:
-        return sorted([
-            parser.parse(item).date()
-            for item
-            in self.get_HTTP_listing(URL)
-            if self.DATE_REGEX.match(item)
-        ])
+        return sorted([parser.parse(item).date() for item in self.get_HTTP_listing(URL) if self.DATE_REGEX.match(item)])
 
     def read_HTTP_XML(self, URL: str) -> OrderedDict:
         return xmltodict.parse(self.get_HTTP_text(URL))
@@ -208,12 +180,10 @@ class LPDAACDataPool:
         return metadata
 
     def get_remote_checksum(self, URL: str) -> int:
-        return int(self.get_metadata(URL)["GranuleMetaDataFile"]["GranuleURMetaData"]["DataFiles"]["DataFileContainer"][
-                       "Checksum"])
+        return int(self.get_metadata(URL)["GranuleMetaDataFile"]["GranuleURMetaData"]["DataFiles"]["DataFileContainer"]["Checksum"])
 
     def get_remote_filesize(self, URL: str) -> int:
-        return int(self.get_metadata(URL)["GranuleMetaDataFile"]["GranuleURMetaData"]["DataFiles"]["DataFileContainer"][
-                       "FileSize"])
+        return int(self.get_metadata(URL)["GranuleMetaDataFile"]["GranuleURMetaData"]["DataFiles"]["DataFileContainer"]["FileSize"])
 
     def get_local_checksum(self, filename: str, checksum_type: str = "CKSUM") -> str:
         with open(filename, "rb") as file:
@@ -240,42 +210,23 @@ class LPDAACDataPool:
     def dates(self, platform: str, product: str, build: str = None) -> List[date]:
         return self.get_HTTP_date_listing(self.product_directory(platform, product, build))
 
-    def date_URL(
-            self,
-            platform: str,
-            product: str,
-            acquisition_date: date or str,
-            build: str = None) -> str:
+    def date_URL(self, platform: str, product: str, acquisition_date: date or str, build: str = None) -> str:
         if isinstance(acquisition_date, str):
             acquisition_date = parser.parse(acquisition_date).date()
 
-        URL = posixpath.join(
-            self.product_directory(platform, product, build),
-            f"{acquisition_date:%Y.%m.%d}"
-        )
+        URL = posixpath.join(self.product_directory(platform, product, build), f"{acquisition_date:%Y.%m.%d}")
 
         return URL
 
-    def files(
-            self,
-            platform: str,
-            product: str,
-            acquisition_date: date or str,
-            build: str = None,
-            pattern: str = None) -> List[str]:
+    def files(self, platform: str, product: str, acquisition_date: date or str, build: str = None, pattern: str = None) -> List[str]:
         URL = self.date_URL(platform, product, acquisition_date, build)
         listing = self.get_HTTP_listing(URL, pattern)
 
         return listing
 
-    def download_URL(
-            self,
-            URL: str,
-            download_location: str = None,
-            XML_retries: int = None,
-            XML_timeout_seconds: int = None,
-            download_retries: int = None,
-            download_wait_seconds: int = None) -> str:
+    def download_URL(self, URL: str, download_location: str = None, XML_retries: int = None, XML_timeout_seconds: int = None, download_retries: int = None,
+                     download_wait_seconds: int = None) -> str:
+
         if isdir(download_location):
             filename = join(download_location, posixpath.basename(URL))
         else:
@@ -313,7 +264,7 @@ class LPDAACDataPool:
         metadata = None
 
         while XML_retries > 0:
-            XML_retries -= 1
+            XML_retries -= 1 #todo: start here
             command = f"wget -nc -c --user {self._username} --password {self._password} -O {metadata_filename} {metadata_URL}"
             logger.info(command)
             os.system(command)
@@ -352,15 +303,12 @@ class LPDAACDataPool:
         if metadata is None:
             raise DownloadFailed(f"unable to retrieve metadata URL: {metadata_URL}")  # exit code 16
 
-        remote_checksum = str(
-            metadata["GranuleMetaDataFile"]["GranuleURMetaData"]["DataFiles"]["DataFileContainer"]["Checksum"])
-        checksum_type = str(
-            metadata["GranuleMetaDataFile"]["GranuleURMetaData"]["DataFiles"]["DataFileContainer"]["ChecksumType"])
-        remote_filesize = int(
-            metadata["GranuleMetaDataFile"]["GranuleURMetaData"]["DataFiles"]["DataFileContainer"]["FileSize"])
+        remote_checksum = str(metadata["GranuleMetaDataFile"]["GranuleURMetaData"]["DataFiles"]["DataFileContainer"]["Checksum"])
+        checksum_type = str(metadata["GranuleMetaDataFile"]["GranuleURMetaData"]["DataFiles"]["DataFileContainer"]["ChecksumType"])
+        remote_filesize = int(metadata["GranuleMetaDataFile"]["GranuleURMetaData"]["DataFiles"]["DataFileContainer"]["FileSize"])
 
-        logger.info(
-            f"metadata retrieved {checksum_type} checksum: {colored_logging.val(remote_checksum)} size: {colored_logging.val(remote_filesize)} URL: {colored_logging.URL(metadata_URL)}")
+        logger.info(f"metadata retrieved {checksum_type} checksum: {colored_logging.val(remote_checksum)} size: {colored_logging.val(remote_filesize)} URL: "
+                    f"{colored_logging.URL(metadata_URL)}")
         makedirs(dirname(filename), exist_ok=True)
         logger.info(f"downloading {colored_logging.URL(URL)} -> {colored_logging.file(filename)}")
 
@@ -375,8 +323,7 @@ class LPDAACDataPool:
                     temporary_filesize = self.get_local_filesize(temporary_filename)
 
                     if temporary_filesize > remote_filesize:
-                        logger.warning(
-                            f"removing corrupted file with size {temporary_filesize} greater than remote size {remote_filesize}: {temporary_filename}")
+                        logger.warning(f"removing corrupted file with size {temporary_filesize} greater than remote size {remote_filesize}: {temporary_filename}")
                         remove(temporary_filename)
 
                     elif temporary_filesize == remote_filesize:
@@ -395,8 +342,7 @@ class LPDAACDataPool:
 
                             return filename
                         else:
-                            logger.warning(
-                                f"removing corrupted file with local checksum {local_checksum} and remote checksum {remote_checksum}: {temporary_filename}")
+                            logger.warning(f"removing corrupted file with local checksum {local_checksum} and remote checksum {remote_checksum}: {temporary_filename}")
                             remove(temporary_filename)
                     else:
                         logger.info(f"resuming incomplete download: {colored_logging.file(temporary_filename)}")

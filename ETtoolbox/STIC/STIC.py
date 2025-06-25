@@ -11,9 +11,9 @@ import colored_logging
 import rasters as rt
 from geos5fp import GEOS5FP
 from ETtoolbox.SRTM import SRTM
-from ETtoolbox.model.model import DEFAULT_PREVIEW_QUALITY, DEFAULT_RESAMPLING, Model
+from ..model import DEFAULT_PREVIEW_QUALITY, DEFAULT_RESAMPLING, Model
 from rasters import Raster, RasterGrid
-from ETtoolbox.timer import Timer
+from ..timer import Timer
 
 __author__ = 'Kaniska Mallick, Madeleine Pascolini-Campbell, Gregory Halverson'
 
@@ -22,15 +22,7 @@ logger = logging.getLogger(__name__)
 DEFAULT_WORKING_DIRECTORY = "."
 DEFAULT_STIC_INTERMEDIATE = "STIC_intermediate"
 
-DEFAULT_OUTPUT_VARIABLES = [
-    "LE",
-    "LE_change",
-    "LEt",
-    "PT",
-    "H",
-    "PET",
-    "G"
-]
+DEFAULT_OUTPUT_VARIABLES = ["LE", "LE_change", "LEt", "PT", "H", "PET", "G"]
 
 # constants
 SIGMA = 5.67e-8  # Stefann Boltzmann constant
@@ -45,21 +37,23 @@ def STIC_closure(delta, PHI, Es, Ea, Estar, M, rho=RHO, CP=CP, gamma=GAMMA, alph
     STIC closure equations with modified Priestley Taylor and Penman Monteith
     (Mallick et al., 2015, Water Resources research)
     """
-    gB = ((2 * PHI * alpha * delta * gamma) / (
-            2 * CP * delta * Es * rho - 2 * CP * delta * Ea * rho - 2 * CP * Ea * gamma * rho + CP * Es * gamma * rho + CP * Estar * gamma * rho - CP * M * Es * gamma * rho + CP * M * Estar * gamma * rho))
+    gB = ((2 * PHI * alpha * delta * gamma) / (2 * CP * delta * Es * rho - 2 * CP * delta * Ea * rho - 2 * CP * Ea * gamma * rho + CP * Es * gamma * rho +
+                                               CP * Estar * gamma * rho - CP * M * Es * gamma * rho + CP * M * Estar * gamma * rho))
     gB = rt.where(gB < 0, 0.0001, gB)
     gB = rt.where(gB > 0.2, 0.2, gB)
-    gS = (-(2 * (PHI * alpha * delta * Ea * gamma - PHI * alpha * delta * Es * gamma)) / (
-            CP * Estar ** 2 * gamma * rho - CP * Es ** 2 * gamma * rho - 2 * CP * delta * Es ** 2 * rho + 2 * CP * delta * Ea * Es * rho - 2 * CP * delta * Ea * Estar * rho + 2 * CP * delta * Es * Estar * rho + 2 * CP * Ea * Es * gamma * rho - 2 * CP * Ea * Estar * gamma * rho + CP * M * Es ** 2 * gamma * rho + CP * M * Estar ** 2 * gamma * rho - 2 * CP * M * Es * Estar * gamma * rho))
+    gS = (-(2 * (PHI * alpha * delta * Ea * gamma - PHI * alpha * delta * Es * gamma)) / (CP * Estar ** 2 * gamma * rho - CP * Es ** 2 * gamma * rho -
+                                                                                          2 * CP * delta * Es ** 2 * rho + 2 * CP * delta * Ea * Es * rho -
+                                                                                          2 * CP * delta * Ea * Estar * rho + 2 * CP * delta * Es * Estar * rho +
+                                                                                          2 * CP * Ea * Es * gamma * rho - 2 * CP * Ea * Estar * gamma * rho +
+                                                                                          CP * M * Es ** 2 * gamma * rho + CP * M * Estar ** 2 * gamma * rho -
+                                                                                          2 * CP * M * Es * Estar * gamma * rho))
     gS = rt.where(gS < 0, 0.0001, gS)
     gS = rt.where(gS > 0.2, 0.2, gS)
-    dT = rt.clip(((
-                          2 * delta * Es - 2 * delta * Ea - 2 * Ea * gamma + Es * gamma + Estar * gamma - M * Es * gamma + M * Estar * gamma + 2 * alpha * delta * Ea - 2 * alpha * delta * Es) / (
+    dT = rt.clip(((2 * delta * Es - 2 * delta * Ea - 2 * Ea * gamma + Es * gamma + Estar * gamma - M * Es * gamma + M * Estar * gamma + 2 * alpha * delta * Ea - 2 * alpha * delta * Es) / (
                           2 * alpha * delta * gamma)), -10, 50)
     # EF = rt.clip((-(2 * alpha * delta * Ea - 2 * alpha * delta *Es) / (2 * delta * Es - 2 * delta * Ea - 2 * Ea * gamma + Es * gamma + Estar * gamma - M * Es * gamma + M * Estar * gamma)), 0, 1)
     EF = rt.clip((-(2 * alpha * delta * Ea - 2 * alpha * delta * Es) / (
-            2 * delta * Es - 2 * delta * Ea - 2 * Ea * gamma + Es * gamma + Estar * gamma - M * Es * gamma + M * Estar * gamma)),
-                 0, 1)
+            2 * delta * Es - 2 * delta * Ea - 2 * Ea * gamma + Es * gamma + Estar * gamma - M * Es * gamma + M * Estar * gamma)), 0, 1)
 
     return gB, gS, dT, EF
 
@@ -158,8 +152,7 @@ def f_SoilMoisture_INITIALIZE(GAMMA, delta, ST_C, Ta_C, Td_C, dTS, Rn, Lnet, NDV
     Msoil = (1 - fc) * Msurf;
 
     TdewIndex = (ST_C - Tsd_C) / (Ta_C - Td_C);  # % TdewIndex > 1 signifies super dry condition
-    Ep_PT = (1.26 * delta * Rn) / (
-                delta + GAMMA);  # Potential evaporation (Priestley-Taylor eqn.)
+    Ep_PT = (1.26 * delta * Rn) / (delta + GAMMA);  # Potential evaporation (Priestley-Taylor eqn.)
 
     # surface wetness comes from the soil, vegetation contribution is neglegible
     # fix this
@@ -177,8 +170,7 @@ def f_SoilMoisture_INITIALIZE(GAMMA, delta, ST_C, Ta_C, Td_C, dTS, Rn, Lnet, NDV
     # es                                                  = ea + Ms.*(eastar + slope.*(TS - TA)- ea);
 
     # Rootzone Moisture (Mrz)
-    Mrz = (GAMMA * s11 * (Tsd_C - Td_C)) / (
-                delta * s33 * (ST_C - Td_C) + GAMMA * s44 * (Ta_C - Td_C) - delta * s11 * (Tsd_C - Td_C));
+    Mrz = (GAMMA * s11 * (Tsd_C - Td_C)) / (delta * s33 * (ST_C - Td_C) + GAMMA * s44 * (Ta_C - Td_C) - delta * s11 * (Tsd_C - Td_C));
 
     # Mrz(Mrz>1)  = 0.9999; Mrz(Mrz<0) = 0.0001;
     Mrz = rt.where(Mrz > 1, 0.9999, Mrz)
@@ -216,25 +208,7 @@ def f_SoilMoisture_INITIALIZE(GAMMA, delta, ST_C, Ta_C, Td_C, dTS, Rn, Lnet, NDV
     return M, Mrz, Ms, Ep_PT, Ds, s1, s3, Tsd_C
 
 
-def f_SoilMoisture_ITERATE2(
-        GAMMA,
-        delta,
-        s1,
-        s3,
-        ST_C,
-        Ta_C,
-        dTS,
-        TD,
-        TSD,
-        RG,
-        Rn,
-        Lnet,
-        fc,
-        DA,
-        D0,
-        SVP_hPa,
-        Ea_hPa,
-        T0):
+def f_SoilMoisture_ITERATE2(GAMMA, delta, s1, s3, ST_C, Ta_C, dTS, TD, TSD, RG, Rn, Lnet, fc, DA, D0, SVP_hPa, Ea_hPa, T0):
     # COMMENT: This functions estimates the soil moisture availability (M) (or
     # wetness) (value 0 to 1) based on thermal IR and meteorological
     # information. However, this M will be treated as initial M, which will be
@@ -273,8 +247,7 @@ def f_SoilMoisture_ITERATE2(
     Msoil = (1 - fc) * Msurf
 
     TdewIndex = (ST_C - TSD) / (Ta_C - TD)
-    Ep_PT = (1.26 * delta * Rn) / (
-                delta + GAMMA)  # Potential evaporation (Priestley-Taylor eqn.)
+    Ep_PT = (1.26 * delta * Rn) / (delta + GAMMA)  # Potential evaporation (Priestley-Taylor eqn.)
 
     # Ms(Ep_PT>RN & fc<=0.25 & TdewIndex<1)               = Msoil (Ep_PT>RN & fc<=0.25 & TdewIndex<1);
     Ms = rt.where((Ep_PT > Rn) & (fc <= 0.25) & (TdewIndex < 1), Msoil, Ms)
@@ -303,8 +276,7 @@ def f_SoilMoisture_ITERATE2(
     #########################################################################
     s44 = (SVP_hPa - Ea_hPa) / (Ta_C - TD)
 
-    Mrz = (GAMMA * s1 * (TSD - TD)) / (
-                delta * s3 * kTSTD * (ST_C - TD) + GAMMA * s44 * (Ta_C - TD) - delta * s1 * (TSD - TD))
+    Mrz = (GAMMA * s1 * (TSD - TD)) / (delta * s3 * kTSTD * (ST_C - TD) + GAMMA * s44 * (Ta_C - TD) - delta * s1 * (TSD - TD))
 
     Mrz = rt.where((Rn < 0) & (dTS < 0) & (Mrz < 0), np.abs(Mrz), Mrz)
     Mrz = rt.where((Rn < 0) & (dTS > 0) & (Mrz < 0), np.abs(Mrz), Mrz)
@@ -317,8 +289,7 @@ def f_SoilMoisture_ITERATE2(
     Mrz = rt.where(Mrz < 0, 0.0001, Mrz)
 
     TdewIndex = (ST_C - TSD) / (Ta_C - TD)
-    Ep_PT = (1.26 * delta * Rn) / (
-                delta + GAMMA)  # Potential evaporation (Priestley-Taylor eqn.)
+    Ep_PT = (1.26 * delta * Rn) / (delta + GAMMA)  # Potential evaporation (Priestley-Taylor eqn.)
 
     # COMBINE M to account for Hysteresis and initial estimation of surface vapor pressure
     M = Msurf
@@ -333,25 +304,14 @@ def calculate_G_SEBAL(Rn, ST_C, NDVI, albedo):
 
 
 class STIC(Model):
-    def __init__(
-            self,
-            working_directory: str = None,
-            static_directory: str = None,
-            SRTM_connection: SRTM = None,
-            SRTM_download: str = None,
-            GEOS5FP_connection: GEOS5FP = None,
-            GEOS5FP_download: str = None,
-            GEOS5FP_products: str = None,
-            intermediate_directory=None,
-            preview_quality: int = DEFAULT_PREVIEW_QUALITY,
-            ANN_model: Callable = None,
-            ANN_model_filename: str = None,
-            resampling: str = DEFAULT_RESAMPLING,
-            downscale_air: bool = True,
-            downscale_vapor: bool = True,
-            save_intermediate: bool = False,
-            include_preview: bool = True,
-            show_distribution: bool = True):
+    def __init__(self, working_directory: str = None, static_directory: str = None,
+                 SRTM_connection: SRTM = None, SRTM_download: str = None,
+                 GEOS5FP_connection: GEOS5FP = None, GEOS5FP_download: str = None, GEOS5FP_products: str = None,
+                 intermediate_directory=None, preview_quality: int = DEFAULT_PREVIEW_QUALITY,
+                 ANN_model: Callable = None, ANN_model_filename: str = None,
+                 resampling: str = DEFAULT_RESAMPLING, downscale_air: bool = True, downscale_vapor: bool = True,
+                 save_intermediate: bool = False, include_preview: bool = True, show_distribution: bool = True):
+
         if working_directory is None:
             working_directory = DEFAULT_WORKING_DIRECTORY
 
@@ -365,39 +325,17 @@ class STIC(Model):
         if intermediate_directory is None:
             intermediate_directory = join(working_directory, DEFAULT_STIC_INTERMEDIATE)
 
-        super(STIC, self).__init__(
-            working_directory=working_directory,
-            static_directory=static_directory,
-            intermediate_directory=intermediate_directory,
-            preview_quality=preview_quality,
-            resampling=resampling,
-            save_intermediate=save_intermediate,
-            show_distribution=show_distribution,
-            include_preview=include_preview
-        )
+        super(STIC, self).__init__(working_directory=working_directory, static_directory=static_directory, intermediate_directory=intermediate_directory,
+                                   preview_quality=preview_quality, resampling=resampling, save_intermediate=save_intermediate,
+                                   show_distribution=show_distribution, include_preview=include_preview)
 
         self.downscale_air = downscale_air
         self.downscale_vapor = downscale_vapor
 
-    def STIC(
-            self,
-            geometry: RasterGrid,
-            target: str,
-            time_UTC: datetime or str,
-            Rn: Raster,
-            RH: Raster,
-            Ta_C: Raster,
-            ST_C: Raster,
-            albedo: Raster,
-            emissivity: Raster,
-            NDVI: Raster,
-            G: Raster = None,
-            Rg: Raster = None,
-            water: Raster = None,
-            output_variables: List[str] = None,
-            LE_convergence_target: float = 1.0,
-            max_iterations: int = 3,
-            results: Dict = None):
+    def STIC(self, geometry: RasterGrid, target: str, time_UTC: datetime or str, Rn: Raster, RH: Raster, Ta_C: Raster, ST_C: Raster, albedo: Raster, emissivity: Raster,
+             NDVI: Raster, G: Raster = None, Rg: Raster = None, water: Raster = None, output_variables: List[str] = None, LE_convergence_target: float = 1.0,
+             max_iterations: int = 3, results: Dict = None):
+
         if results is None:
             results = {}
 
@@ -464,8 +402,7 @@ class STIC(Model):
             Tsd_C = ((Estar - Ea_hPa) - (s33 * ST_C) + (s1 * Td_C)) / (s1 - s33)
             self.diagnostic(Tsd_C, "Tsd_C", date_UTC, target)
             # slope of saturation vapor pressure and temperature
-            s3 = rt.where((dTS > -20) & (dTS < 5), (Estar - Ea_hPa) / (ST_C - Td_C),
-                          (45.03 + 3.014 * ST_C + 0.05345 * ST_C ** 2 + 0.00224 * ST_C ** 3) * 1e-2)  # hpa/K
+            s3 = rt.where((dTS > -20) & (dTS < 5), (Estar - Ea_hPa) / (ST_C - Td_C), (45.03 + 3.014 * ST_C + 0.05345 * ST_C ** 2 + 0.00224 * ST_C ** 3) * 1e-2)  # hpa/K
             self.diagnostic(s3, "s3", date_UTC, target)
             # Surface Moisture (Ms)
             # Surface wetness
@@ -475,9 +412,7 @@ class STIC(Model):
             # Rootzone Moisture (Mrz)
             s44 = (SVP_hPa - Ea_hPa) / (Ta_C - Td_C)
             self.diagnostic(s44, "s44", date_UTC, target)
-            Mrz = (GAMMA * s1 * (Tsd_C - Td_C)) / (
-                        delta * s3 * (ST_C - Td_C) + GAMMA * s44 * (Ta_C - Td_C) - delta * s1 * (
-                        Tsd_C - Td_C))  # rootzone wetness
+            Mrz = (GAMMA * s1 * (Tsd_C - Td_C)) / (delta * s3 * (ST_C - Td_C) + GAMMA * s44 * (Ta_C - Td_C) - delta * s1 * (Tsd_C - Td_C))  # rootzone wetness
             Mrz = rt.clip(rt.where((dTS < 0) & (Mrz < 0) & (phi < 0), np.abs(Mrz), Mrz), 0, 1)
             self.diagnostic(Mrz, "Mrz", date_UTC, target)
             # now the limits of both Ms and Mrz are consistent
@@ -485,8 +420,7 @@ class STIC(Model):
             # Potential evaporation (Priestley-Taylor eqn.)
             Ep_PT = (ALPHA * delta * phi) / (delta + GAMMA)
             self.diagnostic(Ep_PT, "Ep_PT", date_UTC, target)
-            Es = rt.where((Ep_PT > phi) & (dTS > 0) & (Td_C <= 0), Ea_hPa + Mrz * (Estar - Ea_hPa),
-                          Ea_hPa + Ms * (Estar - Ea_hPa))
+            Es = rt.where((Ep_PT > phi) & (dTS > 0) & (Td_C <= 0), Ea_hPa + Mrz * (Estar - Ea_hPa), Ea_hPa + Ms * (Estar - Ea_hPa))
             self.diagnostic(Es, "Es", date_UTC, target)
             M = rt.where((Ep_PT > phi) & (dTS > 0) & (Td_C <= 0), Mrz, Ms)
             self.diagnostic(M, "M", date_UTC, target)
@@ -508,9 +442,7 @@ class STIC(Model):
 
             Lnet = f_NetRadiation(SIGMA, Ta_C, Ea_hPa, ST_C, emissivity, Rg, albedo)
             # Get M from f_soilmoisture initialize
-            M, Mrz, Ms, Ep_PT, Ds, s1, s3, Tsd_C = f_SoilMoisture_INITIALIZE(GAMMA, delta, ST_C, Ta_C, Td_C, dTS, Rn,
-                                                                             Lnet, NDVI, VPD_hPa, SVP_hPa, Ea_hPa,
-                                                                             Estar)
+            M, Mrz, Ms, Ep_PT, Ds, s1, s3, Tsd_C = f_SoilMoisture_INITIALIZE(GAMMA, delta, ST_C, Ta_C, Td_C, dTS, Rn, Lnet, NDVI, VPD_hPa, SVP_hPa, Ea_hPa, Estar)
             # get G from new function
             # G = f_G_PHI_actualsurface(Rn, Rnsoil, ttSEC, M)
 
@@ -518,8 +450,7 @@ class STIC(Model):
             # get phi with new comp
             phi = Rn - G
 
-            Es = rt.where((Ep_PT > phi) & (dTS > 0) & (Td_C <= 0), Ea_hPa + Mrz * (Estar - Ea_hPa),
-                          Ea_hPa + Ms * (Estar - Ea_hPa))
+            Es = rt.where((Ep_PT > phi) & (dTS > 0) & (Td_C <= 0), Ea_hPa + Mrz * (Estar - Ea_hPa), Ea_hPa + Ms * (Estar - Ea_hPa))
 
         # STIC analytical equations (convergence on LE)
         [gB, gS, dT, EF] = STIC_closure(delta, phi, Es, Ea_hPa, Estar, M)
@@ -552,9 +483,7 @@ class STIC(Model):
         # super dry conditions (I Put this condition back) (COMMENT by K.M on 21/02/2017)
         dry = (Ds > VPD_hPa) & (PET > phi) & (dTS > 0) & (Td_C <= 0)
         self.diagnostic(dry, "dry", date_UTC, target)
-        omega = rt.where(dry,
-                         ((delta / GAMMA) + 1 + gR / gB) / ((delta / GAMMA) + 1 + gB / gS + gR / gS + gR / gB),
-                         omega)
+        omega = rt.where(dry, ((delta / GAMMA) + 1 + gR / gB) / ((delta / GAMMA) + 1 + gB / gS + gR / gS + gR / gB), omega)
         self.diagnostic(omega, "omega", date_UTC, target)
         LE_eq = rt.where(dry, (phi * (delta / GAMMA)) / ((delta / GAMMA) + 1 + gR / gB), LE_eq)
         self.diagnostic(LE_eq, "LE_eq", date_UTC, target)
@@ -580,8 +509,7 @@ class STIC(Model):
                 e0star = rt.where(e0star < 0, Estar, e0star)
                 e0star = rt.where(e0star > 250, Estar, e0star)
                 self.diagnostic(e0star, f"e0star_{iteration}", date_UTC, target)
-                D0 = VPD_hPa + (delta * phi - (delta + GAMMA) * LE_new) / (
-                        RHO * CP * gB)  # vapor pressure deficit at source
+                D0 = VPD_hPa + (delta * phi - (delta + GAMMA) * LE_new) / (RHO * CP * gB)  # vapor pressure deficit at source
                 D0 = rt.where(D0 < 0, Ds, D0)
                 self.diagnostic(D0, f"D0_{iteration}", date_UTC, target)
                 e0 = e0star - D0
@@ -597,8 +525,7 @@ class STIC(Model):
                 Ms = rt.clip(s1 * (Tsd_C - Td_C) / (s3 * (ST_C - Td_C)), 0, 1)
                 self.diagnostic(Ms, f"Ms_{iteration}", date_UTC, target)
                 # Root zone moisture Mrz
-                Mrz = rt.clip(((GAMMA * s1 * (Tsd_C - Td_C)) / (
-                        delta * s3 * (ST_C - Td_C) + GAMMA * s44 * (Ta_C - Td_C) - delta * s1 * (Tsd_C - Td_C))), 0, 1)
+                Mrz = rt.clip(((GAMMA * s1 * (Tsd_C - Td_C)) / (delta * s3 * (ST_C - Td_C) + GAMMA * s44 * (Ta_C - Td_C) - delta * s1 * (Tsd_C - Td_C))), 0, 1)
                 self.diagnostic(Mrz, f"Mrz_{iteration}", date_UTC, target)
                 # combining hysteresis logic to differentiate surface vs. rootzone water control
                 M = rt.where((D0 > VPD_hPa) & (PET > phi) & (dTS > 0), Mrz, M)
@@ -607,11 +534,8 @@ class STIC(Model):
                 self.diagnostic(M, f"M_{iteration}", date_UTC, target)
                 # checking convergence
                 # re-estimating alpha
-                alphaN = ((gS * (e0star - Ea_hPa) * (2 * delta + 2 * GAMMA + GAMMA * gB_by_gS * (1 + M))) / (
-                        2 * delta * (GAMMA * (T0 - Ta_C) * (gB + gS) + gS * (e0star - Ea_hPa))))
+                alphaN = ((gS * (e0star - Ea_hPa) * (2 * delta + 2 * GAMMA + GAMMA * gB_by_gS * (1 + M))) / (2 * delta * (GAMMA * (T0 - Ta_C) * (gB + gS) + gS * (e0star - Ea_hPa))))
                 self.diagnostic(alphaN, f"alphaN_{iteration}", date_UTC, target)
-
-
 
             else:
 
@@ -624,16 +548,14 @@ class STIC(Model):
                 e0star = rt.where(e0star < 0, Estar, e0star)
                 e0star = rt.where(e0star > 250, Estar, e0star)
 
-                D0 = VPD_hPa + (delta * phi - (delta + GAMMA) * LE_new) / (
-                            RHO * CP * gBB)  # vapor pressure deficit at source/
+                D0 = VPD_hPa + (delta * phi - (delta + GAMMA) * LE_new) / (RHO * CP * gBB)  # vapor pressure deficit at source/
 
                 e0 = e0star - D0
                 e0 = rt.where(e0 < 0, Es, e0)
                 e0 = rt.where(e0 > e0star, e0star, e0)
 
                 # Get M from f_soilmoisture initialize
-                M = f_SoilMoisture_ITERATE2(GAMMA, delta, s1, s3, ST_C, Ta_C, dTS, Td_C, Tsd_C, Rg, Rn, Lnet, fc,
-                                            VPD_hPa, D0, SVP_hPa, Ea_hPa, T0)
+                M = f_SoilMoisture_ITERATE2(GAMMA, delta, s1, s3, ST_C, Ta_C, dTS, Td_C, Tsd_C, Rg, Rn, Lnet, fc, VPD_hPa, D0, SVP_hPa, Ea_hPa, T0)
 
                 # get G from new function
                 # G = f_G_PHI_actualsurface(Rn,ttSEC,M)
@@ -645,8 +567,8 @@ class STIC(Model):
                 # recompute phi
                 phi = Rn - G
 
-                alphaN = ((gSS * (e0star - Ea_hPa) * (2 * delta + 2 * GAMMA + GAMMA * gBB_by_gSS * (1 + M))) / (
-                            2 * delta * (GAMMA * (T0 - Ta_C) * (gBB + gSS) + gSS * (e0star - Ea_hPa))))
+                alphaN = ((gSS * (e0star - Ea_hPa) * (2 * delta + 2 * GAMMA + GAMMA * gBB_by_gSS * (1 + M))) / \
+                          (2 * delta * (GAMMA * (T0 - Ta_C) * (gBB + gSS) + gSS * (e0star - Ea_hPa))))
 
             # re-estimated conductances and states
             [gB, gS, dT, EF] = STIC_closure(delta, phi, e0, Ea_hPa, e0star, M, RHO, CP, GAMMA, alphaN)
@@ -670,8 +592,7 @@ class STIC(Model):
             PET = ((delta * phi + RHO * CP * gB * VPD_hPa) / (delta + GAMMA))
             self.diagnostic(PET, f"PET_{iteration}", date_UTC, target)
             # Potential Transpiration
-            PT = (delta * phi + RHO * CP * gB * VPD_hPa) / (
-                    delta + GAMMA * (1 + M * gB_by_gS))  # potential transpiration
+            PT = (delta * phi + RHO * CP * gB * VPD_hPa) / (delta + GAMMA * (1 + M * gB_by_gS))  # potential transpiration
             PT = PT.mask(~water)
             self.diagnostic(PT, f"PT_{iteration}", date_UTC, target)
             # ET PARTITIONING
@@ -685,8 +606,8 @@ class STIC(Model):
             LE_new = rt.where(np.isnan(LE_new), LE_old, LE_new)
             LE_old = LE_new
             LE_max_change = np.nanmax(LE_change)
-            logger.info(
-                f"completed STIC iteration {colored_logging.val(iteration)} / {colored_logging.val(max_iterations)} with max LE change: {colored_logging.val(LE_max_change)} ({t} seconds)")
+            logger.info(f"completed STIC iteration {colored_logging.val(iteration)} / {colored_logging.val(max_iterations)} with max LE change: "
+                        f"{colored_logging.val(LE_max_change)} ({t} seconds)")
             iteration += 1
 
         iteration -= 1

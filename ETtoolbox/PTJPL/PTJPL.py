@@ -34,16 +34,7 @@ DEFAULT_PTJPL_INTERMEDIATE = "PTJPL_intermediate"
 DEFAULT_RESAMPLING = "cubic"
 DEFAULT_PREVIEW_QUALITY = 20
 
-DEFAULT_OUTPUT_VARIABLES = [
-    "Rn",
-    "LE",
-    "ETc",
-    "ETi",
-    "ETs",
-    "ET",
-    "ESI",
-    "WUE"
-]
+DEFAULT_OUTPUT_VARIABLES = ["Rn", "LE", "ETc", "ETi", "ETs", "ET", "ESI", "WUE"]
 
 FLOOR_TOPT = True
 
@@ -73,31 +64,16 @@ class GEOS5FPNotAvailableError(IOError):
 class PTJPL(BESS):
     logger = logging.getLogger(__name__)
 
-    def __init__(
-            self,
-            working_directory: str = None,
-            static_directory: str = None,
-            SRTM_connection: SRTM = None,
-            SRTM_download: str = None,
-            GEOS5FP_connection: GEOS5FP = None,
-            GEOS5FP_download: str = None,
-            GEOS5FP_products: str = None,
-            GEDI_connection: GEDICanopyHeight = None,
-            GEDI_download: str = None,
-            ORNL_connection: MODISCI = None,
-            CI_directory: str = None,
-            intermediate_directory=None,
-            preview_quality: int = DEFAULT_PREVIEW_QUALITY,
-            ANN_model: Callable = None,
-            ANN_model_filename: str = None,
-            resampling: str = DEFAULT_RESAMPLING,
-            downscale_air: bool = DEFAULT_DOWNSCALE_AIR,
-            downscale_humidity: bool = DEFAULT_DOWNSCALE_HUMIDITY,
-            downscale_moisture: bool = DEFAULT_DOWNSCALE_MOISTURE,
-            floor_Topt: bool = FLOOR_TOPT,
-            save_intermediate: bool = False,
-            include_preview: bool = True,
-            show_distribution: bool = True):
+    def __init__(self, working_directory: str = None, static_directory: str = None,
+                 SRTM_connection: SRTM = None, SRTM_download: str = None,
+                 GEOS5FP_connection: GEOS5FP = None, GEOS5FP_download: str = None, GEOS5FP_products: str = None,
+                 GEDI_connection: GEDICanopyHeight = None, GEDI_download: str = None,
+                 ORNL_connection: MODISCI = None,
+                 CI_directory: str = None, intermediate_directory=None, preview_quality: int = DEFAULT_PREVIEW_QUALITY,
+                 ANN_model: Callable = None, ANN_model_filename: str = None,
+                 resampling: str = DEFAULT_RESAMPLING, downscale_air: bool = DEFAULT_DOWNSCALE_AIR, downscale_humidity: bool = DEFAULT_DOWNSCALE_HUMIDITY,
+                 downscale_moisture: bool = DEFAULT_DOWNSCALE_MOISTURE, floor_Topt: bool = FLOOR_TOPT,
+                 save_intermediate: bool = False, include_preview: bool = True, show_distribution: bool = True):
         if working_directory is None:
             working_directory = DEFAULT_WORKING_DIRECTORY
 
@@ -111,30 +87,15 @@ class PTJPL(BESS):
         if intermediate_directory is None:
             intermediate_directory = join(working_directory, DEFAULT_PTJPL_INTERMEDIATE)
 
-        super(PTJPL, self).__init__(
-            working_directory=working_directory,
-            static_directory=static_directory,
-            SRTM_connection=SRTM_connection,
-            SRTM_download=SRTM_download,
-            GEOS5FP_connection=GEOS5FP_connection,
-            GEOS5FP_download=GEOS5FP_download,
-            GEOS5FP_products=GEOS5FP_products,
-            GEDI_connection=GEDI_connection,
-            GEDI_download=GEDI_download,
-            ORNL_connection=ORNL_connection,
-            CI_directory=CI_directory,
-            intermediate_directory=intermediate_directory,
-            preview_quality=preview_quality,
-            ANN_model=ANN_model,
-            ANN_model_filename=ANN_model_filename,
-            resampling=resampling,
-            save_intermediate=save_intermediate,
-            show_distribution=show_distribution,
-            include_preview=include_preview,
-            downscale_air=downscale_air,
-            downscale_humidity=downscale_humidity,
-            downscale_moisture=downscale_moisture
-        )
+        super(PTJPL, self).__init__(working_directory=working_directory, static_directory=static_directory,
+                                    SRTM_connection=SRTM_connection, SRTM_download=SRTM_download,
+                                    GEOS5FP_connection=GEOS5FP_connection, GEOS5FP_download=GEOS5FP_download, GEOS5FP_products=GEOS5FP_products,
+                                    GEDI_connection=GEDI_connection, GEDI_download=GEDI_download,
+                                    ORNL_connection=ORNL_connection,
+                                    CI_directory=CI_directory, intermediate_directory=intermediate_directory, preview_quality=preview_quality,
+                                    ANN_model=ANN_model, ANN_model_filename=ANN_model_filename,
+                                    resampling=resampling, save_intermediate=save_intermediate, show_distribution=show_distribution, include_preview=include_preview,
+                                    downscale_air=downscale_air, downscale_humidity=downscale_humidity, downscale_moisture=downscale_moisture)
 
         self.downscale_air = downscale_air
         self.downscale_humidity = downscale_humidity
@@ -234,12 +195,7 @@ class PTJPL(BESS):
 
         return ET
 
-    def water_heat_flux(
-            self,
-            WST_C: Raster,
-            Td_C: Raster,
-            wind_speed: Raster,
-            SWnet: Raster) -> Raster:
+    def water_heat_flux(self, WST_C: Raster, Td_C: Raster, wind_speed: Raster, SWnet: Raster) -> Raster:
         """
         Water heat flux method from AquaSEBS
         http://www.mdpi.com/2072-4292/8/7/583
@@ -273,22 +229,14 @@ class PTJPL(BESS):
         return W
 
     def Ta_C(self, time_UTC: datetime, geometry: RasterGeometry, ST_K: Raster = None) -> Raster:
-        Ta_K = self.Ta_K(
-            time_UTC=time_UTC,
-            geometry=geometry,
-            ST_K=ST_K
-        )
+        Ta_K = self.Ta_K(time_UTC=time_UTC, geometry=geometry, ST_K=ST_K)
 
         Ta_C = Ta_K - 273.15
 
         return Ta_C
 
     def Ea_kPa(self, time_UTC: datetime, geometry: RasterGeometry, ST_K: Raster = None) -> Raster:
-        Ea_Pa = self.Ea_Pa(
-            time_UTC=time_UTC,
-            geometry=geometry,
-            ST_K=ST_K
-        )
+        Ea_Pa = self.Ea_Pa(time_UTC=time_UTC, geometry=geometry, ST_K=ST_K)
 
         Ea_kPa = Ea_Pa / 1000
 
@@ -302,17 +250,7 @@ class PTJPL(BESS):
         self.logger.info("retrieving GEOS-5 FP wind speed raster in meters per second")
         return self.GEOS5FP_connection.wind_speed(time_UTC=time_UTC, geometry=geometry, resampling=self.resampling)
 
-    def Rn(
-            self,
-            date_UTC: date,
-            target: str,
-            SWin: Raster,
-            albedo: Raster,
-            ST_C: Raster,
-            emissivity: Raster,
-            Ea_kPa: Raster,
-            Ta_C: Raster,
-            cloud_mask: Raster) -> Raster:
+    def Rn(self, date_UTC: date, target: str, SWin: Raster, albedo: Raster, ST_C: Raster, emissivity: Raster, Ea_kPa: Raster, Ta_C: Raster, cloud_mask: Raster) -> Raster:
         Ea_Pa = Ea_kPa * 1000
         Ta_K = Ta_C + 273.15
         ST_K = ST_C + 273.15
@@ -336,11 +274,7 @@ class PTJPL(BESS):
             LWin = atmospheric_emissivity * STEFAN_BOLTZMAN_CONSTANT * Ta_K ** 4
         else:
             # calculate incoming longwave for clear sky and cloudy
-            LWin = rt.where(
-                ~cloud_mask,
-                atmospheric_emissivity * STEFAN_BOLTZMAN_CONSTANT * Ta_K ** 4,
-                STEFAN_BOLTZMAN_CONSTANT * Ta_K ** 4
-            )
+            LWin = rt.where(~cloud_mask, atmospheric_emissivity * STEFAN_BOLTZMAN_CONSTANT * Ta_K ** 4, STEFAN_BOLTZMAN_CONSTANT * Ta_K ** 4)
 
         self.diagnostic(LWin, "LWin", date_UTC, target)
 
@@ -361,27 +295,9 @@ class PTJPL(BESS):
 
         return Rn
 
-    def PTJPL(
-            self,
-            geometry: RasterGrid,
-            target: str,
-            time_UTC: datetime or str,
-            ST_C: Raster,
-            emissivity: Raster,
-            NDVI: Raster,
-            albedo: Raster,
-            water: Raster = None,
-            cloud_mask: Raster = None,
-            SWin: Raster = None,
-            Ta_C: Raster = None,
-            RH: Raster = None,
-            Ea_kPa: Raster = None,
-            Topt: Raster = None,
-            fAPARmax: Raster = None,
-            Rn: Raster = None,
-            Rn_daily: Raster = None,
-            wind_speed: Raster = None,
-            output_variables: List[str] = DEFAULT_OUTPUT_VARIABLES) -> Dict[str, Raster]:
+    def PTJPL(self, geometry: RasterGrid, target: str, time_UTC: datetime or str, ST_C: Raster, emissivity: Raster, NDVI: Raster, albedo: Raster, water: Raster = None,
+              cloud_mask: Raster = None, SWin: Raster = None, Ta_C: Raster = None, RH: Raster = None, Ea_kPa: Raster = None, Topt: Raster = None, fAPARmax: Raster = None,
+              Rn: Raster = None, Rn_daily: Raster = None, wind_speed: Raster = None, output_variables: List[str] = DEFAULT_OUTPUT_VARIABLES) -> Dict[str, Raster]:
         warnings.filterwarnings('ignore')
 
         results = {}
@@ -448,12 +364,7 @@ class PTJPL(BESS):
 
         if SWin is None:
             # SWin = self.SWin(time_UTC=time_UTC, geometry=geometry)
-            Ra, Rg, UV, VIS, NIR, VISdiff, NIRdiff, VISdir, NIRdir = self.FLiES(
-                geometry=geometry,
-                target=target,
-                time_UTC=time_UTC,
-                albedo=albedo
-            )
+            Ra, Rg, UV, VIS, NIR, VISdiff, NIRdiff, VISdir, NIRdir = self.FLiES(geometry=geometry, target=target, time_UTC=time_UTC, albedo=albedo)
 
             SWin = Rg
 
@@ -474,17 +385,7 @@ class PTJPL(BESS):
         self.diagnostic(SWnet, "SWnet", date_UTC, target)
 
         if Rn is None:
-            Rn = self.Rn(
-                date_UTC=date_UTC,
-                target=target,
-                SWin=SWin,
-                albedo=albedo,
-                ST_C=ST_C,
-                emissivity=emissivity,
-                Ea_kPa=Ea_kPa,
-                Ta_C=Ta_C,
-                cloud_mask=cloud_mask
-            )
+            Rn = self.Rn(date_UTC=date_UTC, target=target, SWin=SWin, albedo=albedo, ST_C=ST_C, emissivity=emissivity, Ea_kPa=Ea_kPa, Ta_C=Ta_C, cloud_mask=cloud_mask)
 
         self.diagnostic(Rn, "Rn", date_UTC, target)
 
@@ -493,12 +394,7 @@ class PTJPL(BESS):
 
         if Rn_daily is None:
             # integrate net radiation to daily value
-            Rn_daily = self.Rn_daily(
-                Rn,
-                hour_of_day,
-                sunrise_hour,
-                daylight_hours
-            )
+            Rn_daily = self.Rn_daily(Rn, hour_of_day, sunrise_hour, daylight_hours)
 
             # constrain negative values of daily integrated net radiation
             Rn_daily = rt.clip(Rn_daily, 0, None)
@@ -614,12 +510,7 @@ class PTJPL(BESS):
             wind_speed = self.wind_speed(time_UTC=time_UTC, geometry=geometry)
 
         # water heat flux
-        W = self.water_heat_flux(
-            ST_C,
-            Td_C,
-            wind_speed,
-            SWnet
-        )
+        W = self.water_heat_flux(ST_C, Td_C, wind_speed, SWnet)
 
         W = rt.clip(W, 0, W_MAX_PROPORTION * Rn)
         W = W.mask(water)
@@ -644,11 +535,7 @@ class PTJPL(BESS):
         PET_land = PT_ALPHA * epsilon * (Rn - G)
         self.diagnostic(PET_land, "PET_land", date_UTC, target)
 
-        PET = rt.where(
-            water,
-            PET_water,
-            PET_land
-        )
+        PET = rt.where(water, PET_water, PET_land)
 
         if "PET" in output_variables:
             results["PET"] = PET

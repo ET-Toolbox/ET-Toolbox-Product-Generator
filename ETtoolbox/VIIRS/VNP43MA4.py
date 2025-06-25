@@ -28,14 +28,9 @@ class VIIRSUnavailableError(Exception):
 
 
 class VNP43MA4Granule(VIIRSGranule):
-    def reflectance(
-            self,
-            band: int,
-            geometry: RasterGeometry = None,
-            save_data: bool = False,
-            include_preview: bool = True,
-            apply_QA: bool = True,
-            product_filename: str = None) -> Raster:
+    def reflectance(self, band: int, geometry: RasterGeometry = None, save_data: bool = False, include_preview: bool = True, apply_QA: bool = True,
+                    product_filename: str = None) -> Raster:
+
         if product_filename is None:
             product_filename = self.product_filename(f"M{band}")
 
@@ -43,20 +38,11 @@ class VNP43MA4Granule(VIIRSGranule):
             logger.info(f"loading VNP43MA4 NBAR M{band}: {colored_logging.file(product_filename)}")
             image = Raster.open(product_filename)
         else:
-            image = self.dataset(
-                filename=self.filename,
-                dataset_name=f"HDFEOS/GRIDS/VIIRS_Grid_BRDF/Data Fields/Nadir_Reflectance_M{int(band)}",
-                fill_value=32767,
-                scale_factor=0.0001
-            )
+            image = self.dataset(filename=self.filename, dataset_name=f"HDFEOS/GRIDS/VIIRS_Grid_BRDF/Data Fields/Nadir_Reflectance_M{int(band)}",
+                                 fill_value=32767, scale_factor=0.0001)
 
             if apply_QA:
-                QA = self.QA(
-                    band=band,
-                    geometry=geometry,
-                    save_data=save_data,
-                    include_preview=include_preview
-                )
+                QA = self.QA(band=band, geometry=geometry, save_data=save_data, include_preview=include_preview)
 
                 image = rt.where(QA == 0, image, np.nan)
 
@@ -69,13 +55,8 @@ class VNP43MA4Granule(VIIRSGranule):
 
         return image
 
-    def QA(
-            self,
-            band: int,
-            geometry: RasterGeometry = None,
-            save_data: bool = True,
-            include_preview: bool = True,
-            product_filename: str = None) -> Raster:
+    def QA(self, band: int, geometry: RasterGeometry = None, save_data: bool = True, include_preview: bool = True, product_filename: str = None) -> Raster:
+
         if product_filename is None:
             product_filename = self.product_filename(f"VNP43MA4_QA_M{band}")
 
@@ -91,11 +72,7 @@ class VNP43MA4Granule(VIIRSGranule):
                 grid = generate_modland_grid(h, v, image.shape[0])
 
                 logger.info("opening file: " + colored_logging.file(self.filename))
-
-                logger.info(
-                    f"loading {colored_logging.val(dataset_name)} " +
-                    "at " + colored_logging.val(f"{grid.cell_size:0.2f} m") + " resolution"
-                )
+                logger.info(f"loading {colored_logging.val(dataset_name)} at " + colored_logging.val(f"{grid.cell_size:0.2f} m") + " resolution")
 
                 image = Raster(image, geometry=grid)
 
@@ -151,16 +128,7 @@ class VNP43MA4Granule(VIIRSGranule):
         M10 = self.reflectance(10)
         M11 = self.reflectance(11)
 
-        albedo = -0.0131 + \
-                (M1 * 0.2418) + \
-                (M2 * -0.201) + \
-                (M3 * 0.2093) + \
-                (M4 * 0.1146) + \
-                (M5 * 0.1348) + \
-                (M7 * 0.2251) + \
-                (M8 * 0.1123) + \
-                (M10 * 0.086) + \
-                (M11 * 0.0803)
+        albedo = -0.0131 + (M1 * 0.2418) + (M2 * -0.201) + (M3 * 0.2093) + (M4 * 0.1146) + (M5 * 0.1348) + (M7 * 0.2251) + (M8 * 0.1123) + (M10 * 0.086) + (M11 * 0.0803)
 
         return albedo
 
@@ -190,66 +158,26 @@ class VNP43MA4(VIIRSDataPool):
     DEFAULT_PRODUCTS_DIRECTORY = "VNP43MA4_products"
     DEFAULT_MOSAIC_DIRECTORY = "VNP43MA4_mosaics"
 
-    def __init__(
-            self,
-            username: str = None,
-            password: str = None,
-            remote: str = None,
-            working_directory: str = None,
-            download_directory: str = None,
-            products_directory: str = None,
-            mosaic_directory: str = None,
-            *args,
-            **kwargs):
-        super(VNP43MA4, self).__init__(
-            username=username,
-            password=password,
-            remote=remote,
-            working_directory=working_directory,
-            download_directory=download_directory,
-            products_directory=products_directory,
-            mosaic_directory=mosaic_directory,
-            *args,
-            **kwargs
-        )
+    def __init__(self, username: str = None, password: str = None, remote: str = None, working_directory: str = None, download_directory: str = None,
+                 products_directory: str = None, mosaic_directory: str = None, *args, **kwargs):
+
+        super(VNP43MA4, self).__init__(username=username, password=password, remote=remote, working_directory=working_directory, download_directory=download_directory,
+                                       products_directory=products_directory, mosaic_directory=mosaic_directory, *args, **kwargs)
 
         logger.info(f"VNP43MA4 LP-DAAC URL: {colored_logging.URL(self.remote)}")
         logger.info(f"VNP43MA4 working directory: {colored_logging.dir(self.working_directory)}")
         logger.info(f"VNP43MA4 download directory: {colored_logging.dir(self.download_directory)}")
         logger.info(f"VNP43MA4 products directory: {colored_logging.dir(self.products_directory)}")
 
-    def search(
-            self,
-            start_date: date or datetime or str,
-            end_date: date or datetime or str = None,
-            build: str = None,
-            tiles: List[str] or str = None,
-            target_geometry: Point or Polygon or RasterGrid = None,
-            *args,
-            **kwargs) -> pd.DataFrame:
-        return super(VNP43MA4, self).search(
-            product="VNP43MA4",
-            start_date=start_date,
-            end_date=end_date,
-            build=build,
-            tiles=tiles,
-            target_geometry=target_geometry,
-            *args,
-            **kwargs
-        )
+    def search(self, start_date: date or datetime or str, end_date: date or datetime or str = None, build: str = None, tiles: List[str] or str = None,
+               target_geometry: Point or Polygon or RasterGrid = None, *args, **kwargs) -> pd.DataFrame:
 
-    def granule(
-            self,
-            date_UTC: Union[date, str],
-            tile: str,
-            # download_location: str = None,
-            build: str = None) -> VNP43MA4Granule:
+        return super(VNP43MA4, self).search(product="VNP43MA4", start_date=start_date, end_date=end_date, build=build, tiles=tiles, target_geometry=target_geometry,
+                                      *args, **kwargs)
+
+    def granule(self, date_UTC: Union[date, str], tile: str, build: str = None) -> VNP43MA4Granule:
         # if download_location is None:
-        download_location = join(
-            self.download_directory,
-            "VNP43MA4",
-            f"{date_UTC:%Y.%m.%d}"
-        )
+        download_location = join(self.download_directory, "VNP43MA4", f"{date_UTC:%Y.%m.%d}")
 
         makedirs(download_location, exist_ok=True)
         logger.info(f"download location: {colored_logging.dir(download_location)}")
@@ -261,32 +189,18 @@ class VNP43MA4(VIIRSDataPool):
                 filename = sorted(filenames)[0]
                 logger.info(f"found previously retrieved VNP09GA file: {filename}")
 
-                granule = VNP43MA4Granule(
-                    filename=filename,
-                    products_directory=self.products_directory
-                )
+                granule = VNP43MA4Granule(filename=filename, products_directory=self.products_directory)
 
                 return granule
 
-        listing = self.search(
-            start_date=date_UTC,
-            end_date=date_UTC,
-            build=build,
-            tiles=[tile]
-        )
+        listing = self.search(start_date=date_UTC, end_date=date_UTC, build=build, tiles=[tile])
 
         if len(listing) > 0:
             URL = listing.iloc[0].URL
 
-        filename = super(VNP43MA4, self).download_URL(
-            URL=URL,
-            download_location=download_location
-        )
+        filename = super(VNP43MA4, self).download_URL(URL=URL, download_location=download_location)
 
-        granule = VNP43MA4Granule(
-            filename=filename,
-            products_directory=self.products_directory
-        )
+        granule = VNP43MA4Granule(filename=filename, products_directory=self.products_directory)
 
         return granule
 
@@ -301,25 +215,14 @@ class VNP43MA4(VIIRSDataPool):
 
         return product_filename
 
-    def product(
-            self,
-            product: str,
-            date_UTC: Union[date, str],
-            geometry: RasterGeometry,
-            target: str = None,
-            filename: str = None,
-            save_data: bool = True,
-            resampling: str = None) -> Raster:
+    def product(self, product: str, date_UTC: Union[date, str], geometry: RasterGeometry, target: str = None, filename: str = None, save_data: bool = True,
+                resampling: str = None) -> Raster:
+
         if isinstance(date_UTC, str):
             date_UTC = parser.parse(date_UTC).date()
 
         if filename is None and target is not None:
-            filename = self.product_filename(
-                target=target,
-                date_UTC=date_UTC,
-                product=product,
-                resolution=int(geometry.cell_size_meters)
-            )
+            filename = self.product_filename(target=target, date_UTC=date_UTC, product=product, resolution=int(geometry.cell_size_meters))
 
         if filename is not None and exists(filename):
             return Raster.open(filename)

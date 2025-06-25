@@ -118,14 +118,7 @@ def parse_sentinel_granule_id(granule_id: str) -> dict:
     # https://sentinel.esa.int/web/sentinel/user-guides/sentinel-2-msi/naming-convention
     parts = granule_id.split("_")
 
-    return {
-        "mission_id": parts[0],
-        "product": parts[1],
-        "date": parser.parse(parts[2]),
-        "baseline": parts[3],
-        "orbit": parts[4],
-        "tile": parts[5][1:]
-    }
+    return {"mission_id": parts[0], "product": parts[1], "date": parser.parse(parts[2]), "baseline": parts[3], "orbit": parts[4], "tile": parts[5][1:]}
 
 
 def resize_affine(affine: Affine, cell_size: float) -> Affine:
@@ -140,12 +133,7 @@ def resize_affine(affine: Affine, cell_size: float) -> Affine:
 class SentinelGranule:
     logger = logging.getLogger(__name__)
 
-    def __init__(
-            self,
-            filename: str,
-            working_directory: str = None,
-            products_directory: str = None,
-            target_resolution: float = None):
+    def __init__(self, filename: str, working_directory: str = None, products_directory: str = None, target_resolution: float = None):
 
         if working_directory is None:
             working_directory = DEFAULT_WORKING_DIRECTORY
@@ -183,10 +171,7 @@ class SentinelGranule:
         self._resolution_grid = {}
 
     def __repr__(self):
-        display_dict = {
-            "filename": self.filename,
-            "products_directory": self.products_directory
-        }
+        display_dict = {"filename": self.filename, "products_directory": self.products_directory}
 
         if self.target_resolution is not None:
             display_dict["target_resolution"] = self.target_resolution
@@ -323,11 +308,7 @@ class SentinelGranule:
         if isinstance(band, int):
             band = f"B{band:02d}"
 
-        filenames = sorted([
-            filename
-            for filename
-            in self.image_filenames
-            if band in filename])
+        filenames = sorted([filename for filename in self.image_filenames if band in filename])
 
         if len(filenames) == 0:
             return None
@@ -635,75 +616,44 @@ class SentinelGranule:
                 resampling = None
 
             if source_resolution != target_resolution:
-                self.logger.info(
-                    f"resampling Sentinel band {colored_logging.val(band)} ({colored_logging.val(source_resolution)}m -> {colored_logging.val(target_resolution)}m)")
+                self.logger.info(f"resampling Sentinel band {colored_logging.val(band)} ({colored_logging.val(source_resolution)}m -> "
+                                 f"{colored_logging.val(target_resolution)}m)")
                 reflectance = reflectance.to_grid(target_grid, resampling=resampling)
 
         return reflectance
 
     def get_blue(self, target_resolution: float = None, apply_cloud_mask: bool = True) -> Raster:
-        return self.band_reflectance(
-            2,
-            target_resolution=target_resolution,
-            apply_cloud_mask=apply_cloud_mask
-        )
+        return self.band_reflectance(2, target_resolution=target_resolution, apply_cloud_mask=apply_cloud_mask)
 
     blue = property(get_blue)
 
     def get_green(self, target_resolution: float = None, apply_cloud_mask: bool = True) -> Raster:
-        return self.band_reflectance(
-            3,
-            target_resolution=target_resolution,
-            apply_cloud_mask=apply_cloud_mask
-        )
+        return self.band_reflectance(3, target_resolution=target_resolution, apply_cloud_mask=apply_cloud_mask)
 
     green = property(get_green)
 
     def get_red(self, target_resolution: float = None, apply_cloud_mask: bool = True) -> Raster:
-        return self.band_reflectance(
-            4,
-            target_resolution=target_resolution,
-            apply_cloud_mask=apply_cloud_mask
-        )
+        return self.band_reflectance(4, target_resolution=target_resolution, apply_cloud_mask=apply_cloud_mask)
 
     red = property(get_red)
 
     def get_NIR(self, target_resolution: float = None, apply_cloud_mask: bool = True) -> Raster:
-        return self.band_reflectance(
-            8,
-            target_resolution=target_resolution,
-            apply_cloud_mask=apply_cloud_mask
-        )
+        return self.band_reflectance(8, target_resolution=target_resolution, apply_cloud_mask=apply_cloud_mask)
 
     NIR = property(get_NIR)
 
     def get_SWIR1(self, target_resolution: float = None, apply_cloud_mask: bool = True) -> Raster:
-        return self.band_reflectance(
-            11,
-            target_resolution=target_resolution,
-            apply_cloud_mask=apply_cloud_mask
-        )
+        return self.band_reflectance(11, target_resolution=target_resolution, apply_cloud_mask=apply_cloud_mask)
 
     SWIR1 = property(get_SWIR1)
 
     def get_SWIR2(self, target_resolution: float = None, apply_cloud_mask: bool = True) -> Raster:
-        return self.band_reflectance(
-            12,
-            target_resolution=target_resolution,
-            apply_cloud_mask=apply_cloud_mask
-        )
+        return self.band_reflectance(12, target_resolution=target_resolution, apply_cloud_mask=apply_cloud_mask)
 
     SWIR2 = property(get_SWIR2)
 
-    def get_NDVI(
-            self,
-            target_resolution: float = None,
-            apply_cloud_mask: bool = True,
-            save_data: bool = True,
-            save_preview: bool = True,
-            product_filename: str = None,
-            preview_filename: str = None,
-            return_filename: bool = False) -> Union[Raster, Tuple[Raster, str]]:
+    def get_NDVI(self, target_resolution: float = None, apply_cloud_mask: bool = True, save_data: bool = True, save_preview: bool = True, product_filename: str = None,
+                 preview_filename: str = None, return_filename: bool = False) -> Union[Raster, Tuple[Raster, str]]:
         if target_resolution is None:
             target_resolution = self.target_resolution
 
@@ -755,31 +705,15 @@ class SentinelGranule:
     # 12	    2.190	0.180	3	            0.0002
     # https://www.sciencedirect.com/science/article/pii/S0034425718303134#t0015
 
-    def get_albedo(
-            self,
-            target_resolution: float = None,
-            apply_cloud_mask: bool = True,
-            save_data: bool = True,
-            save_preview: bool = True,
-            product_filename: str = None,
-            preview_filename: str = None,
-            geometry: RasterGeometry = None,
-            return_filename: bool = False) -> Union[Raster, Tuple[Raster, str]]:
+    def get_albedo(self, target_resolution: float = None, apply_cloud_mask: bool = True, save_data: bool = True, save_preview: bool = True, product_filename: str = None,
+                   preview_filename: str = None, geometry: RasterGeometry = None, return_filename: bool = False) -> Union[Raster, Tuple[Raster, str]]:
+
         if target_resolution is None:
             target_resolution = self.target_resolution
 
         if target_resolution is None:
-            target_resolution = max(
-                self.band_cell_size(2),
-                self.band_cell_size(3),
-                self.band_cell_size(4),
-                self.band_cell_size(5),
-                self.band_cell_size(6),
-                self.band_cell_size(7),
-                self.band_cell_size(8),
-                self.band_cell_size(11),
-                self.band_cell_size(12)
-            )
+            target_resolution = max(self.band_cell_size(2), self.band_cell_size(3), self.band_cell_size(4), self.band_cell_size(5), self.band_cell_size(6),
+                                    self.band_cell_size(7), self.band_cell_size(8), self.band_cell_size(11), self.band_cell_size(12))
 
         if product_filename is None:
             product_filename = self.product_filename("albedo", target_resolution=target_resolution)
@@ -800,16 +734,7 @@ class SentinelGranule:
             b8 = self.band_reflectance(8, target_resolution=target_resolution, apply_cloud_mask=apply_cloud_mask)
             b11 = self.band_reflectance(11, target_resolution=target_resolution, apply_cloud_mask=apply_cloud_mask)
             b12 = self.band_reflectance(12, target_resolution=target_resolution, apply_cloud_mask=apply_cloud_mask)
-            albedo = \
-                0.1324 * b2 + \
-                0.1269 * b3 + \
-                0.1051 * b4 + \
-                0.0971 * b5 + \
-                0.0890 * b6 + \
-                0.0818 * b7 + \
-                0.0722 * b8 + \
-                0.0167 * b11 + \
-                0.0002 * b12
+            albedo = 0.1324 * b2 + 0.1269 * b3 + 0.1051 * b4 + 0.0971 * b5 + 0.0890 * b6 + 0.0818 * b7 + 0.0722 * b8 + 0.0167 * b11 + 0.0002 * b12
 
             albedo = np.clip(albedo, -1, 1)
 
@@ -853,13 +778,7 @@ class MGRS(mgrs.MGRS):
         xmax = xmin + precision
         ymax = ymin + precision
 
-        bbox = BBox(
-            xmin=xmin,
-            ymin=ymin,
-            xmax=xmax,
-            ymax=ymax,
-            crs=crs
-        )
+        bbox = BBox(xmin=xmin, ymin=ymin, xmax=xmax, ymax=ymax, crs=crs)
 
         return bbox
 
@@ -890,12 +809,7 @@ class SentinelTileGrid(MGRS):
 
         return proj4
 
-    def footprint(
-            self,
-            tile: str,
-            in_UTM: bool = False,
-            round_UTM: bool = True,
-            in_2d: bool = True) -> Polygon:
+    def footprint(self, tile: str, in_UTM: bool = False, round_UTM: bool = True, in_2d: bool = True) -> Polygon:
         try:
             polygon = Polygon(self.sentinel_polygons[self.sentinel_polygons.Name == tile].iloc[0]["geometry"], crs=self.crs)
         except Exception as e:
@@ -914,23 +828,13 @@ class SentinelTileGrid(MGRS):
         return polygon
 
     def footprint_UTM(self, tile: str) -> Polygon:
-        return self.footprint(
-            tile=tile,
-            in_UTM=True,
-            round_UTM=True,
-            in_2d=True
-        )
+        return self.footprint(tile=tile, in_UTM=True, round_UTM=True, in_2d=True)
 
     def bbox(self, tile: str, MGRS: bool = False) -> BBox:
         if len(tile) != 5 or MGRS:
             return super(SentinelTileGrid, self).bbox(tile=tile)
 
-        polygon = self.footprint(
-            tile=tile,
-            in_UTM=True,
-            round_UTM=True,
-            in_2d=True
-        )
+        polygon = self.footprint(tile=tile, in_UTM=True, round_UTM=True, in_2d=True)
 
         bbox = polygon.bbox
 
@@ -945,11 +849,8 @@ class SentinelTileGrid(MGRS):
 
         return tiles
 
-    def tile_footprints(
-            self,
-            target_geometry: shapely.geometry.shape or gpd.GeoDataFrame,
-            calculate_area: bool = False,
-            eliminate_redundancy: bool = False) -> gpd.GeoDataFrame:
+    def tile_footprints(self, target_geometry: shapely.geometry.shape or gpd.GeoDataFrame, calculate_area: bool = False,
+                        eliminate_redundancy: bool = False) -> gpd.GeoDataFrame:
         if isinstance(target_geometry, str):
             target_geometry = shapely.wkt.loads(target_geometry)
 
@@ -959,8 +860,7 @@ class SentinelTileGrid(MGRS):
         if not isinstance(target_geometry, gpd.GeoDataFrame):
             raise ValueError("invalid target geometry")
 
-        matches = self.sentinel_polygons[
-            self.sentinel_polygons.intersects(target_geometry.to_crs(self.sentinel_polygons.crs).unary_union)]
+        matches = self.sentinel_polygons[self.sentinel_polygons.intersects(target_geometry.to_crs(self.sentinel_polygons.crs).unary_union)]
         matches.rename(columns={"Name": "tile"}, inplace=True)
         tiles = matches[["tile", "geometry"]]
 
@@ -1000,6 +900,7 @@ class SentinelTileGrid(MGRS):
                 tiles = tiles_UTM.to_crs(tiles.crs)
                 tiles.sort_values(by="tile", ascending=True, inplace=True)
                 tiles = tiles[["tile", "area", "geometry"]]
+
             else:
                 # tiles["area"] = np.array(area)
                 tiles = tiles[["tile", "area", "geometry"]]
@@ -1020,14 +921,8 @@ class SentinelTileGrid(MGRS):
     def centroid(self, tile: str) -> shapely.geometry.Point:
         return self.footprint(tile).centroid
 
-    def tile_grids(
-            self,
-            target_geometry: shapely.geometry.shape or gpd.GeoDataFrame,
-            eliminate_redundancy: bool = True) -> gpd.GeoDataFrame:
-        tiles = self.tile_footprints(
-            target_geometry=target_geometry,
-            eliminate_redundancy=eliminate_redundancy,
-        )
+    def tile_grids(self, target_geometry: shapely.geometry.shape or gpd.GeoDataFrame, eliminate_redundancy: bool = True) -> gpd.GeoDataFrame:
+        tiles = self.tile_footprints(target_geometry=target_geometry, eliminate_redundancy=eliminate_redundancy)
 
         tiles["grid"] = tiles["tile"].apply(lambda tile: self.grid(tile))
         tiles = tiles[["tile", "area", "grid", "geometry"]]
@@ -1043,24 +938,11 @@ class NoSentinelGranulesAvailable(Exception):
 class Sentinel(SentinelAPI, SentinelTileGrid):
     logger = logging.getLogger(__name__)
 
-    def __init__(
-            self,
-            username: str = None,
-            password: str = None,
-            working_directory: str = None,
-            download_directory: str = None,
-            products_directory: str = None,
-            target_resolution: float = None,
-            *args,
-            **kwargs):
+    def __init__(self, username: str = None, password: str = None, working_directory: str = None, download_directory: str = None, products_directory: str = None,
+                 target_resolution: float = None, *args, **kwargs):
         if username is None or password is None:
-            credentials = get_credentials(
-                filename="~/.sentinelhub",
-                displayed=["username"],
-                hidden=["password"],
-                prompt="credentials for Sentinel Hub https://www.sentinel-hub.com",
-                replace=True
-            )
+            credentials = get_credentials(filename="~/.sentinelhub", displayed=["username"], hidden=["password"],
+                                          prompt="credentials for Sentinel Hub https://www.sentinel-hub.com", replace=True)
 
             username = credentials["username"]
             password = credentials["password"]
@@ -1093,11 +975,7 @@ class Sentinel(SentinelAPI, SentinelTileGrid):
         self._sentinel_polygons = None
 
     def __repr__(self):
-        display_dict = {
-            "working_directory": self.working_directory,
-            "download_directory": self.download_directory,
-            "products_directory": self.products_directory,
-        }
+        display_dict = {"working_directory": self.working_directory, "download_directory": self.download_directory, "products_directory": self.products_directory}
 
         if self.target_resolution is not None:
             display_dict["target_resolution"] = self.target_resolution
@@ -1117,12 +995,8 @@ class Sentinel(SentinelAPI, SentinelTileGrid):
 
         filename = source_tile_filenames[0]
 
-        granule = SentinelGranule(
-            filename=filename,
-            working_directory=self.working_directory,
-            products_directory=self.products_directory,
-            target_resolution=self.target_resolution
-        )
+        granule = SentinelGranule(filename=filename, working_directory=self.working_directory, products_directory=self.products_directory,
+                                  target_resolution=self.target_resolution)
 
         return granule
 
@@ -1137,16 +1011,8 @@ class Sentinel(SentinelAPI, SentinelTileGrid):
     def centroid(self, tile: str) -> shapely.geometry.Point:
         return self.polygon(tile).centroid
 
-    def search_geometry(
-            self,
-            footprint: shapely.geometry.Polygon,
-            start_date: date or str,
-            filename_pattern: str,
-            end_date: date = None,
-            cloud_min: float = None,
-            cloud_max: float = None,
-            order_by: str = None,
-            max_results: int = None) -> gpd.GeoDataFrame:
+    def search_geometry(self, footprint: shapely.geometry.Polygon, start_date: date or str, filename_pattern: str, end_date: date = None, cloud_min: float = None,
+                        cloud_max: float = None, order_by: str = None, max_results: int = None) -> gpd.GeoDataFrame:
         DATE_FORMAT = "%Y%m%d"
 
         if isinstance(start_date, string_types):
@@ -1175,15 +1041,8 @@ class Sentinel(SentinelAPI, SentinelTileGrid):
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
 
-            listing = self.to_geodataframe(self.query(
-                area=footprint,
-                date=(f"{start_date:%Y%m%d}", f"{end_date:%Y%m%d}"),
-                platformname='Sentinel-2',
-                filename=filename_pattern,
-                cloudcoverpercentage=(cloud_min, cloud_max),
-                order_by=order_by,
-                limit=limit
-            ))
+            listing = self.to_geodataframe(self.query(area=footprint, date=(f"{start_date:%Y%m%d}", f"{end_date:%Y%m%d}"), platformname='Sentinel-2',
+                                                      filename=filename_pattern, cloudcoverpercentage=(cloud_min, cloud_max), order_by=order_by, limit=limit))
 
             listing = listing.reset_index()
             listing["UUID"] = listing["index"]
@@ -1206,18 +1065,9 @@ class Sentinel(SentinelAPI, SentinelTileGrid):
     def level_from_ID(self, ID: str) -> str:
         return ID.split("_")[1][3:]
 
-    def search_pattern(
-            self,
-            pattern: str,
-            start_date: date,
-            end_date: date = None,
-            tile: str = None,
-            geometry: BaseGeometry or RasterGeometry = None,
-            cloud_min: float = None,
-            cloud_max: float = None,
-            order_by: str = None,
-            max_results: int = None,
-            keep_all_columns: bool = False):
+    def search_pattern(self, pattern: str, start_date: date, end_date: date = None, tile: str = None, geometry: BaseGeometry or RasterGeometry = None,
+                       cloud_min: float = None, cloud_max: float = None, order_by: str = None, max_results: int = None, keep_all_columns: bool = False):
+
         if isinstance(geometry, RasterGeometry):
             geometry = geometry.corner_polygon_latlon
 
@@ -1235,16 +1085,8 @@ class Sentinel(SentinelAPI, SentinelTileGrid):
 
         # self.logger.info(f"Sentinel search from {start:%Y-%m-%d} to {end:%Y-%m-%d}")
 
-        listing = self.search_geometry(
-            geometry,
-            start_date,
-            filename_pattern=pattern,
-            end_date=end_date,
-            cloud_min=cloud_min,
-            cloud_max=cloud_max,
-            order_by=order_by,
-            max_results=max_results
-        )
+        listing = self.search_geometry(geometry, start_date, filename_pattern=pattern, end_date=end_date, cloud_min=cloud_min, cloud_max=cloud_max, order_by=order_by,
+                                       max_results=max_results)
 
         if len(listing.columns) == 0 or len(listing) == 0:
             raise NoSentinelGranulesAvailable("empty listing")
@@ -1269,73 +1111,30 @@ class Sentinel(SentinelAPI, SentinelTileGrid):
 
         return listing
 
-    def search_L2A(
-            self,
-            start_date: date,
-            end_date: date = None,
-            tile: str = None,
-            geometry: BaseGeometry or RasterGeometry = None,
-            cloud_min: float = None,
-            cloud_max: float = None,
-            order_by: str = None,
-            max_results: int = None,
-            keep_all_columns: bool = False):
-        return self.search_pattern(
-            pattern="*L2A*",
-            start_date=start_date,
-            end_date=end_date,
-            tile=tile,
-            geometry=geometry,
-            cloud_min=cloud_min,
-            cloud_max=cloud_max,
-            order_by=order_by,
-            max_results=max_results,
-            keep_all_columns=keep_all_columns
-        )
+    def search_L2A(self, start_date: date, end_date: date = None, tile: str = None, geometry: BaseGeometry or RasterGeometry = None, cloud_min: float = None,
+                   cloud_max: float = None, order_by: str = None, max_results: int = None, keep_all_columns: bool = False):
 
-    def search_L1C(
-            self,
-            start_date: date,
-            end_date: date = None,
-            tile: str = None,
-            geometry: BaseGeometry or RasterGeometry = None,
-            cloud_min: float = None,
-            cloud_max: float = None,
-            order_by: str = None,
-            max_results: int = None,
-            keep_all_columns: bool = False):
-        return self.search_pattern(
-            pattern="*L1C*",
-            start_date=start_date,
-            end_date=end_date,
-            geometry=geometry,
-            tile=tile,
-            cloud_min=cloud_min,
-            cloud_max=cloud_max,
-            order_by=order_by,
-            max_results=max_results,
-            keep_all_columns=keep_all_columns
-        )
+        return self.search_pattern(pattern="*L2A*", start_date=start_date, end_date=end_date, tile=tile, geometry=geometry, cloud_min=cloud_min, cloud_max=cloud_max,
+                                   order_by=order_by, max_results=max_results, keep_all_columns=keep_all_columns)
+
+    def search_L1C(self, start_date: date, end_date: date = None, tile: str = None, geometry: BaseGeometry or RasterGeometry = None, cloud_min: float = None,
+                   cloud_max: float = None, order_by: str = None, max_results: int = None, keep_all_columns: bool = False):
+
+        return self.search_pattern(pattern="*L1C*", start_date=start_date, end_date=end_date, geometry=geometry, tile=tile, cloud_min=cloud_min, cloud_max=cloud_max,
+                                   order_by=order_by, max_results=max_results, keep_all_columns=keep_all_columns)
 
     @classmethod
     def filter_to_sensor(cls, listing: gpd.GeoDataFrame, sensor: str) -> gpd.GeoDataFrame:
         filtered_listing = listing[listing["sensor"] == sensor]
-        filtered_listing = filtered_listing.sort_values(by="date", ascending=False).groupby(
-            by="tile").first().sort_values(
-            by="date", ascending=False)
+        filtered_listing = filtered_listing.sort_values(by="date", ascending=False).groupby(by="tile").first().sort_values(by="date", ascending=False)
         filtered_listing["tile"] = filtered_listing.index
         filtered_listing = filtered_listing.reset_index(drop=True)
 
         return filtered_listing
 
-    def search(
-            self,
-            geometry: shapely.geometry.shape,
-            start_date: date,
-            end_date: date = None,
-            cloud_min: float = None,
-            cloud_max: float = None,
-            max_results: int = None) -> gpd.GeoDataFrame:
+    def search(self, geometry: shapely.geometry.shape, start_date: date, end_date: date = None, cloud_min: float = None, cloud_max: float = None,
+               max_results: int = None) -> gpd.GeoDataFrame:
+
         if isinstance(start_date, string_types):
             start_date = parser.parse(start_date).date()
 
@@ -1349,8 +1148,7 @@ class Sentinel(SentinelAPI, SentinelTileGrid):
         listing = self.search_L2A(geometry, start_date, end_date, cloud_min, cloud_max, max_results)
 
         if len(listing) == 0:
-            self.logger.info(
-                f"no L2A granules found between {start_date} and {end_date}, searching L1C instead")
+            self.logger.info(f"no L2A granules found between {start_date} and {end_date}, searching L1C instead")
             listing = self.search_L1C(geometry, start_date, end_date, cloud_min, cloud_max, max_results)
 
         # filter to most recent for each sensor at each target
@@ -1370,13 +1168,7 @@ class Sentinel(SentinelAPI, SentinelTileGrid):
         return self.download_path(self.date_from_ID(ID))
 
     def output_path(self, product: str, level: str, sensor: str, acquisition_date: date) -> str:
-        return join(
-            self.download_directory,
-            level.upper(),
-            sensor.upper(),
-            product,
-            acquisition_date.strftime("%Y.%m.%d")
-        )
+        return join(self.download_directory, level.upper(), sensor.upper(), product, acquisition_date.strftime("%Y.%m.%d"))
 
     def source_filename(self, ID: str) -> str:
         download_path = self.download_path_from_ID(ID)
@@ -1405,30 +1197,13 @@ class Sentinel(SentinelAPI, SentinelTileGrid):
         else:
             raise IOError(f"downloaded Sentinel file not found: {colored_logging.file(download_filename)}")
 
-        granule = SentinelGranule(
-            filename=download_filename,
-            working_directory=self.working_directory,
-            products_directory=self.products_directory,
-            target_resolution=self.target_resolution
-        )
+        granule = SentinelGranule(filename=download_filename, working_directory=self.working_directory, products_directory=self.products_directory,
+                                  target_resolution=self.target_resolution)
 
         return granule
 
-    def acquire(
-            self,
-            geometry: BaseGeometry,
-            end_date: date,
-            start_date: date = None,
-            cloud_min: float = None,
-            cloud_max: float = None,
-            max_results: int = None):
-        listing = self.search(
-            geometry=geometry,
-            end_date=end_date,
-            start_date=start_date,
-            cloud_min=cloud_min,
-            cloud_max=cloud_max
-        )
+    def acquire(self, geometry: BaseGeometry, end_date: date, start_date: date = None, cloud_min: float = None, cloud_max: float = None, max_results: int = None):
+        listing = self.search(geometry=geometry, end_date=end_date, start_date=start_date, cloud_min=cloud_min, cloud_max=cloud_max)
 
         if max_results is not None:
             listing = listing.iloc[:max_results]
@@ -1442,14 +1217,9 @@ class Sentinel(SentinelAPI, SentinelTileGrid):
     def processed_data_directory(self, name: str, acquisition_date: date):
         return join(self.products_directory)
 
-    def most_recent(
-            self,
-            tile: str = None,
-            geometry: BaseGeometry or RasterGeometry = None,
-            target_date: date = None,
-            cloud_min: float = None,
-            cloud_max: float = None,
-            level: str = None) -> SentinelGranule:
+    def most_recent(self, tile: str = None, geometry: BaseGeometry or RasterGeometry = None, target_date: date = None, cloud_min: float = None, cloud_max: float = None,
+                    level: str = None) -> SentinelGranule:
+
         if isinstance(target_date, str):
             target_date = parser.parse(target_date).date()
 
@@ -1463,27 +1233,11 @@ class Sentinel(SentinelAPI, SentinelTileGrid):
         end_date = target_date
 
         if level == "L2A":
-            listing = self.search_L2A(
-                tile=tile,
-                geometry=geometry,
-                start_date=start_date,
-                end_date=end_date,
-                cloud_min=cloud_min,
-                cloud_max=cloud_max,
-                order_by="-beginposition",
-                max_results=1
-            )
+            listing = self.search_L2A(tile=tile, geometry=geometry, start_date=start_date, end_date=end_date, cloud_min=cloud_min, cloud_max=cloud_max,
+                                      order_by="-beginposition", max_results=1)
         elif level == "L1C":
-            listing = self.search_L1C(
-                tile=tile,
-                geometry=geometry,
-                start_date=start_date,
-                end_date=end_date,
-                cloud_min=cloud_min,
-                cloud_max=cloud_max,
-                order_by="-beginposition",
-                max_results=1
-            )
+            listing = self.search_L1C(tile=tile, geometry=geometry, start_date=start_date, end_date=end_date, cloud_min=cloud_min, cloud_max=cloud_max,
+                                      order_by="-beginposition", max_results=1)
         else:
             raise ValueError(f"invalid level: {level}")
 
@@ -1493,14 +1247,7 @@ class Sentinel(SentinelAPI, SentinelTileGrid):
 
         return granule
 
-    def process_granule(
-            self,
-            granule_ID,
-            sentinel_ID,
-            tile,
-            acquisition_date,
-            filename,
-            product_names: List[str] = None) -> dict:
+    def process_granule(self, granule_ID, sentinel_ID, tile, acquisition_date, filename, product_names: List[str] = None) -> dict:
         logger = logging.getLogger(__name__)
 
         product_filenames = {}
@@ -1512,12 +1259,8 @@ class Sentinel(SentinelAPI, SentinelTileGrid):
         makedirs(download_directory, exist_ok=True)
         sentinel_filename = self.download_filename(acquisition_date, filename)
 
-        granule = SentinelGranule(
-            filename=sentinel_filename,
-            working_directory=self.working_directory,
-            products_directory=self.products_directory,
-            target_resolution=self.target_resolution
-        )
+        granule = SentinelGranule(filename=sentinel_filename, working_directory=self.working_directory, products_directory=self.products_directory,
+                                  target_resolution=self.target_resolution)
 
         for product_name in product_names:
             product_filename = granule.product_filename(product_name)
@@ -1529,8 +1272,8 @@ class Sentinel(SentinelAPI, SentinelTileGrid):
                 product_filenames[product_name] = product_filename
                 continue
 
-            logger.info(
-                f"processing Sentinel granule: {colored_logging.name(granule_ID)} target: {colored_logging.place(tile)} date: {colored_logging.time(acquisition_date)}")
+            logger.info(f"processing Sentinel granule: {colored_logging.name(granule_ID)} target: {colored_logging.place(tile)} date: "
+                        f"{colored_logging.time(acquisition_date)}")
             start_time = perf_counter()
             logger.info(f"downloading Sentinel granule: {colored_logging.name(sentinel_ID)}")
             self.download(sentinel_ID, download_directory)
@@ -1557,17 +1300,11 @@ class Sentinel(SentinelAPI, SentinelTileGrid):
                 else:
                     logger.info(f"file not found: {colored_logging.file(sentinel_filename)}")
 
-                granule = SentinelGranule(
-                    filename=sentinel_filename,
-                    working_directory=self.working_directory,
-                    products_directory=self.products_directory,
-                    target_resolution=self.target_resolution
-                )
+                granule = SentinelGranule(filename=sentinel_filename, working_directory=self.working_directory, products_directory=self.products_directory,
+                                          target_resolution=self.target_resolution)
 
-                logger.info(
-                    f"generating Sentinel {colored_logging.name(product_name)} at {colored_logging.val(self.target_resolution)} m "
-                    f"for tile {colored_logging.name(tile)} on " + colored_logging.time(f"{acquisition_date:%Y-%m-%d}")
-                )
+                logger.info(f"generating Sentinel {colored_logging.name(product_name)} at {colored_logging.val(self.target_resolution)} m "
+                            f"for tile {colored_logging.name(tile)} on " + colored_logging.time(f"{acquisition_date:%Y-%m-%d}"))
                 start_time = datetime.now()
 
                 if product_name == "NDVI":
@@ -1590,20 +1327,10 @@ class Sentinel(SentinelAPI, SentinelTileGrid):
         return product_filenames
 
     def download_filename(self, acquisition_date, filename):
-        return join(
-            self.download_path(acquisition_date),
-            filename
-        )
+        return join(self.download_path(acquisition_date), filename)
 
-    def process(
-            self,
-            start_date: date or str,
-            tile: str,
-            product_names: List[str] = None,
-            end_date: date or str = None,
-            cloud_min: float = None,
-            cloud_max: float = None,
-            max_results: int = None) -> (pd.DataFrame, RasterGeometry):
+    def process(self, start_date: date or str, tile: str, product_names: List[str] = None, end_date: date or str = None, cloud_min: float = None, cloud_max: float = None,
+                max_results: int = None) -> (pd.DataFrame, RasterGeometry):
         if product_names is None:
             product_names = ["NDVI", "albedo"]
 
@@ -1621,21 +1348,11 @@ class Sentinel(SentinelAPI, SentinelTileGrid):
         if end_date is None:
             self.logger.info(f"searching Sentinel target {colored_logging.name(tile)} on " + colored_logging.time(f"{start_date:%Y-%m-%d}"))
         else:
-            self.logger.info(
-                f"searching Sentinel target {colored_logging.name(tile)} "
-                f"from " + colored_logging.time("f{start_date:%Y-%m-%d}") +
-                " to " + colored_logging.time("f{end_date:%Y-%m-%d}")
-            )
+            self.logger.info(f"searching Sentinel target {colored_logging.name(tile)} from " + colored_logging.time("f{start_date:%Y-%m-%d}") +
+                             " to " + colored_logging.time("f{end_date:%Y-%m-%d}"))
 
-        sentinel_listing = self.search_L2A(
-            start_date=start_date,
-            end_date=end_date,
-            tile=tile,
-            geometry=target_geometry,
-            cloud_min=cloud_min,
-            cloud_max=cloud_max,
-            max_results=max_results
-        )
+        sentinel_listing = self.search_L2A(start_date=start_date, end_date=end_date, tile=tile, geometry=target_geometry, cloud_min=cloud_min, cloud_max=cloud_max,
+                                           max_results=max_results)
 
         self.logger.info(f"found {colored_logging.val(len(sentinel_listing))} granules")
 
@@ -1643,14 +1360,9 @@ class Sentinel(SentinelAPI, SentinelTileGrid):
             sentinel_listing[product_name] = pd.Series(dtype=str)
 
         for product_name in product_names:
-            sentinel_listing[product_name] = sentinel_listing.apply(lambda row: self.process_granule(
-                granule_ID=row["ID"],
-                sentinel_ID=row["UUID"],
-                tile=tile,
-                acquisition_date=row["date"],
-                filename=row["filename"],
-                product_names=product_names
-            )[product_name], axis=1)
+            sentinel_listing[product_name] = sentinel_listing.apply(lambda row: self.process_granule(granule_ID=row["ID"], sentinel_ID=row["UUID"], tile=tile,
+                                                                                                     acquisition_date=row["date"], filename=row["filename"],
+                                                                                                     product_names=product_names)[product_name], axis=1)
 
         return sentinel_listing
 
@@ -1658,11 +1370,7 @@ class Sentinel(SentinelAPI, SentinelTileGrid):
 def sentinel(tile: str, start: Union[date, str], end: Union[date, str]):
     logger = logging.getLogger(__name__)
     sentinel = Sentinel()
-    listing = sentinel.search_L2A(
-        tile=tile,
-        start_date=start,
-        end_date=end
-    )
+    listing = sentinel.search_L2A(tile=tile, start_date=start, end_date=end)
 
     listing = listing[["date", "ID"]]
 

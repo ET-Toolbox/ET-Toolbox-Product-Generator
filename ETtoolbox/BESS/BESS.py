@@ -17,14 +17,14 @@ from scipy.stats import zscore
 import colored_logging as cl
 import rasters as rt
 
-from ETtoolbox.ERS_credentials import get_ERS_credentials
+from ..credentials import get_ers_credentials
 from ETtoolbox.FLiES.FLiES import FLiES
 from gedi_canopy_height import GEDICanopyHeight
 from geos5fp import GEOS5FP
 from modisci import MODISCI
 from ETtoolbox.SRTM import SRTM
 from rasters import Raster, RasterGeometry, RasterGrid
-from solar_apparent_time import day_of_year
+from solar_apparent_time import solar_day_of_year_for_area as day_of_year
 
 __author__ = "Gregory Halverson, Robert Freepartner"
 
@@ -67,33 +67,20 @@ class CINotAvailable(IOError):
 class BESS(FLiES):
     logger = logging.getLogger(__name__)
 
-    def __init__(
-            self,
-            working_directory: str = None,
-            static_directory: str = None,
-            SRTM_connection: SRTM = None,
-            SRTM_download: str = None,
-            GEOS5FP_connection: GEOS5FP = None,
-            GEOS5FP_download: str = None,
-            GEOS5FP_products: str = None,
-            GEDI_connection: GEDICanopyHeight = None,
-            GEDI_download: str = None,
-            ORNL_connection: MODISCI = None,
-            CI_directory: str = None,
-            intermediate_directory: str = None,
-            preview_quality: int = DEFAULT_PREVIEW_QUALITY,
-            ANN_model: Callable = None,
-            ANN_model_filename: str = None,
-            ERS_credentials: Dict[str, str] = None,
-            resampling: str = DEFAULT_RESAMPLING,
-            passes: int = DEFAULT_PASSES,
-            initialize_Tf_with_ST: bool = True,
-            downscale_air: bool = DEFAULT_DOWNSCALE_AIR,
-            downscale_humidity: bool = DEFAULT_DOWNSCALE_HUMIDITY,
-            downscale_moisture: bool = DEFAULT_DOWNSCALE_MOISTURE,
-            save_intermediate: bool = False,
-            include_preview: bool = True,
-            show_distribution: bool = True):
+    def __init__(self, working_directory: str = None, static_directory: str = None,
+                 SRTM_connection: SRTM = None, SRTM_download: str = None,
+                 GEOS5FP_connection: GEOS5FP = None, GEOS5FP_download: str = None, GEOS5FP_products: str = None,
+                 GEDI_connection: GEDICanopyHeight = None, GEDI_download: str = None,
+                 ORNL_connection: MODISCI = None,
+                 CI_directory: str = None, intermediate_directory: str = None, save_intermediate: bool = False,
+                 preview_quality: int = DEFAULT_PREVIEW_QUALITY,
+                 ANN_model: Callable = None, ANN_model_filename: str = None,
+                 ERS_credentials: Dict[str, str] = None,
+                 resampling: str = DEFAULT_RESAMPLING, passes: int = DEFAULT_PASSES,
+                 initialize_Tf_with_ST: bool = True,
+                 downscale_air: bool = DEFAULT_DOWNSCALE_AIR, downscale_humidity: bool = DEFAULT_DOWNSCALE_HUMIDITY, downscale_moisture: bool = DEFAULT_DOWNSCALE_MOISTURE,
+                 include_preview: bool = True, show_distribution: bool = True):
+
         if working_directory is None:
             working_directory = DEFAULT_WORKING_DIRECTORY
 
@@ -148,13 +135,9 @@ class BESS(FLiES):
                 self.logger.info("preparing MODIS clumping index dataset: " + cl.dir(CI_directory))
 
                 if ERS_credentials is None:
-                    ERS_credentials = get_ERS_credentials()
+                    ERS_credentials = get_ers_credentials()
 
-                ORNL_connection = MODISCI(
-                    directory=CI_directory,
-                    username=ERS_credentials["username"],
-                    password=ERS_credentials["password"]
-                )
+                ORNL_connection = MODISCI(directory=CI_directory, username=ERS_credentials["username"], password=ERS_credentials["password"])
 
                 filename = ORNL_connection.download()
                 self.logger.info("MODIS clumping index ready: " + cl.file(filename))
@@ -168,13 +151,9 @@ class BESS(FLiES):
         self.downscale_humidity = downscale_humidity
         self.downscale_moisture = downscale_moisture
 
-    def Ta_K_coarse(
-            self,
-            time_UTC: datetime,
-            coarse_geometry: RasterGrid = None,
-            fine_geometry: RasterGrid = None,
-            coarse_cell_size: int = GEOS_IN_SENTINEL_COARSE_CELL_SIZE,
-            resampling: str = "cubic") -> Raster:
+    def Ta_K_coarse(self, time_UTC: datetime, coarse_geometry: RasterGrid = None, fine_geometry: RasterGrid = None,coarse_cell_size: int = GEOS_IN_SENTINEL_COARSE_CELL_SIZE,
+                    resampling: str = "cubic") -> Raster:
+
         if coarse_geometry is None:
             coarse_geometry = fine_geometry.rescale(coarse_cell_size)
 
@@ -183,13 +162,9 @@ class BESS(FLiES):
 
         return Ta_K_coarse
 
-    def Td_K_coarse(
-            self,
-            time_UTC: datetime,
-            coarse_geometry: RasterGrid = None,
-            fine_geometry: RasterGrid = None,
-            coarse_cell_size: int = GEOS_IN_SENTINEL_COARSE_CELL_SIZE,
-            resampling: str = "cubic") -> Raster:
+    def Td_K_coarse(self, time_UTC: datetime, coarse_geometry: RasterGrid = None, fine_geometry: RasterGrid = None, coarse_cell_size: int = GEOS_IN_SENTINEL_COARSE_CELL_SIZE,
+                    resampling: str = "cubic") -> Raster:
+
         if coarse_geometry is None:
             coarse_geometry = fine_geometry.rescale(coarse_cell_size)
 
@@ -198,72 +173,29 @@ class BESS(FLiES):
 
         return Td_K_coarse
 
-    def Ta_K(
-            self,
-            time_UTC: datetime,
-            geometry: RasterGeometry = None,
-            ST_K: Raster = None,
-            water: Raster = None,
-            coarse_geometry: RasterGeometry = None,
-            coarse_cell_size_meters: int = GEOS_IN_SENTINEL_COARSE_CELL_SIZE,
-            resampling: str = None,
-            upsampling: str = None,
-            downsampling: str = None,
-            apply_scale: bool = True,
-            apply_bias: bool = True,
-            return_scale_and_bias: bool = False) -> Raster:
+    def Ta_K(self, time_UTC: datetime, geometry: RasterGeometry = None, ST_K: Raster = None, water: Raster = None, coarse_geometry: RasterGeometry = None,
+             coarse_cell_size_meters: int = GEOS_IN_SENTINEL_COARSE_CELL_SIZE, resampling: str = None, upsampling: str = None, downsampling: str = None,
+             apply_scale: bool = True, apply_bias: bool = True, return_scale_and_bias: bool = False) -> Raster:
         self.logger.info("retrieving GEOS-5 FP air temperature raster in Kelvin")
 
         if self.downscale_air and ST_K is not None:
-            return self.GEOS5FP_connection.Ta_K(
-                time_UTC=time_UTC,
-                geometry=geometry,
-                ST_K=ST_K,
-                water=water,
-                coarse_geometry=coarse_geometry,
-                coarse_cell_size_meters=coarse_cell_size_meters,
-                resampling=resampling,
-                upsampling=upsampling,
-                downsampling=downsampling,
-                apply_scale=apply_scale,
-                apply_bias=apply_bias,
-                return_scale_and_bias=return_scale_and_bias
-            )
+            return self.GEOS5FP_connection.Ta_K(time_UTC=time_UTC, geometry=geometry, ST_K=ST_K, water=water, coarse_geometry=coarse_geometry,
+                                                coarse_cell_size_meters=coarse_cell_size_meters, resampling=resampling, upsampling=upsampling, downsampling=downsampling,
+                                                apply_scale=apply_scale, apply_bias=apply_bias, return_scale_and_bias=return_scale_and_bias)
         else:
             return self.GEOS5FP_connection.Ta_K(time_UTC=time_UTC, geometry=geometry, resampling=self.resampling)
 
-    def RH(
-            self,
-            time_UTC: datetime,
-            geometry: RasterGrid,
-            SM: Raster = None,
-            ST_K: Raster = None,
-            water: Raster = None,
-            coarse_geometry: RasterGeometry = None,
-            coarse_cell_size_meters: int = GEOS_IN_SENTINEL_COARSE_CELL_SIZE,
-            resampling: str = None,
-            upsampling: str = None,
-            downsampling: str = None) -> Raster:
+    def RH(self, time_UTC: datetime, geometry: RasterGrid, SM: Raster = None, ST_K: Raster = None, water: Raster = None, coarse_geometry: RasterGeometry = None,
+           coarse_cell_size_meters: int = GEOS_IN_SENTINEL_COARSE_CELL_SIZE, resampling: str = None, upsampling: str = None, downsampling: str = None) -> Raster:
         self.logger.info("retrieving GEOS-5 FP relative humidity raster")
 
         if self.downscale_humidity and SM is not None:
-            return self.GEOS5FP_connection.RH(
-                time_UTC=time_UTC,
-                geometry=geometry,
-                SM=SM,
-                ST_K=ST_K,
-                water=water,
-                coarse_geometry=coarse_geometry,
-                coarse_cell_size_meters=coarse_cell_size_meters,
-                resampling=resampling,
-                upsampling=upsampling,
-                downsampling=downsampling
-            )
+            return self.GEOS5FP_connection.RH(time_UTC=time_UTC, geometry=geometry, SM=SM, ST_K=ST_K, water=water, coarse_geometry=coarse_geometry,
+                                              coarse_cell_size_meters=coarse_cell_size_meters, resampling=resampling, upsampling=upsampling, downsampling=downsampling)
         else:
             return self.GEOS5FP_connection.RH(time_UTC=time_UTC, geometry=geometry, resampling=self.resampling)
 
-    def Ea_Pa(self, time_UTC: datetime, geometry: RasterGeometry, ST_K: Raster = None,
-              resampling: str = None) -> Raster:
+    def Ea_Pa(self, time_UTC: datetime, geometry: RasterGeometry, ST_K: Raster = None, resampling: str = None) -> Raster:
         if resampling is None:
             resampling = self.resampling
 
@@ -362,20 +294,8 @@ class BESS(FLiES):
 
         return image
 
-    def meteorology(
-            self,
-            date_UTC: date,
-            target: str,
-            day_of_year: Raster,
-            hour_of_day: Raster,
-            latitude: np.ndarray,
-            elevation_m: Raster,
-            SZA: Raster,
-            Ta_K: Raster,
-            Ea_Pa: Raster,
-            Rg: Raster,
-            wind_speed_mps: Raster,
-            canopy_height_meters: Raster):
+    def meteorology(self, date_UTC: date, target: str, day_of_year: Raster, hour_of_day: Raster, latitude: np.ndarray, elevation_m: Raster, SZA: Raster, Ta_K: Raster,
+                    Ea_Pa: Raster, Rg: Raster, wind_speed_mps: Raster, canopy_height_meters: Raster):
         """
         =============================================================================
 
@@ -564,18 +484,9 @@ class BESS(FLiES):
 
         return MET
 
-    def VCmax(
-            self,
-            date_UTC: date,
-            target: str,
-            peakVCmax_C3: Raster,
-            peakVCmax_C4: Raster,
-            LAI: Raster,
-            SZA: Raster,
-            LAI_minimum: Raster,
-            LAI_maximum: Raster,
-            fC4: Raster,
-            kn: Raster) -> (Raster, Raster, Raster, Raster):
+    def VCmax(self, date_UTC: date, target: str, peakVCmax_C3: Raster, peakVCmax_C4: Raster, LAI: Raster, SZA: Raster, LAI_minimum: Raster, LAI_maximum: Raster,
+              fC4: Raster, kn: Raster) -> (Raster, Raster, Raster, Raster):
+
         MINIMUM_FC4 = 0.01
         A = 0.3
 
@@ -615,20 +526,8 @@ class BESS(FLiES):
 
         return VCmax_C3_sun, VCmax_C4_sun, VCmax_C3_sh, VCmax_C4_sh
 
-    def canopy_shortwave_radiation(
-            self,
-            date_UTC: date,
-            target: str,
-            PARDiff: Raster,
-            PARDir: Raster,
-            NIRDiff: Raster,
-            NIRDir: Raster,
-            UV: Raster,
-            SZA: Raster,
-            LAI: Raster,
-            CI: Raster,
-            RVIS: Raster,
-            RNIR: Raster) -> namedtuple:
+    def canopy_shortwave_radiation(self, date_UTC: date, target: str, PARDiff: Raster, PARDir: Raster, NIRDiff: Raster, NIRDir: Raster, UV: Raster, SZA: Raster,
+                                   LAI: Raster, CI: Raster, RVIS: Raster, RNIR: Raster) -> namedtuple:
         """
         =============================================================================
 
@@ -841,19 +740,8 @@ class BESS(FLiES):
 
         return CSR
 
-    def canopy_longwave_radiation(
-            self,
-            LAI: Raster,
-            SZA: Raster,
-            Ts_K: Raster,
-            Tf_K: Raster,
-            Ta_K: Raster,
-            epsa: Raster,
-            epsf: float,
-            epss: float,
-            ALW_min: float = None,
-            intermediate_min: float = None,
-            intermediate_max: float = None) -> namedtuple:
+    def canopy_longwave_radiation(self, LAI: Raster, SZA: Raster, Ts_K: Raster, Tf_K: Raster, Ta_K: Raster, epsa: Raster, epsf: float, epss: float, ALW_min: float = None,
+                                  intermediate_min: float = None, intermediate_max: float = None) -> namedtuple:
         """
         =============================================================================
 
@@ -897,17 +785,11 @@ class BESS(FLiES):
         kd_LAI = kd * LAI
 
         # Absorbed longwave radiation by sunlit leaves
-        CLR.ALW_Sun = rt.clip(
-            rt.clip(Ls - Lf, intermediate_min, None) * kd * (np.exp(-kd_LAI) - np.exp(-kb * LAI)) / (
-                    kd - kb) + kd * rt.clip(La - Lf,
-                                            intermediate_min, intermediate_max) * (
-                    1.0 - np.exp(-(kb + kd) * LAI)), ALW_min, None) / (kd + kb)  # Eq. (44)
+        CLR.ALW_Sun = rt.clip(rt.clip(Ls - Lf, intermediate_min, None) * kd * (np.exp(-kd_LAI) - np.exp(-kb * LAI)) / (kd - kb) + kd * rt.clip(La - Lf,
+                                            intermediate_min, intermediate_max) * (1.0 - np.exp(-(kb + kd) * LAI)), ALW_min, None) / (kd + kb)  # Eq. (44)
 
         # Absorbed longwave radiation by shade leaves
-        CLR.ALW_Sh = rt.clip(
-            (1.0 - np.exp(-kd_LAI)) * rt.clip(Ls + La - 2 * Lf, intermediate_min, intermediate_max) - CLR.ALW_Sun,
-            ALW_min,
-            None)  # Eq. (45)
+        CLR.ALW_Sh = rt.clip((1.0 - np.exp(-kd_LAI)) * rt.clip(Ls + La - 2 * Lf, intermediate_min, intermediate_max) - CLR.ALW_Sun, ALW_min, None)  # Eq. (45)
 
         # Absorbed longwave radiation by soil
         CLR.ALW_Soil = rt.clip((1.0 - np.exp(-kd_LAI)) * Lf + np.exp(-kd_LAI) * La, ALW_min, None)  # Eq. (41)
@@ -971,14 +853,7 @@ class BESS(FLiES):
 
         return An
 
-    def C3_photosynthesis(
-            self,
-            Tf_K: Raster,
-            Ci: Raster,
-            APAR: Raster,
-            Vcmax25: Raster,
-            Ps_Pa: Raster,
-            alf: Raster) -> Raster:
+    def C3_photosynthesis(self, Tf_K: Raster, Ci: Raster, APAR: Raster, Vcmax25: Raster, Ps_Pa: Raster, alf: Raster) -> Raster:
         """
         =============================================================================
         Collatz et al., 1991
@@ -1054,30 +929,9 @@ class BESS(FLiES):
 
         return An
 
-    def energy_balance(
-            self,
-            date_UTC: date,
-            target: str,
-            An: Raster,
-            ASW: Raster,
-            ALW: Raster,
-            Tf_K: Raster,
-            Ps_Pa: Raster,
-            Ca: Raster,
-            Ta_K: Raster,
-            RH: Raster,
-            VPD_Pa: Raster,
-            desTa: Raster,
-            ddesTa: Raster,
-            gamma: Raster,
-            Cp: Raster,
-            rhoa: Raster,
-            Rc: Raster,
-            m: Raster,
-            b0: Raster,
-            flgC4: bool,
-            carbon: int,
-            iter: int) -> namedtuple:
+    def energy_balance(self, date_UTC: date, target: str, An: Raster, ASW: Raster, ALW: Raster, Tf_K: Raster, Ps_Pa: Raster, Ca: Raster, Ta_K: Raster, RH: Raster,
+                       VPD_Pa: Raster, desTa: Raster, ddesTa: Raster, gamma: Raster, Cp: Raster, rhoa: Raster, Rc: Raster, m: Raster, b0: Raster, flgC4: bool,
+                       carbon: int, iter: int) -> namedtuple:
         """
         =============================================================================
 
@@ -1193,22 +1047,9 @@ class BESS(FLiES):
 
         return EB
 
-    def soil(
-            self,
-            Ts: Raster,
-            Ta: Raster,
-            G: Raster,
-            VPD: Raster,
-            RH: Raster,
-            gamma: Raster,
-            Cp: Raster,
-            rhoa: Raster,
-            desTa: Raster,
-            Rs: Raster,
-            ASW_Soil: Raster,
-            ALW_Soil: Raster,
-            Ls: Raster,
-            epsa: Raster) -> namedtuple:
+    def soil(self, Ts: Raster, Ta: Raster, G: Raster, VPD: Raster, RH: Raster, gamma: Raster, Cp: Raster, rhoa: Raster, desTa: Raster, Rs: Raster, ASW_Soil: Raster,
+             ALW_Soil: Raster, Ls: Raster, epsa: Raster) -> namedtuple:
+
         SOIL = namedtuple('SOIL', 'Rn, LE, H, Ts')
 
         # Net radiation
@@ -1234,41 +1075,10 @@ class BESS(FLiES):
 
         return SOIL
 
-    def carbon_water_fluxes(
-            self,
-            date_UTC: date,
-            target: str,
-            ST_K: Raster,
-            LAI: Raster,
-            Ta_K: Raster,
-            APAR_Sun: Raster,
-            APAR_Sh: Raster,
-            ASW_Sun: Raster,
-            ASW_Sh: Raster,
-            Vcmax25_Sun: Raster,
-            Vcmax25_Sh: Raster,
-            m: Raster,
-            b0: Union[Raster, float],
-            fSun: Raster,
-            ASW_Soil: Raster,
-            G: Raster,
-            SZA: Raster,
-            Ca: Raster,
-            Ps_Pa: Raster,
-            gamma: Raster,
-            Cp: Raster,
-            rhoa: Raster,
-            VPD_Pa: Raster,
-            RH: Raster,
-            desTa: Raster,
-            ddesTa: Raster,
-            epsa: Raster,
-            Rc: Raster,
-            Rs: Raster,
-            alf: Raster,
-            fStress: Raster,
-            FVC: Raster,
-            C4: bool) -> namedtuple:
+    def carbon_water_fluxes(self, date_UTC: date, target: str, ST_K: Raster, LAI: Raster, Ta_K: Raster, APAR_Sun: Raster, APAR_Sh: Raster, ASW_Sun: Raster, ASW_Sh: Raster,
+                            Vcmax25_Sun: Raster, Vcmax25_Sh: Raster, m: Raster, b0: Union[Raster, float], fSun: Raster, ASW_Soil: Raster, G: Raster, SZA: Raster,
+                            Ca: Raster, Ps_Pa: Raster, gamma: Raster, Cp: Raster, rhoa: Raster, VPD_Pa: Raster, RH: Raster, desTa: Raster, ddesTa: Raster,
+                            epsa: Raster, Rc: Raster, Rs: Raster, alf: Raster, fStress: Raster, FVC: Raster, C4: bool) -> namedtuple:
         CWF = namedtuple('CWF', 'GPP, LE, LE_soil, LE_canopy, Rn, Rn_soil, Rn_canopy')
 
         if C4:
@@ -1491,22 +1301,8 @@ class BESS(FLiES):
 
             # Soil
             # SOIL:[Rn, LE, H, Ts]
-            SOIL = self.soil(
-                Ts=Ts_K,
-                Ta=Ta_K,
-                G=G,
-                VPD=VPD_Pa,
-                RH=RH,
-                gamma=gamma,
-                Cp=Cp,
-                rhoa=rhoa,
-                desTa=desTa,
-                Rs=Rs,
-                ASW_Soil=ASW_Soil,
-                ALW_Soil=CLR.ALW_Soil,
-                Ls=CLR.Ls,
-                epsa=epsa
-            )
+            SOIL = self.soil(Ts=Ts_K, Ta=Ta_K, G=G, VPD=VPD_Pa, RH=RH, gamma=gamma, Cp=Cp, rhoa=rhoa, desTa=desTa, Rs=Rs, ASW_Soil=ASW_Soil, ALW_Soil=CLR.ALW_Soil,
+                             Ls=CLR.Ls, epsa=epsa)
 
             Rn_Soil = rt.where(np.isnan(SOIL.Rn), Rn_Soil, SOIL.Rn)
             self.diagnostic(Rn_Soil, f"Rn_Soil_C{carbon}_I{iter}", date_UTC, target)
@@ -1603,11 +1399,8 @@ class BESS(FLiES):
 
         results = {}
 
-        self.logger.info(
-            f"processing {colored_logging.name('BESS')} " +
-            f"tile {colored_logging.place(target)} {colored_logging.val(geometry.shape)} " +
-            f"at {colored_logging.time(time_UTC)} UTC"
-        )
+        self.logger.info(f"processing {colored_logging.name('BESS')} tile {colored_logging.place(target)} {colored_logging.val(geometry.shape)} " +
+                         f"at {colored_logging.time(time_UTC)} UTC")
 
         if isinstance(time_UTC, str):
             time_UTC = parser.parse(time_UTC)
@@ -1636,19 +1429,9 @@ class BESS(FLiES):
         self.diagnostic(SZA, "SZA", date_UTC, target)
 
         if Rg is None or VISdiff is None or VISdir is None or NIRdiff is None or NIRdir is None or UV is None:
-            Ra, Rg, UV, VIS, NIR, VISdiff, NIRdiff, VISdir, NIRdir = self.FLiES(
-                geometry=geometry,
-                target=target,
-                time_UTC=time_UTC,
-                albedo=albedo,
-                COT=COT,
-                AOT=AOT,
-                vapor_gccm=vapor_gccm,
-                ozone_cm=ozone_cm,
-                elevation_km=elevation_km,
-                SZA=SZA,
-                KG_climate=KG_climate
-            )
+            Ra, Rg, UV, VIS, NIR, VISdiff, NIRdiff, VISdir, NIRdir = self.FLiES(geometry=geometry, target=target, time_UTC=time_UTC, albedo=albedo, COT=COT, AOT=AOT,
+                                                                                vapor_gccm=vapor_gccm, ozone_cm=ozone_cm, elevation_km=elevation_km, SZA=SZA,
+                                                                                KG_climate=KG_climate)
 
             Rg = Rg.mask(~np.isnan(ST_K))
 
@@ -1670,14 +1453,8 @@ class BESS(FLiES):
         self.diagnostic(canopy_height_meters, "canopy_height_meters", date_UTC, target)
 
         if Ta_K is None:
-            Ta_K = self.Ta_K(
-                time_UTC=time_UTC,
-                geometry=geometry,
-                ST_K=ST_K,
-                water=water,
-                apply_scale=False,
-                apply_bias=True
-            )
+            Ta_K = self.Ta_K(time_UTC=time_UTC, geometry=geometry, ST_K=ST_K, water=water, apply_scale=False,apply_bias=True
+)
 
         self.diagnostic(Ta_K, "Ta_K", date_UTC, target)
 
@@ -1719,20 +1496,8 @@ class BESS(FLiES):
 
         self.diagnostic(wind_speed, "wind_speed", date_UTC, target)
 
-        MET = self.meteorology(
-            date_UTC=date_UTC,
-            target=target,
-            day_of_year=doy,
-            hour_of_day=hour_of_day,
-            latitude=geometry.lat,
-            elevation_m=elevation_km * 1000,
-            SZA=SZA,
-            Ta_K=Ta_K,
-            Ea_Pa=Ea_Pa,
-            Rg=Rg,
-            wind_speed_mps=wind_speed,
-            canopy_height_meters=canopy_height_meters
-        )
+        MET = self.meteorology(date_UTC=date_UTC, target=target, day_of_year=doy, hour_of_day=hour_of_day, latitude=geometry.lat, elevation_m=elevation_km * 1000, SZA=SZA,
+                               Ta_K=Ta_K, Ea_Pa=Ea_Pa, Rg=Rg, wind_speed_mps=wind_speed, canopy_height_meters=canopy_height_meters)
 
         RH = MET.RH
 
@@ -1809,18 +1574,8 @@ class BESS(FLiES):
         FVC = self.NDVI_to_FVC(NDVI)
         self.diagnostic(FVC, "FVC", date_UTC, target)
 
-        VCmax_C3_sun, VCmax_C4_sun, VCmax_C3_sh, VCmax_C4_sh = self.VCmax(
-            date_UTC=date_UTC,
-            target=target,
-            peakVCmax_C3=peakVCmax_C3,
-            peakVCmax_C4=peakVCmax_C4,
-            LAI=LAI,
-            SZA=SZA,
-            LAI_minimum=LAI_minimum,
-            LAI_maximum=LAI_maximum,
-            fC4=fC4,
-            kn=kn
-        )
+        VCmax_C3_sun, VCmax_C4_sun, VCmax_C3_sh, VCmax_C4_sh = self.VCmax(date_UTC=date_UTC, target=target, peakVCmax_C3=peakVCmax_C3, peakVCmax_C4=peakVCmax_C4,
+                                                                          LAI=LAI, SZA=SZA, LAI_minimum=LAI_minimum, LAI_maximum=LAI_maximum, fC4=fC4, kn=kn)
 
         albedo_NWP = self.GEOS5FP_connection.ALBEDO(time_UTC=time_UTC, geometry=geometry, resampling=self.resampling)
         RVIS_NWP = self.GEOS5FP_connection.ALBVISDR(time_UTC=time_UTC, geometry=geometry, resampling=self.resampling)
@@ -1832,20 +1587,8 @@ class BESS(FLiES):
         PARDir = VISdir
         self.diagnostic(PARDir, "PARDir", date_UTC, target)
 
-        CSR = self.canopy_shortwave_radiation(
-            date_UTC=date_UTC,
-            target=target,
-            PARDiff=VISdiff,
-            PARDir=VISdir,
-            NIRDiff=NIRdiff,
-            NIRDir=NIRdir,
-            UV=UV,
-            SZA=SZA,
-            LAI=LAI,
-            CI=CI,
-            RVIS=RVIS,
-            RNIR=RNIR
-        )
+        CSR = self.canopy_shortwave_radiation(date_UTC=date_UTC, target=target, PARDiff=VISdiff, PARDir=VISdir, NIRDiff=NIRdiff, NIRDir=NIRdir, UV=UV, SZA=SZA, LAI=LAI,
+                                              CI=CI, RVIS=RVIS, RNIR=RNIR)
 
         fSun = CSR.fSun
         self.diagnostic(fSun, "fSun", date_UTC, target)
@@ -1867,77 +1610,15 @@ class BESS(FLiES):
 
         self.diagnostic(Ca, "Ca", date_UTC, target)
 
-        CWF_C3 = self.carbon_water_fluxes(
-            date_UTC=date_UTC,
-            target=target,
-            ST_K=ST_K,
-            LAI=LAI,
-            Ta_K=Ta_K,
-            APAR_Sun=APAR_Sun,
-            APAR_Sh=APAR_Sh,
-            ASW_Sun=ASW_Sun,
-            ASW_Sh=ASW_Sh,
-            Vcmax25_Sun=VCmax_C3_sun,
-            Vcmax25_Sh=VCmax_C3_sh,
-            m=m_C3,
-            b0=b0_C3,
-            fSun=fSun,
-            ASW_Soil=ASW_Soil,
-            G=G,
-            SZA=SZA,
-            Ca=Ca,
-            Ps_Pa=MET.Ps,
-            gamma=MET.gamma,
-            Cp=MET.Cp,
-            rhoa=MET.rhoa,
-            VPD_Pa=MET.VPD,
-            RH=MET.RH,
-            desTa=MET.desTa,
-            ddesTa=MET.ddesTa,
-            epsa=MET.epsa,
-            Rc=MET.Rc,
-            Rs=MET.Rs,
-            alf=alf,
-            fStress=MET.fStress,
-            FVC=FVC,
-            C4=False
-        )
+        CWF_C3 = self.carbon_water_fluxes(date_UTC=date_UTC, target=target, ST_K=ST_K, LAI=LAI, Ta_K=Ta_K, APAR_Sun=APAR_Sun, APAR_Sh=APAR_Sh, ASW_Sun=ASW_Sun,
+                                          ASW_Sh=ASW_Sh, Vcmax25_Sun=VCmax_C3_sun, Vcmax25_Sh=VCmax_C3_sh, m=m_C3, b0=b0_C3, fSun=fSun, ASW_Soil=ASW_Soil, G=G,
+                                          SZA=SZA, Ca=Ca, Ps_Pa=MET.Ps, gamma=MET.gamma, Cp=MET.Cp, rhoa=MET.rhoa, VPD_Pa=MET.VPD, RH=MET.RH, desTa=MET.desTa,
+                                          ddesTa=MET.ddesTa, epsa=MET.epsa, Rc=MET.Rc, Rs=MET.Rs, alf=alf, fStress=MET.fStress, FVC=FVC, C4=False )
 
-        CWF_C4 = self.carbon_water_fluxes(
-            date_UTC=date_UTC,
-            target=target,
-            ST_K=ST_K,
-            LAI=LAI,
-            Ta_K=Ta_K,
-            APAR_Sun=APAR_Sun,
-            APAR_Sh=APAR_Sh,
-            ASW_Sun=ASW_Sun,
-            ASW_Sh=ASW_Sh,
-            Vcmax25_Sun=VCmax_C4_sun,
-            Vcmax25_Sh=VCmax_C4_sh,
-            m=m_C4,
-            b0=b0_C4,
-            fSun=fSun,
-            ASW_Soil=ASW_Soil,
-            G=G,
-            SZA=SZA,
-            Ca=Ca,
-            Ps_Pa=MET.Ps,
-            gamma=MET.gamma,
-            Cp=MET.Cp,
-            rhoa=MET.rhoa,
-            VPD_Pa=MET.VPD,
-            RH=MET.RH,
-            desTa=MET.desTa,
-            ddesTa=MET.ddesTa,
-            epsa=MET.epsa,
-            Rc=MET.Rc,
-            Rs=MET.Rs,
-            alf=alf,
-            fStress=MET.fStress,
-            FVC=FVC,
-            C4=True
-        )
+        CWF_C4 = self.carbon_water_fluxes(date_UTC=date_UTC, target=target, ST_K=ST_K, LAI=LAI, Ta_K=Ta_K, APAR_Sun=APAR_Sun, APAR_Sh=APAR_Sh, ASW_Sun=ASW_Sun,
+                                          ASW_Sh=ASW_Sh, Vcmax25_Sun=VCmax_C4_sun, Vcmax25_Sh=VCmax_C4_sh, m=m_C4, b0=b0_C4, fSun=fSun, ASW_Soil=ASW_Soil,
+                                          G=G, SZA=SZA, Ca=Ca, Ps_Pa=MET.Ps, gamma=MET.gamma, Cp=MET.Cp, rhoa=MET.rhoa, VPD_Pa=MET.VPD, RH=MET.RH, desTa=MET.desTa,
+                                          ddesTa=MET.ddesTa, epsa=MET.epsa, Rc=MET.Rc, Rs=MET.Rs, alf=alf, fStress=MET.fStress, FVC=FVC, C4=True)
 
         GPP = rt.clip(self.interpolate_fC4(CWF_C3.GPP, CWF_C4.GPP, fC4), 0, 50)
         GPP = GPP.mask(~np.isnan(ST_K))

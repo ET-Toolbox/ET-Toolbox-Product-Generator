@@ -1,0 +1,86 @@
+name: ettoolbox
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11
+  - astropy
+  - affine
+  - beautifulsoup4
+  - cmake
+  - cython
+  - descartes
+  - ephem
+  - gdal>3.1
+  - geopandas
+  - hdfeos5
+  - h5py
+  - imageio
+  - imageio-ffmpeg
+  - jdcal
+  - keras
+  - matplotlib
+  - netcdf4
+  - nose
+  - matplotlib
+  - netcdf4
+  - nose
+  - numpy
+  - pygeos
+  - pygrib
+  - pyhdf
+  - pykdtree
+  - pyogrio
+  - pyresample
+  - pysolar
+  - pystac-client
+  - python-dateutil
+  - rasterio>1.0.0
+  - rioxarray
+  - requests
+  - scikit-image
+  - scipy
+  - setuptools
+  - shapely
+  - six
+  - tensorflow
+  - termcolor
+  - untangle
+  - urllib3
+  - xmltodict
+  - xtensor
+  - xtensor-python
+  - mgrs
+  - pygrib
+  - sentinelsat
+  - aiobotocore
+  - boto3
+  - aioitertools
+  - botocore
+  - earthaccess
+  - multimethod
+  - s3fs
+  - tinynetrc
+  - pillow
+  - python-cmr
+  - pytest
+  - xarray
+  - pip
+  - pip:
+     - spacetrack
+     - pycksum
+     - bounded-pool-executor
+     - msgpack
+     - msgpack_numpy
+     - pip_system_certs
+     - -e /home/app/packages/soil_capacity_wilting
+     - -e /home/app/packages/harmonized-landsat-sentinel
+     - -e /home/app/packages/gedi_canopy_height
+     - -e /home/app/packages/rasters
+     - -e /home/app/packages/geos5fp
+     - -e /home/app/packages/modisci
+     - -e /home/app/packages/koppengeiger
+     - -e /home/app/packages/solar-apparent-time
+     - -e /home/app/packages/sentinel-tiles
+     - -e /home/app/packages/colored-logging
+     - -e /home/app/packages/modland
+     - -e /home/app/packages/sun-angles

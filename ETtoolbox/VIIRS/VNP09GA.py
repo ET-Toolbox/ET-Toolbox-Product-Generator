@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 from matplotlib.colors import LinearSegmentedColormap
 
-from ETtoolbox.daterange import date_range
+from ..daterange import date_range
 from dateutil import parser
 from shapely.geometry import Point, Polygon
 from skimage.transform import resize
@@ -70,15 +70,8 @@ class VNP09GAGranule(VIIRSGranule):
 
     cloud_mask = property(get_cloud_mask)
 
-    def dataset(
-            self,
-            filename: str,
-            dataset_name: str,
-            scale_factor: float,
-            cloud_mask: Raster = None,
-            apply_cloud_mask: bool = True,
-            geometry: RasterGeometry = None,
-            resampling: str = None) -> Raster:
+    def dataset(self, filename: str, dataset_name: str, scale_factor: float, cloud_mask: Raster = None, apply_cloud_mask: bool = True, geometry: RasterGeometry = None,
+                resampling: str = None) -> Raster:
 
         with h5py.File(filename, "r") as f:
             DN = np.array(f[dataset_name])
@@ -122,12 +115,7 @@ class VNP09GAGranule(VIIRSGranule):
         else:
             raise ValueError(f"invalid band: {band}")
 
-    def get_sensor_zenith_M(
-            self,
-            geometry: RasterGeometry = None,
-            save_data: bool = True,
-            save_preview: bool = True,
-            product_filename: str = None) -> Raster:
+    def get_sensor_zenith_M(self, geometry: RasterGeometry = None, save_data: bool = True, save_preview: bool = True, product_filename: str = None) -> Raster:
         if product_filename is None:
             product_filename = self.product_filename(f"sensor_zenith_M")
 
@@ -135,13 +123,8 @@ class VNP09GAGranule(VIIRSGranule):
             logger.info(f"loading VIIRS sensor zenith: {colored_logging.file(product_filename)}")
             image = Raster.open(product_filename)
         else:
-            image = self.dataset(
-                self.filename,
-                f"HDFEOS/GRIDS/VNP_Grid_1km_2D/Data Fields/SensorZenith_1",
-                0.01,
-                cloud_mask=None,
-                apply_cloud_mask=False
-            )
+            image = self.dataset(self.filename, f"HDFEOS/GRIDS/VNP_Grid_1km_2D/Data Fields/SensorZenith_1", 0.01, cloud_mask=None,
+                                 apply_cloud_mask=False)
 
         if np.all(np.isnan(image)):
             raise ValueError("blank sensor zenith image")
@@ -160,12 +143,7 @@ class VNP09GAGranule(VIIRSGranule):
 
     sensor_zenith_M = property(get_sensor_zenith_M)
 
-    def get_sensor_zenith_I(
-            self,
-            geometry: RasterGeometry = None,
-            save_data: bool = True,
-            save_preview: bool = True,
-            product_filename: str = None) -> Raster:
+    def get_sensor_zenith_I(self, geometry: RasterGeometry = None, save_data: bool = True, save_preview: bool = True, product_filename: str = None) -> Raster:
         if product_filename is None:
             product_filename = self.product_filename(f"sensor_zenith_I")
 
@@ -176,15 +154,8 @@ class VNP09GAGranule(VIIRSGranule):
             h, v = self.hv
             grid_I = generate_modland_grid(h, v, 2400)
 
-            image = self.dataset(
-                self.filename,
-                f"HDFEOS/GRIDS/VNP_Grid_1km_2D/Data Fields/SensorZenith_1",
-                0.01,
-                cloud_mask=None,
-                apply_cloud_mask=False,
-                geometry=grid_I,
-                resampling="cubic"
-            )
+            image = self.dataset(self.filename, f"HDFEOS/GRIDS/VNP_Grid_1km_2D/Data Fields/SensorZenith_1", 0.01, cloud_mask=None,
+                                 apply_cloud_mask=False, geometry=grid_I, resampling="cubic")
 
         if np.all(np.isnan(image)):
             raise ValueError("blank sensor zenith image")
@@ -203,41 +174,20 @@ class VNP09GAGranule(VIIRSGranule):
 
     sensor_zenith_I = property(get_sensor_zenith_I)
 
-    def sensor_zenith(
-            self,
-            band: str,
-            geometry: RasterGeometry = None,
-            save_data: bool = True,
-            save_preview: bool = True,
-            product_filename: str = None) -> Raster:
+    def sensor_zenith(self, band: str, geometry: RasterGeometry = None, save_data: bool = True, save_preview: bool = True, product_filename: str = None) -> Raster:
         try:
             band_letter = band[0]
         except Exception as e:
             raise ValueError(f"invalid band: {band}")
 
         if band_letter == "I":
-            return self.get_sensor_zenith_I(
-                geometry=geometry,
-                save_data=save_data,
-                save_preview=save_preview,
-                product_filename=product_filename
-            )
+            return self.get_sensor_zenith_I(geometry=geometry, save_data=save_data, save_preview=save_preview, product_filename=product_filename)
         elif band_letter == "M":
-            return self.get_sensor_zenith_M(
-                geometry=geometry,
-                save_data=save_data,
-                save_preview=save_preview,
-                product_filename=product_filename
-            )
+            return self.get_sensor_zenith_M(geometry=geometry, save_data=save_data, save_preview=save_preview, product_filename=product_filename)
         else:
             raise ValueError(f"invalid band: {band}")
 
-    def get_sensor_azimuth_M(
-            self,
-            geometry: RasterGeometry = None,
-            save_data: bool = True,
-            save_preview: bool = True,
-            product_filename: str = None) -> Raster:
+    def get_sensor_azimuth_M(self, geometry: RasterGeometry = None, save_data: bool = True, save_preview: bool = True, product_filename: str = None) -> Raster:
         if product_filename is None:
             product_filename = self.product_filename(f"sensor_azimuth_M")
 
@@ -245,13 +195,8 @@ class VNP09GAGranule(VIIRSGranule):
             logger.info(f"loading VIIRS sensor azimuth: {colored_logging.file(product_filename)}")
             image = Raster.open(product_filename)
         else:
-            image = self.dataset(
-                self.filename,
-                f"HDFEOS/GRIDS/VNP_Grid_1km_2D/Data Fields/SensorAzimuth_1",
-                0.01,
-                cloud_mask=None,
-                apply_cloud_mask=False
-            )
+            image = self.dataset(self.filename,f"HDFEOS/GRIDS/VNP_Grid_1km_2D/Data Fields/SensorAzimuth_1",0.01, cloud_mask=None,
+                                 apply_cloud_mask=False)
 
         if np.all(np.isnan(image)):
             raise ValueError("blank sensor azimuth image")
@@ -270,12 +215,7 @@ class VNP09GAGranule(VIIRSGranule):
 
     sensor_azimuth_M = property(get_sensor_azimuth_M)
 
-    def get_sensor_azimuth_I(
-            self,
-            geometry: RasterGeometry = None,
-            save_data: bool = True,
-            save_preview: bool = True,
-            product_filename: str = None) -> Raster:
+    def get_sensor_azimuth_I(self, geometry: RasterGeometry = None, save_data: bool = True, save_preview: bool = True, product_filename: str = None) -> Raster:
         if product_filename is None:
             product_filename = self.product_filename(f"sensor_azimuth_I")
 
@@ -286,15 +226,8 @@ class VNP09GAGranule(VIIRSGranule):
             h, v = self.hv
             grid_I = generate_modland_grid(h, v, 2400)
 
-            image = self.dataset(
-                self.filename,
-                f"HDFEOS/GRIDS/VNP_Grid_1km_2D/Data Fields/SensorAzimuth_1",
-                0.01,
-                cloud_mask=None,
-                apply_cloud_mask=False,
-                geometry=grid_I,
-                resampling="cubic"
-            )
+            image = self.dataset(self.filename, f"HDFEOS/GRIDS/VNP_Grid_1km_2D/Data Fields/SensorAzimuth_1", 0.01, cloud_mask=None,
+                                 apply_cloud_mask=False, geometry=grid_I, resampling="cubic" )
 
         if np.all(np.isnan(image)):
             raise ValueError("blank sensor azimuth image")
@@ -313,41 +246,20 @@ class VNP09GAGranule(VIIRSGranule):
 
     sensor_azimuth_I = property(get_sensor_azimuth_I)
 
-    def sensor_azimuth(
-            self,
-            band: str,
-            geometry: RasterGeometry = None,
-            save_data: bool = True,
-            save_preview: bool = True,
-            product_filename: str = None) -> Raster:
+    def sensor_azimuth(self, band: str, geometry: RasterGeometry = None, save_data: bool = True, save_preview: bool = True, product_filename: str = None) -> Raster:
         try:
             band_letter = band[0]
         except Exception as e:
             raise ValueError(f"invalid band: {band}")
 
         if band_letter == "I":
-            return self.get_sensor_azimuth_I(
-                geometry=geometry,
-                save_data=save_data,
-                save_preview=save_preview,
-                product_filename=product_filename
-            )
+            return self.get_sensor_azimuth_I(geometry=geometry, save_data=save_data, save_preview=save_preview, product_filename=product_filename)
         elif band_letter == "M":
-            return self.get_sensor_azimuth_M(
-                geometry=geometry,
-                save_data=save_data,
-                save_preview=save_preview,
-                product_filename=product_filename
-            )
+            return self.get_sensor_azimuth_M(geometry=geometry, save_data=save_data, save_preview=save_preview, product_filename=product_filename)
         else:
             raise ValueError(f"invalid band: {band}")
 
-    def get_solar_zenith_M(
-            self,
-            geometry: RasterGeometry = None,
-            save_data: bool = True,
-            save_preview: bool = True,
-            product_filename: str = None) -> Raster:
+    def get_solar_zenith_M(self, geometry: RasterGeometry = None, save_data: bool = True, save_preview: bool = True, product_filename: str = None) -> Raster:
         if product_filename is None:
             product_filename = self.product_filename(f"solar_zenith_M")
 
@@ -355,13 +267,8 @@ class VNP09GAGranule(VIIRSGranule):
             logger.info(f"loading VIIRS solar zenith: {colored_logging.file(product_filename)}")
             image = Raster.open(product_filename)
         else:
-            image = self.dataset(
-                self.filename,
-                f"HDFEOS/GRIDS/VNP_Grid_1km_2D/Data Fields/SolarZenith_1",
-                0.01,
-                cloud_mask=None,
-                apply_cloud_mask=False
-            )
+            image = self.dataset(self.filename,f"HDFEOS/GRIDS/VNP_Grid_1km_2D/Data Fields/SolarZenith_1",0.01, cloud_mask=None,
+                                 apply_cloud_mask=False)
 
         if np.all(np.isnan(image)):
             raise ValueError("blank solar zenith image")
@@ -380,12 +287,7 @@ class VNP09GAGranule(VIIRSGranule):
 
     solar_zenith_M = property(get_solar_zenith_M)
 
-    def get_solar_zenith_I(
-            self,
-            geometry: RasterGeometry = None,
-            save_data: bool = True,
-            save_preview: bool = True,
-            product_filename: str = None) -> Raster:
+    def get_solar_zenith_I(self, geometry: RasterGeometry = None, save_data: bool = True, save_preview: bool = True, product_filename: str = None) -> Raster:
         if product_filename is None:
             product_filename = self.product_filename("solar_zenith_I")
 
@@ -396,15 +298,8 @@ class VNP09GAGranule(VIIRSGranule):
             h, v = self.hv
             grid_I = generate_modland_grid(h, v, 2400)
 
-            image = self.dataset(
-                self.filename,
-                f"HDFEOS/GRIDS/VNP_Grid_1km_2D/Data Fields/SolarZenith_1",
-                0.01,
-                cloud_mask=None,
-                apply_cloud_mask=False,
-                geometry=grid_I,
-                resampling="cubic"
-            )
+            image = self.dataset(self.filename, f"HDFEOS/GRIDS/VNP_Grid_1km_2D/Data Fields/SolarZenith_1", 0.01, cloud_mask=None,
+                                 apply_cloud_mask=False, geometry=grid_I, resampling="cubic")
 
         if np.all(np.isnan(image)):
             raise ValueError("blank solar zenith image")
@@ -424,41 +319,20 @@ class VNP09GAGranule(VIIRSGranule):
 
     solar_zenith_I = property(get_solar_zenith_I)
 
-    def solar_zenith(
-            self,
-            band: str,
-            geometry: RasterGeometry = None,
-            save_data: bool = True,
-            save_preview: bool = True,
-            product_filename: str = None) -> Raster:
+    def solar_zenith(self, band: str, geometry: RasterGeometry = None, save_data: bool = True, save_preview: bool = True, product_filename: str = None) -> Raster:
         try:
             band_letter = band[0]
         except Exception as e:
             raise ValueError(f"invalid band: {band}")
 
         if band_letter == "I":
-            return self.get_solar_zenith_I(
-                geometry=geometry,
-                save_data=save_data,
-                save_preview=save_preview,
-                product_filename=product_filename
-            )
+            return self.get_solar_zenith_I(geometry=geometry, save_data=save_data, save_preview=save_preview, product_filename=product_filename)
         elif band_letter == "M":
-            return self.get_solar_zenith_M(
-                geometry=geometry,
-                save_data=save_data,
-                save_preview=save_preview,
-                product_filename=product_filename
-            )
+            return self.get_solar_zenith_M(geometry=geometry, save_data=save_data, save_preview=save_preview, product_filename=product_filename)
         else:
             raise ValueError(f"invalid band: {band}")
 
-    def get_solar_azimuth_M(
-            self,
-            geometry: RasterGeometry = None,
-            save_data: bool = True,
-            save_preview: bool = True,
-            product_filename: str = None) -> Raster:
+    def get_solar_azimuth_M(self, geometry: RasterGeometry = None, save_data: bool = True, save_preview: bool = True, product_filename: str = None) -> Raster:
         if product_filename is None:
             product_filename = self.product_filename("solar_azimuth_M")
 
@@ -466,13 +340,8 @@ class VNP09GAGranule(VIIRSGranule):
             logger.info(f"loading VIIRS solar azimuth: {colored_logging.file(product_filename)}")
             image = Raster.open(product_filename)
         else:
-            image = self.dataset(
-                self.filename,
-                f"HDFEOS/GRIDS/VNP_Grid_1km_2D/Data Fields/SolarAzimuth_1",
-                0.01,
-                cloud_mask=None,
-                apply_cloud_mask=False
-            )
+            image = self.dataset(self.filename, f"HDFEOS/GRIDS/VNP_Grid_1km_2D/Data Fields/SolarAzimuth_1", 0.01, cloud_mask=None,
+                                 apply_cloud_mask=False)
 
         if np.all(np.isnan(image)):
             raise ValueError("blank solar azimuth image")
@@ -491,12 +360,8 @@ class VNP09GAGranule(VIIRSGranule):
 
     solar_azimuth_M = property(get_solar_azimuth_M)
 
-    def get_solar_azimuth_I(
-            self,
-            geometry: RasterGeometry = None,
-            save_data: bool = True,
-            save_preview: bool = True,
-            product_filename: str = None) -> Raster:
+    def get_solar_azimuth_I(self, geometry: RasterGeometry = None, save_data: bool = True, save_preview: bool = True, product_filename: str = None) -> Raster:
+
         if product_filename is None:
             product_filename = self.product_filename("solar_azimuth_I")
 
@@ -507,15 +372,8 @@ class VNP09GAGranule(VIIRSGranule):
             h, v = self.hv
             grid_I = generate_modland_grid(h, v, 2400)
 
-            image = self.dataset(
-                self.filename,
-                f"HDFEOS/GRIDS/VNP_Grid_1km_2D/Data Fields/SolarAzimuth_1",
-                0.01,
-                cloud_mask=None,
-                apply_cloud_mask=False,
-                geometry=grid_I,
-                resampling="cubic"
-            )
+            image = self.dataset(self.filename, f"HDFEOS/GRIDS/VNP_Grid_1km_2D/Data Fields/SolarAzimuth_1", 0.01, cloud_mask=None,
+                                 apply_cloud_mask=False, geometry=grid_I, resampling="cubic")
 
         if np.all(np.isnan(image)):
             raise ValueError("blank solar azimuth image")
@@ -534,44 +392,21 @@ class VNP09GAGranule(VIIRSGranule):
 
     solar_azimuth_I = property(get_solar_azimuth_I)
 
-    def solar_azimuth(
-            self,
-            band: str,
-            geometry: RasterGeometry = None,
-            save_data: bool = True,
-            save_preview: bool = True,
-            product_filename: str = None) -> Raster:
+    def solar_azimuth(self, band: str, geometry: RasterGeometry = None, save_data: bool = True, save_preview: bool = True, product_filename: str = None) -> Raster:
         try:
             band_letter = band[0]
         except Exception as e:
             raise ValueError(f"invalid band: {band}")
 
         if band_letter == "I":
-            return self.get_solar_azimuth_I(
-                geometry=geometry,
-                save_data=save_data,
-                save_preview=save_preview,
-                product_filename=product_filename
-            )
+            return self.get_solar_azimuth_I(geometry=geometry, save_data=save_data, save_preview=save_preview, product_filename=product_filename)
         elif band_letter == "M":
-            return self.get_solar_azimuth_M(
-                geometry=geometry,
-                save_data=save_data,
-                save_preview=save_preview,
-                product_filename=product_filename
-            )
+            return self.get_solar_azimuth_M(geometry=geometry, save_data=save_data, save_preview=save_preview, product_filename=product_filename)
         else:
             raise ValueError(f"invalid band: {band}")
 
-    def get_M_band(
-            self,
-            band: int,
-            cloud_mask: Raster = None,
-            apply_cloud_mask: bool = True,
-            geometry: RasterGeometry = None,
-            save_data: bool = True,
-            save_preview: bool = True,
-            product_filename: str = None) -> Raster:
+    def get_M_band(self, band: int, cloud_mask: Raster = None, apply_cloud_mask: bool = True, geometry: RasterGeometry = None, save_data: bool = True,
+                   save_preview: bool = True, product_filename: str = None) -> Raster:
         if product_filename is None:
             product_filename = self.product_filename(f"M{band}")
 
@@ -579,13 +414,8 @@ class VNP09GAGranule(VIIRSGranule):
             logger.info(f"loading VIIRS M{band}: {colored_logging.file(product_filename)}")
             image = Raster.open(product_filename)
         else:
-            image = self.dataset(
-                self.filename,
-                f"HDFEOS/GRIDS/VNP_Grid_1km_2D/Data Fields/SurfReflect_M{int(band)}_1",
-                0.0001,
-                cloud_mask=cloud_mask,
-                apply_cloud_mask=apply_cloud_mask
-            )
+            image = self.dataset(self.filename, f"HDFEOS/GRIDS/VNP_Grid_1km_2D/Data Fields/SurfReflect_M{int(band)}_1", 0.0001,
+                                 cloud_mask=cloud_mask, apply_cloud_mask=apply_cloud_mask)
 
         if save_data and not exists(product_filename):
             logger.info(f"writing VIIRS M{band}: {colored_logging.file(product_filename)}")
@@ -599,15 +429,8 @@ class VNP09GAGranule(VIIRSGranule):
 
         return image
 
-    def get_I_band(
-            self,
-            band: int,
-            cloud_mask: Raster = None,
-            apply_cloud_mask: bool = True,
-            geometry: RasterGeometry = None,
-            save_data: bool = True,
-            save_preview: bool = True,
-            product_filename: str = None) -> Raster:
+    def get_I_band(self, band: int, cloud_mask: Raster = None, apply_cloud_mask: bool = True, geometry: RasterGeometry = None, save_data: bool = True,
+                   save_preview: bool = True, product_filename: str = None) -> Raster:
         if product_filename is None:
             product_filename = self.product_filename(f"I{band}")
 
@@ -615,13 +438,8 @@ class VNP09GAGranule(VIIRSGranule):
             logger.info(f"loading VIIRS I{band}: {colored_logging.file(product_filename)}")
             image = Raster.open(product_filename)
         else:
-            image = self.dataset(
-                self.filename,
-                f"HDFEOS/GRIDS/VNP_Grid_500m_2D/Data Fields/SurfReflect_I{int(band)}_1",
-                0.0001,
-                cloud_mask=cloud_mask,
-                apply_cloud_mask=apply_cloud_mask
-            )
+            image = self.dataset(self.filename, f"HDFEOS/GRIDS/VNP_Grid_500m_2D/Data Fields/SurfReflect_I{int(band)}_1", 0.0001, cloud_mask=cloud_mask,
+                                 apply_cloud_mask=apply_cloud_mask)
 
         if save_data and not exists(product_filename):
             logger.info(f"writing VIIRS I{band}: {colored_logging.file(product_filename)}")
@@ -635,15 +453,9 @@ class VNP09GAGranule(VIIRSGranule):
 
         return image
 
-    def band(
-            self,
-            band: str,
-            cloud_mask: Raster = None,
-            apply_cloud_mask: bool = True,
-            geometry: RasterGeometry = None,
-            save_data: bool = True,
-            save_preview: bool = True,
-            product_filename: str = None) -> Raster:
+    def band(self, band: str, cloud_mask: Raster = None, apply_cloud_mask: bool = True, geometry: RasterGeometry = None, save_data: bool = True,
+             save_preview: bool = True, product_filename: str = None) -> Raster:
+
         try:
             band_letter = band[0]
             band_number = int(band[1:])
@@ -651,76 +463,31 @@ class VNP09GAGranule(VIIRSGranule):
             raise ValueError(f"invalid band: {band}")
 
         if band_letter == "I":
-            return self.get_I_band(
-                band=band_number,
-                cloud_mask=cloud_mask,
-                apply_cloud_mask=apply_cloud_mask,
-                geometry=geometry,
-                save_data=save_data,
-                save_preview=save_preview,
-                product_filename=product_filename
-            )
+            return self.get_I_band(band=band_number, cloud_mask=cloud_mask, apply_cloud_mask=apply_cloud_mask, geometry=geometry, save_data=save_data,
+                                   save_preview=save_preview, product_filename=product_filename)
         elif band_letter == "M":
-            return self.get_M_band(
-                band=band_number,
-                cloud_mask=cloud_mask,
-                apply_cloud_mask=apply_cloud_mask,
-                geometry=geometry,
-                save_data=save_data,
-                save_preview=save_preview,
-                product_filename=product_filename
-            )
+            return self.get_M_band(band=band_number, cloud_mask=cloud_mask, apply_cloud_mask=apply_cloud_mask, geometry=geometry, save_data=save_data,
+                                   save_preview=save_preview, product_filename=product_filename)
         else:
             raise ValueError(f"invalid band: {band}")
 
-    def get_red(
-            self,
-            cloud_mask: Raster = None,
-            apply_cloud_mask: bool = True,
-            geometry: RasterGeometry = None,
-            save_data: bool = True,
-            save_preview: bool = True,
-            product_filename: str = None) -> Raster:
-        return self.get_I_band(
-            band=1,
-            cloud_mask=cloud_mask,
-            apply_cloud_mask=apply_cloud_mask,
-            geometry=geometry,
-            save_data=save_data,
-            save_preview=save_preview,
-            product_filename=product_filename
-        )
+    def get_red(self, cloud_mask: Raster = None, apply_cloud_mask: bool = True, geometry: RasterGeometry = None, save_data: bool = True, save_preview: bool = True,
+                product_filename: str = None) -> Raster:
+
+        return self.get_I_band(band=1, cloud_mask=cloud_mask, apply_cloud_mask=apply_cloud_mask, geometry=geometry, save_data=save_data, save_preview=save_preview,
+                               product_filename=product_filename)
 
     red = property(get_red)
 
-    def get_NIR(
-            self,
-            cloud_mask: Raster = None,
-            apply_cloud_mask: bool = True,
-            geometry: RasterGeometry = None,
-            save_data: bool = True,
-            save_preview: bool = True,
-            product_filename: str = None) -> Raster:
-        return self.get_I_band(
-            band=2,
-            cloud_mask=cloud_mask,
-            apply_cloud_mask=apply_cloud_mask,
-            geometry=geometry,
-            save_data=save_data,
-            save_preview=save_preview,
-            product_filename=product_filename
-        )
+    def get_NIR(self, cloud_mask: Raster = None, apply_cloud_mask: bool = True, geometry: RasterGeometry = None, save_data: bool = True, save_preview: bool = True,
+                product_filename: str = None) -> Raster:
+        return self.get_I_band(band=2, cloud_mask=cloud_mask, apply_cloud_mask=apply_cloud_mask, geometry=geometry, save_data=save_data, save_preview=save_preview,
+                               product_filename=product_filename)
 
     NIR = property(get_NIR)
 
-    def get_NDVI(
-            self,
-            cloud_mask: Raster = None,
-            apply_cloud_mask: bool = True,
-            geometry: RasterGeometry = None,
-            save_data: bool = True,
-            save_preview: bool = True,
-            product_filename: str = None) -> Raster:
+    def get_NDVI(self, cloud_mask: Raster = None, apply_cloud_mask: bool = True, geometry: RasterGeometry = None, save_data: bool = True, save_preview: bool = True,
+                 product_filename: str = None) -> Raster:
         if product_filename is None:
             product_filename = self.product_filename("NDVI")
 
@@ -728,21 +495,9 @@ class VNP09GAGranule(VIIRSGranule):
             logger.info(f"loading VIIRS NDVI: {colored_logging.file(product_filename)}")
             NDVI = Raster.open(product_filename)
         else:
-            red = self.get_red(
-                cloud_mask=cloud_mask,
-                apply_cloud_mask=apply_cloud_mask,
-                geometry=geometry,
-                save_data=save_data,
-                save_preview=save_preview
-            )
+            red = self.get_red(cloud_mask=cloud_mask, apply_cloud_mask=apply_cloud_mask, geometry=geometry, save_data=save_data, save_preview=save_preview)
 
-            NIR = self.get_NIR(
-                cloud_mask=cloud_mask,
-                apply_cloud_mask=apply_cloud_mask,
-                geometry=geometry,
-                save_data=save_data,
-                save_preview=save_preview
-            )
+            NIR = self.get_NIR(cloud_mask=cloud_mask, apply_cloud_mask=apply_cloud_mask, geometry=geometry, save_data=save_data, save_preview=save_preview)
 
             NDVI = np.clip((NIR - red) / (NIR + red), -1, 1)
 
@@ -762,14 +517,9 @@ class VNP09GAGranule(VIIRSGranule):
 
     NDVI = property(get_NDVI)
 
-    def get_albedo(
-            self,
-            cloud_mask: Raster = None,
-            apply_cloud_mask: bool = True,
-            geometry: RasterGeometry = None,
-            save_data: bool = True,
-            save_preview: bool = True,
-            product_filename: str = None) -> Raster:
+    def get_albedo(self, cloud_mask: Raster = None, apply_cloud_mask: bool = True, geometry: RasterGeometry = None, save_data: bool = True, save_preview: bool = True,
+                  product_filename: str = None) -> Raster:
+
         if product_filename is None:
             product_filename = self.product_filename("albedo")
 
@@ -777,99 +527,18 @@ class VNP09GAGranule(VIIRSGranule):
             logger.info(f"loading VIIRS albedo: {colored_logging.file(product_filename)}")
             albedo = Raster.open(product_filename)
         else:
-            b1 = self.get_M_band(
-                1,
-                cloud_mask=cloud_mask,
-                apply_cloud_mask=apply_cloud_mask,
-                geometry=geometry,
-                save_data=save_data,
-                save_preview=save_preview
-            )
-
-            b2 = self.get_M_band(
-                2,
-                cloud_mask=cloud_mask,
-                apply_cloud_mask=apply_cloud_mask,
-                geometry=geometry,
-                save_data=save_data,
-                save_preview=save_preview
-            )
-
-            b3 = self.get_M_band(
-                3,
-                cloud_mask=cloud_mask,
-                apply_cloud_mask=apply_cloud_mask,
-                geometry=geometry,
-                save_data=save_data,
-                save_preview=save_preview
-            )
-
-            b4 = self.get_M_band(
-                4,
-                cloud_mask=cloud_mask,
-                apply_cloud_mask=apply_cloud_mask,
-                geometry=geometry,
-                save_data=save_data,
-                save_preview=save_preview
-            )
-
-            b5 = self.get_M_band(
-                5,
-                cloud_mask=cloud_mask,
-                apply_cloud_mask=apply_cloud_mask,
-                geometry=geometry,
-                save_data=save_data,
-                save_preview=save_preview
-            )
-
-            b7 = self.get_M_band(
-                7,
-                cloud_mask=cloud_mask,
-                apply_cloud_mask=apply_cloud_mask,
-                geometry=geometry,
-                save_data=save_data,
-                save_preview=save_preview
-            )
-
-            b8 = self.get_M_band(
-                8,
-                cloud_mask=cloud_mask,
-                apply_cloud_mask=apply_cloud_mask,
-                geometry=geometry,
-                save_data=save_data,
-                save_preview=save_preview
-            )
-
-            b10 = self.get_M_band(
-                10,
-                cloud_mask=cloud_mask,
-                apply_cloud_mask=apply_cloud_mask,
-                geometry=geometry,
-                save_data=save_data,
-                save_preview=save_preview
-            )
-
-            b11 = self.get_M_band(
-                11,
-                cloud_mask=cloud_mask,
-                apply_cloud_mask=apply_cloud_mask,
-                geometry=geometry,
-                save_data=save_data,
-                save_preview=save_preview
-            )
+            b1 = self.get_M_band(1, cloud_mask=cloud_mask, apply_cloud_mask=apply_cloud_mask, geometry=geometry, save_data=save_data, save_preview=save_preview)
+            b2 = self.get_M_band(2, cloud_mask=cloud_mask, apply_cloud_mask=apply_cloud_mask, geometry=geometry, save_data=save_data, save_preview=save_preview)
+            b3 = self.get_M_band(3, cloud_mask=cloud_mask, apply_cloud_mask=apply_cloud_mask, geometry=geometry, save_data=save_data, save_preview=save_preview)
+            b4 = self.get_M_band(4, cloud_mask=cloud_mask, apply_cloud_mask=apply_cloud_mask, geometry=geometry, save_data=save_data, save_preview=save_preview)
+            b5 = self.get_M_band(5, cloud_mask=cloud_mask, apply_cloud_mask=apply_cloud_mask, geometry=geometry, save_data=save_data, save_preview=save_preview)
+            b7 = self.get_M_band(7, cloud_mask=cloud_mask, apply_cloud_mask=apply_cloud_mask, geometry=geometry, save_data=save_data, save_preview=save_preview)
+            b8 = self.get_M_band(8, cloud_mask=cloud_mask, apply_cloud_mask=apply_cloud_mask, geometry=geometry, save_data=save_data, save_preview=save_preview)
+            b10 = self.get_M_band(10,cloud_mask=cloud_mask, apply_cloud_mask=apply_cloud_mask, geometry=geometry, save_data=save_data, save_preview=save_preview)
+            b11 = self.get_M_band(11, cloud_mask=cloud_mask, apply_cloud_mask=apply_cloud_mask, geometry=geometry, save_data=save_data, save_preview=save_preview)
 
             # https://lpdaac.usgs.gov/documents/194/VNP43_ATBD_V1.pdf
-            albedo = 0.2418 * b1 \
-                     - 0.201 * b2 \
-                     + 0.2093 * b3 \
-                     + 0.1146 * b4 \
-                     + 0.1348 * b5 \
-                     + 0.2251 * b7 \
-                     + 0.1123 * b8 \
-                     + 0.0860 * b10 \
-                     + 0.0803 * b11 \
-                     - 0.0131
-
+            albedo = 0.2418 * b1 - 0.201 * b2 + 0.2093 * b3 + 0.1146 * b4 + 0.1348 * b5 + 0.2251 * b7 + 0.1123 * b8 + 0.0860 * b10 + 0.0803 * b11 - 0.0131
             albedo = np.clip(albedo, 0, 1)
 
         if save_data and not exists(product_filename):
@@ -893,68 +562,27 @@ class VNP09GA(VIIRSDataPool):
     DEFAULT_MOSAIC_DIRECTORY = "VNP09GA_mosaics"
     DEFAULT_RESAMPLING = "nearest"
 
-    def __init__(
-            self,
-            *args,
-            username: str = None,
-            password: str = None,
-            remote: str = None,
-            working_directory: str = None,
-            download_directory: str = None,
-            products_directory: str = None,
-            mosaic_directory: str = None,
-            resampling: str = None,
-            **kwargs):
-        super(VNP09GA, self).__init__(
-            *args,
-            username=username,
-            password=password,
-            remote=remote,
-            working_directory=working_directory,
-            download_directory=download_directory,
-            products_directory=products_directory,
-            mosaic_directory=mosaic_directory,
-            **kwargs
-        )
+    def __init__(self, *args, username: str = None, password: str = None, remote: str = None, working_directory: str = None, download_directory: str = None,
+                 products_directory: str = None, mosaic_directory: str = None, resampling: str = None, **kwargs):
+        super(VNP09GA, self).__init__(*args, username=username, password=password, remote=remote, working_directory=working_directory,
+                                      download_directory=download_directory, products_directory=products_directory, mosaic_directory=mosaic_directory, **kwargs)
 
         if resampling is None:
             resampling = self.DEFAULT_RESAMPLING
 
         self.resampling = resampling
 
-    def search(
-            self,
-            start_date: date or datetime or str,
-            end_date: date or datetime or str = None,
-            build: str = None,
-            tiles: List[str] or str = None,
-            target_geometry: Point or Polygon or RasterGrid = None,
-            *args,
-            **kwargs) -> pd.DataFrame:
-        return super(VNP09GA, self).search(
-            product="VNP09GA",
-            start_date=start_date,
-            end_date=end_date,
-            build=build,
-            tiles=tiles,
-            target_geometry=target_geometry,
-            *args,
-            **kwargs
-        )
+    def search(self, start_date: date or datetime or str, end_date: date or datetime or str = None, build: str = None, tiles: List[str] or str = None,
+               target_geometry: Point or Polygon or RasterGrid = None, *args, **kwargs) -> pd.DataFrame:
 
-    def granule(
-            self,
-            date_UTC: date or str,
-            tile: str,
-            build: str = None) -> VNP09GAGranule:
+        return super(VNP09GA, self).search(product="VNP09GA", start_date=start_date, end_date=end_date, build=build, tiles=tiles, target_geometry=target_geometry,
+                                     *args, **kwargs)
+
+    def granule(self, date_UTC: date or str, tile: str, build: str = None) -> VNP09GAGranule:
         if isinstance(date_UTC, str):
             date_UTC = parser.parse(date_UTC).date()
 
-        download_location = join(
-            self.download_directory,
-            "VNP09GA",
-            f"{date_UTC:%Y.%m.%d}"
-        )
+        download_location = join(self.download_directory, "VNP09GA", f"{date_UTC:%Y.%m.%d}")
 
         if exists(download_location):
             filenames = glob(join(download_location, f"VNP09GA.A{date_UTC:%Y%j}.{tile}.*.h5"))
@@ -963,34 +591,20 @@ class VNP09GA(VIIRSDataPool):
                 filename = sorted(filenames)[0]
                 logger.info(f"found previously retrieved VNP09GA file: {filename}")
 
-                granule = VNP09GAGranule(
-                    filename=filename,
-                    products_directory=self.products_directory
-                )
+                granule = VNP09GAGranule(filename=filename, products_directory=self.products_directory)
 
                 return granule
 
-        listing = self.search(
-            start_date=date_UTC,
-            end_date=date_UTC,
-            build=build,
-            tiles=[tile]
-        )
+        listing = self.search(start_date=date_UTC, end_date=date_UTC, build=build, tiles=[tile])
 
         if len(listing) > 0:
             URL = listing.iloc[0].URL
 
         makedirs(download_location, exist_ok=True)
 
-        filename = super(VNP09GA, self).download_URL(
-            URL=URL,
-            download_location=download_location
-        )
+        filename = super(VNP09GA, self).download_URL(URL=URL, download_location=download_location)
 
-        granule = VNP09GAGranule(
-            filename=filename,
-            products_directory=self.products_directory
-        )
+        granule = VNP09GAGranule(filename=filename, products_directory=self.products_directory)
 
         return granule
 
@@ -1016,13 +630,7 @@ class VNP09GA(VIIRSDataPool):
 
     cloud_mask = property(get_cloud_mask)
 
-    def dataset(
-            self,
-            filename: str,
-            dataset_name: str,
-            scale_factor: float,
-            cloud_mask: Raster = None,
-            apply_cloud_mask: bool = True) -> Raster:
+    def dataset(self, filename: str, dataset_name: str, scale_factor: float, cloud_mask: Raster = None, apply_cloud_mask: bool = True) -> Raster:
         tile = parse_VIIRS_tile(filename)
         h, v = parsehv(tile)
 
@@ -1042,12 +650,8 @@ class VNP09GA(VIIRSDataPool):
 
         return data
 
-    def NDVI(
-            self,
-            date_UTC: date or str,
-            geometry: RasterGeometry,
-            filename: str = None,
-            resampling: str = None) -> Raster:
+    def NDVI(self, date_UTC: date or str, geometry: RasterGeometry, filename: str = None, resampling: str = None) -> Raster:
+
         if isinstance(date_UTC, str):
             date_UTC = parser.parse(date_UTC).date()
 
@@ -1085,12 +689,7 @@ class VNP09GA(VIIRSDataPool):
 
         return NDVI
 
-    def albedo(
-            self,
-            acquisition_date: date or str,
-            geometry: RasterGeometry,
-            filename: str = None,
-            resampling: str = None) -> Raster:
+    def albedo(self, acquisition_date: date or str, geometry: RasterGeometry, filename: str = None, resampling: str = None) -> Raster:
         if isinstance(acquisition_date, str):
             acquisition_date = parser.parse(acquisition_date).date()
 
@@ -1125,13 +724,7 @@ class VNP09GA(VIIRSDataPool):
         return albedo
 
 
-    def process(
-            self,
-            start: date or str,
-            target_geometry: RasterGeometry,
-            target: str,
-            end: date or str = None,
-            product_names: List[str] = None) -> pd.DataFrame:
+    def process(self, start: date or str, target_geometry: RasterGeometry, target: str, end: date or str = None, product_names: List[str] = None) -> pd.DataFrame:
         if product_names is None:
             product_names = ["NDVI", "albedo"]
 
@@ -1163,36 +756,19 @@ class VNP09GA(VIIRSDataPool):
 
             for product in product_names:
 
-                product_filename = join(
-                    self.mosaic_directory,
-                    product,
-                    f"{acquisition_date:%Y.%m.%d}",
-                    f"{acquisition_date:%Y.%m.%d}_{target}_{product}_{int(target_geometry.cell_size)}m.tif"
-                )
+                product_filename = join(self.mosaic_directory, product, f"{acquisition_date:%Y.%m.%d}",
+                                        f"{acquisition_date:%Y.%m.%d}_{target}_{product}_{int(target_geometry.cell_size)}m.tif")
 
                 if exists(product_filename):
                     logger.info(f"VIIRS {colored_logging.val(product)} already exists: {colored_logging.file(product_filename)}")
                 else:
-                    logger.info(
-                        f"generating VIIRS {colored_logging.val(product)} mosaic " +
-                        "at " + colored_logging.place(target) +
-                        "on " + colored_logging.time(f"{acquisition_date:%Y-%m-%d}")
-                    )
+                    logger.info(f"generating VIIRS {colored_logging.val(product)} mosaic at " + colored_logging.place(target) + "on " +
+                                colored_logging.time(f"{acquisition_date:%Y-%m-%d}"))
 
                     if product == "NDVI":
-                        self.NDVI(
-                            date_UTC=acquisition_date,
-                            geometry=target_geometry,
-                            filename=product_filename
-                            # return_raster=False
-                        )
+                        self.NDVI(date_UTC=acquisition_date, geometry=target_geometry, filename=product_filename)
                     elif product == "albedo":
-                        self.albedo(
-                            acquisition_date=acquisition_date,
-                            geometry=target_geometry,
-                            filename=product_filename
-                            # return_raster=False
-                        )
+                        self.albedo(acquisition_date=acquisition_date, geometry=target_geometry, filename=product_filename)
                     else:
                         raise ValueError(f"unrecognized product: {product}")
 
