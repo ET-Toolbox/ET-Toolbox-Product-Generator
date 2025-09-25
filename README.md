@@ -1,6 +1,11 @@
 # ET Toolbox High-Resolution Evapotranspiration 7-Day Hindcast & 7-Day Forecast
 
-This repository contains the code for the ET Toolbox 7-day hindcast and 7-day forecast data production system. This repository contains both code to deploy the container as
+This repository contains the code for the ET To#### USGS EROS Credentials  
+- `EROS_USERNAME` - USGS EROS login username
+- `EROS_PASSWORD` - USGS EROS login password  
+- `EROS_TOKEN` - Machine-to-Machine (M2M) API token
+- **Purpose**: Access USGS satellite data and Landsat imagery
+- **Setup**: Register at https://ers.cr.usgs.gov/register, then request M2M access at https://m2m.cr.usgs.gov/ndcast and 7-day forecast data production system. This repository contains both code to deploy the container as
 well as the scientific code to run within the deployed container. Changes to either the container configuration or the scientific code should be redeployed to update
 the production products.
 
@@ -67,10 +72,16 @@ containers on a host machine.
 The container deployment follows the standard Podman process. Ensure that the final step from the dependencies is done to change the temporary storage location.
 
 1. Clone the repository to the host machine.
-2. Update the .credentials and certificates following the proceedures in the subsequent sections.
-3. Build the image.
-
-   `podman build --format=docker --layers=false -t ettoolbox -f Dockerfile`
+2. **Configure credentials** (REQUIRED):
+   ```bash
+   cp .credentials.template .credentials
+   nano .credentials  # Add your actual credentials
+   ```
+3. Update certificates following the procedures in the subsequent sections.
+4. Build the image:
+   ```bash
+   podman build --format=docker --layers=false -t ettoolbox -f Dockerfile
+   ```
 
 4. Create a container from the image. This requires the that network share be mounted on the container host at /mnt/jpl. This is the location that the front end will
    attempt to find the raster data.
@@ -81,15 +92,45 @@ The container deployment follows the standard Podman process. Ensure that the fi
 
    `podman exec -it etcontainer /bin/bash`
 
-## Data Feed Registrations
-The system requires authentication from various data feeds to both configure the container build and the data sources for the scientific calculations. These values should be
-set in the .credentials file within the repository before completing a build. Periodically, tokens and passwords may need to refreshed within the .credentials file of the 
-repository. To get the refreshed keys into the container, the user can either rebuild the container or also update the .credentials file within the production system. 
+## Credentials Configuration (REQUIRED BEFORE BUILD)
 
-### GitLab
-The GitLab token allows the system to access the Reclamation Gitlab server to pull in the necessary package dependencies. It is therefore utilized only during the initial
-build of the container. The token is setup to expire on an annual basis, and should be refreshed at least every January 1st to ensure the token remains active. 
-The username does not need to be changed. Instructions for creating a token are available here: https://docs.gitlab.com/user/project/settings/project_access_tokens/
+**⚠️ CRITICAL: The `.credentials` file must be created and properly configured before building the Docker container. The build will fail without valid credentials.**
+
+The system requires authentication credentials for various external data sources. These credentials are stored in a `.credentials` file that serves as a shell script to set environment variables.
+
+### Creating the Credentials File
+
+1. **Copy the template** to create your credentials file:
+   ```bash
+   cp .credentials.template .credentials
+   ```
+
+2. **Edit the `.credentials` file** and replace all placeholder values with your actual credentials:
+   ```bash
+   nano .credentials
+   ```
+
+3. **Secure the file** - Set appropriate permissions:
+   ```bash
+   chmod 600 .credentials
+   ```
+
+### Security Important Notes
+
+- **DO NOT commit `.credentials` to version control** if it contains real secrets
+- The `.credentials.template` file is safe to commit and contains instructions for obtaining each credential
+- Store the populated `.credentials` file securely outside of version control
+- The `.gitignore` file is configured to prevent accidental commits of `.credentials`
+
+### Required Credentials
+
+The `.credentials` file must export the following environment variables (see `.credentials.template` for detailed instructions on obtaining each): 
+
+### GitLab Credentials
+- `GIT_USERNAME` - Your GitLab username
+- `GIT_TOKEN` - GitLab project access token (expires annually, refresh by January 1st)
+- **Purpose**: Access private repositories during container build
+- **Setup**: Create token at Reclamation GitLab server with 'read_repository' permissions
 
 ### EROS 
 The Earth Resources Observation and Science (EROS) system is a USGS system that provides automated data access to USGS data resources. It authentications both with 
@@ -106,18 +147,25 @@ https://ers.cr.usgs.gov/profile/access
 Access type is “Access to EE’s Machine to Machine interface (MACHINE)”, and request access to the MODIS and GEOS-5 datasets. You can create an Application token that needs .
 to be put into the .credentials file as the EROS_TOKEN. 
 
-### Earthdata
-Go to the following site and create a username/password combination:
+#### NASA Earthdata Credentials
+- `EARTHDATA_USERNAME` - NASA Earthdata username
+- `EARTHDATA_PASSWORD` - NASA Earthdata password
+- **Purpose**: Access NASA Earth science datasets (MODIS, VIIRS, etc.)
+- **Setup**: Register at https://urs.earthdata.nasa.gov/
 
-https://urs.earthdata.nasa.gov/
+#### Spacetrack Credentials
+- `SPACETRACK_USERNAME` - Space-Track.org username
+- `SPACETRACK_PASSWORD` - Space-Track.org password
+- **Purpose**: Access satellite orbital data for VIIRS orbit calculations
+- **Setup**: Register at https://www.space-track.org/auth/login
 
-Those should be entered into the .credentials file. Using the credentials information, the system will automatically request and managing tokens within the EarthData 
-environment.
+### Credential Maintenance
 
-### Spacetrack
-Create an account at the below link, and add the username/password into the credentials file.
-
-https://www.space-track.org/auth/login
+- **Periodic Updates**: Some credentials expire and need refresh (GitLab tokens annually, EROS access periodically)
+- **Container Updates**: When credentials expire, either:
+  1. Rebuild the container with updated `.credentials` file, OR  
+  2. Update both the repository `.credentials` file AND `/root/.credentials` in the production container
+- **Monitoring**: If authentication errors occur, check credential expiration first
 
 ## Certificates
 Certificates can be ... problematic ... in the Reclamation security environment. We use self-signed certificates that are not universally accepted by the data providers. 
