@@ -1,93 +1,57 @@
-import os, sys, shutil, datetime
+import sys
 from os.path import join
-from datetime import datetime, timezone, date, timedelta
+
 from ETtoolbox import ET_toolbox_hindcast_forecast_tile
 
 
-def _cleanup_folder(s_folder_path: str, s_delimiter: str, i_day_offset: int = 8):
-    """
-    This function is intended to clean-up input and output data that is beyond the needed time frame of the ET estimates. This minimizes the storage space required for the
-    toolbox.
+def main(argv=sys.argv):
+    RIO_GRANDE_TILES = [
+        "13SBB",
+        "13SCB",
+        "13SDB",
+        "13SCA",
+        "13SDA",
+        "13SCV",
+        "13SDV",
+        "13SCU",
+        "13SBT",
+        "13SCT",
+        "13SBS",
+        "13SCS",
+        "13SCR"
+    ]
 
-    Parameters
-    ----------
-    s_folder_path: str
-        Path to the folder to be cleaned
-    s_delimiter: str
-        Delimiter to use to parse the folder dates.
-    i_day_offset: int
-        Number of days behind the current eday to keep
+    if "--working" in argv:
+        working_directory = argv[argv.index("--working") + 1]
+    else:
+        working_directory = "."
 
-    Returns
-    -------
-    None. Folders are deleted from the disk
+    if "--static" in argv:
+        static_directory = argv[argv.index("--static") + 1]
+    else:
+        static_directory = join(working_directory, "PTJPL_static")
 
-    """
+    if "--SRTM" in argv:
+        SRTM_download = argv[argv.index("--SRTM") + 1]
+    else:
+        SRTM_download = join(working_directory, "SRTM_download_directory")
 
-    # Try/except is intended to handle first cast after the build. Subsequent runs triggering the block should be considered errors.
-    try:
-        # Get the files in the folder
-        sl_files = os.listdir(s_folder_path)
+    if "--LANCE" in argv:
+        LANCE_download_directory = argv[argv.index("--LANCE") + 1]
+    else:
+        LANCE_download_directory = join(working_directory, "LANCE_download_directory")
 
-        # Convert to date
-        ol_dates = [datetime.strptime(x, '%Y' + s_delimiter + "%m" + s_delimiter + '%d').date() for x in sl_files]
+    if "--GEOS5FP" in argv:
+        GEOS5FP_download = argv[argv.index("--GEOS5FP") + 1]
+    else:
+        GEOS5FP_download = join(working_directory, "GEOS5FP_download_directory")
 
-        # Clean the folder
-        for i_entry_folder in range(0, len(ol_dates), 1):
-            # Check for days before a target offset
-            if ol_dates[i_entry_folder] < date.today() - timedelta(days=i_day_offset):
-                # Create the file path
-                s_target_path = os.path.join(s_folder_path, sl_files[i_entry_folder])
-
-                # Remove the folder
-                shutil.rmtree(s_target_path)
-
-    except:
-        # Error cleaning up the file
-        print('Error cleaning up ' + s_folder_path)
-
-
-if __name__ == '__main__':
-
-    ### Input information ###
-    # Set the tile information for the domain
-    RIO_GRANDE_TILES = ["13SBB", "13SCB", "13SDB", "13SCA", "13SDA",
-                        "13SCV", "13SDV", "13SCU", "13SBT", "13SCT",
-                        "13SBS", "13SCS", "13SCR"]
-
-    # Set the directories
-    s_working_directory = os.getcwd()
-    s_static_directory = join(s_working_directory, "ptjpl_static")
-    s_srtm_download = join(s_working_directory, "srtm_download_directory")
-    s_lance_download_directory = join(s_working_directory, "lance_download_directory")
-    s_geos5fp_download = join(s_working_directory, "geos5fp_download_directory")
-
-    ### Cleanup previous runs ###
-    # Cleanup historical values
-    _cleanup_folder(s_geos5fp_download, '.')
-    _cleanup_folder('HLS2_download', '.', i_day_offset=16)
-    _cleanup_folder(os.path.join(s_lance_download_directory, 'VNP21_NRT'), '-')
-    _cleanup_folder(os.path.join(s_lance_download_directory, 'VNP43IA4N'), '-')
-    _cleanup_folder(os.path.join(s_lance_download_directory, 'VNP43MA4N'), '-')
-    _cleanup_folder("LANCE_output", '-')
-    _cleanup_folder("landsat_download", '-', i_day_offset=30)
-    _cleanup_folder(s_geos5fp_download, '.')
-
-    # Cleanup forecast values
-    _cleanup_folder("GFS_download_directory", '-', i_day_offset=-10)
-    _cleanup_folder("GFS_output", '-', i_day_offset=-10)
-
-    ### Get the current datetime ###
-    o_datetime_utc = datetime.now(timezone.utc)
-
-    ### Process each tile ###198
     for tile in RIO_GRANDE_TILES:
         ET_toolbox_hindcast_forecast_tile(
             tile=tile,
-            s_working_directory=s_working_directory,
-            s_static_directory=s_static_directory,
-            s_srtm_download_directory=s_srtm_download,
-            s_lance_download_directory=s_lance_download_directory,
-            s_geos5fp_download_directory=s_geos5fp_download,
-            o_present_date=o_datetime_utc
+            working_directory=working_directory,
+            static_directory=static_directory,
+            SRTM_download_directory=SRTM_download,
+            LANCE_download_directory=LANCE_download_directory,
+            GEOS5FP_download_directory=GEOS5FP_download,
         )

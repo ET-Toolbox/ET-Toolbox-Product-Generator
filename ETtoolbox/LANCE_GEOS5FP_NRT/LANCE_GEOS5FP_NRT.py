@@ -1,19 +1,18 @@
 from glob import glob
 from os.path import splitext
 from typing import Dict, Callable
-import boto3
 from rasters import RasterGrid
 
 from gedi_canopy_height import GEDICanopyHeight
-from geos5fp import GEOS5FP
+from GEOS5FP import GEOS5FP
 from ETtoolbox.LANCE import *
 from ETtoolbox.LANCE import LANCENotAvailableError
-from modisci import MODISCI
-from ETtoolbox.PTJPL import PTJPL
-from ETtoolbox.PTJPLSM import PTJPLSM
+from MODISCI import MODISCI
+from PTJPL import PTJPL
+from PTJPLSM import PTJPLSM
 from ETtoolbox.SRTM import SRTM
 from soil_capacity_wilting import SoilGrids
-from geos5fp.downscaling import downscale_air_temperature, downscale_soil_moisture, downscale_vapor_pressure_deficit, \
+from GEOS5FP.downscaling import downscale_air_temperature, downscale_soil_moisture, downscale_vapor_pressure_deficit, \
     downscale_relative_humidity, bias_correct
 
 from ETtoolbox.LANCE import ARCHIVE
@@ -189,12 +188,6 @@ def LANCE_GEOS5FP_NRT(
         LANCE_output_directory = join(working_directory, DEFAULT_LANCE_OUTPUT_DIRECTORY)
 
     logger.info(f"LANCE output directory: {colored_logging.dir(LANCE_output_directory)}")
-
-    if output_bucket_name is not None:
-        logger.info(f"output S3 bucket: {output_bucket_name}")
-        session = boto3.Session()
-        s3 = session.resource("s3")
-        output_bucket = s3.Bucket(output_bucket_name)
 
     LANCE_already_processed = check_LANCE_already_processed(LANCE_output_directory=LANCE_output_directory, target_date=target_date, time_UTC=time_UTC,
                                                             target=target, products=target_variables)

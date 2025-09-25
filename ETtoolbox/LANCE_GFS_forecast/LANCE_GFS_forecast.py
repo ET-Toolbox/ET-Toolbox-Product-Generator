@@ -4,15 +4,14 @@ from typing import Dict, Callable
 import os
 
 from gedi_canopy_height import GEDICanopyHeight
-from geos5fp import GEOS5FP
-from ETtoolbox.GFS import *
+from GEOS5FP import GEOS5FP
+from global_forecasting_system import *
 from ETtoolbox.LANCE import *
-from modisci import MODISCI
-from ETtoolbox.PTJPL import PTJPL
-from ETtoolbox.PTJPLSM import PTJPLSM, GEOS5FPNotAvailableError
+from MODISCI import MODISCI
+from PTJPL import PTJPL
 from ETtoolbox.SRTM import SRTM
 from soil_capacity_wilting import SoilGrids
-from geos5fp.downscaling import downscale_air_temperature, downscale_soil_moisture, bias_correct
+from GEOS5FP.downscaling import downscale_air_temperature, downscale_soil_moisture, bias_correct
 from sentinel_tiles import sentinel_tiles
 from rasters import RasterGrid, Raster
 
@@ -122,7 +121,7 @@ def LANCE_GFS_forecast(
         Ta_C: Raster = None,
         RH: Raster = None,
         water: Raster = None,
-        model: PTJPLSM = None,
+        model: PTJPL = None,
         working_directory: str = None,
         static_directory: str = None,
         GFS_download: str = None,
