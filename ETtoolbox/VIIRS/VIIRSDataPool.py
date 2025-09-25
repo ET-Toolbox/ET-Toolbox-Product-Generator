@@ -40,7 +40,7 @@ def parse_VIIRS_build(filename: str) -> int:
     return int(basename(filename).split(".")[3])
 
 
-DEFAULT_WORKING_DIRECTORY = "."
+DEFAULT_WORKING_DIRECTORY = "~/data/VIIRS"
 DEFAULT_PRODUCTS_DIRECTORY = "VIIRS_products"
 
 
@@ -143,7 +143,7 @@ class VIIRSGranule:
 
 
 class VIIRSDataPool(LPDAACDataPool):
-    DEFAULT_WORKING_DIRECTORY = "."
+    DEFAULT_WORKING_DIRECTORY = "~/data/VIIRS"
     DEFAULT_DOWNLOAD_DIRECTORY = "VIIRS_download"
     DEFAULT_PRODUCTS_DIRECTORY = "VIIRS_products"
     DEFAULT_MOSAIC_DIRECTORY = "VIIRS_mosaics"

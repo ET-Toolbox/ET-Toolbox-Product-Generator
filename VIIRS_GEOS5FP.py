@@ -208,7 +208,7 @@ def VIIRS_GEOS5FP(
     logger.info(f"VIIRS GEOS-5 FP target time UTC: {cl.time(time_UTC)}")
 
     if working_directory is None:
-        working_directory = "."
+        working_directory = "~/data/ETtoolbox"
 
     working_directory = abspath(expanduser(working_directory))
 

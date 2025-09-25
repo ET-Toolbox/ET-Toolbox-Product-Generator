@@ -108,7 +108,7 @@ def Landsat_GEOS5FP(target_date: Union[date, str], geometry: rt.RasterGeometry, 
     logger.info(f"Landsat target time UTC: {colored_logging.time(time_UTC)}")
 
     if working_directory is None:
-        working_directory = "."
+        working_directory = "~/data/Landsat_GEOS5FP"
     
     working_directory = abspath(expanduser(working_directory))
     

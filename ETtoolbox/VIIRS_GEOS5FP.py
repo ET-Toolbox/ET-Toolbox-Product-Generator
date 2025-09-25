@@ -204,7 +204,7 @@ def VIIRS_GEOS5FP(
         if nrt_mode:
             working_directory = "~/data/ETtoolbox" # Common default for NRT systems
         else:
-            working_directory = "." # Current directory for standard processing
+            working_directory = "~/data/ETtoolbox" # Current directory for standard processing
     # Resolve to an absolute path and expand user directory (e.g., '~' to '/home/user').
     working_directory = abspath(expanduser(working_directory))
     logger.info(f"Working directory: {cl.dir(working_directory)}")

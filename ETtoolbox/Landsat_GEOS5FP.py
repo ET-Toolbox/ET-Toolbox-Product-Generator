@@ -156,7 +156,7 @@ def Landsat_GEOS5FP(
 
     # Set up working directory
     if working_directory is None:
-        working_directory = "."
+        working_directory = "~/data/Landsat_GEOS5FP"
     working_directory = abspath(expanduser(working_directory))
     logger.info(f"Landsat working directory: {colored_logging.dir(working_directory)}")
 

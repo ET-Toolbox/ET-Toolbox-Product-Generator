@@ -171,7 +171,7 @@ def LANCE_GFS_forecast(
         LANCE_processing_date = parser.parse(LANCE_processing_date).date()
 
     if working_directory is None:
-        working_directory = "."
+        working_directory = "~/data/GFS_LANCE"
 
     working_directory = abspath(expanduser(working_directory))
 

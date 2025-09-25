@@ -9,7 +9,7 @@ from rasters import Raster
 import colored_logging
 
 
-DEFAULT_WORKING_DIRECTORY = "."
+DEFAULT_WORKING_DIRECTORY = "~/data/model"
 DEFAULT_INTERMEDIATE = "intermediate"
 DEFAULT_PREVIEW_QUALITY = 20
 DEFAULT_INCLUDE_PREVIEW = True

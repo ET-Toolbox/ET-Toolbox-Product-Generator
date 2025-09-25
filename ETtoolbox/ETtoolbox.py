@@ -246,7 +246,7 @@ def ET_toolbox_hindcast_forecast_tile(
     # Check if a working directory is provided
     if s_working_directory is None:
         # A working directory is not provided. Assume the local directory.
-        s_working_directory = "."
+        s_working_directory = "~/data/ET_toolbox"
 
     # Get the absolute path of the working directory
     s_working_directory = os.path.abspath(os.path.expanduser(s_working_directory))

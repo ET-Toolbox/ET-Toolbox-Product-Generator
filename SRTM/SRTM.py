@@ -18,7 +18,7 @@ from ETtoolbox.LPDAAC import LPDAACDataPool
 from rasters import Raster, RasterGeometry, RasterGrid
 import pandas as pd
 
-DEFAULT_WORKING_DIRECTORY = "."
+DEFAULT_WORKING_DIRECTORY = "~/data/SRTM"
 DEFAULT_DOWNLOAD_DIRECTORY = "SRTM_download_directory"
 
 SRTM_FILENAMES_CSV = join(abspath(dirname(__file__)), "filenames.csv")

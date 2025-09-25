@@ -195,7 +195,7 @@ def VIIRS_GFS_forecast(
         VIIRS_processing_date = parser.parse(VIIRS_processing_date).date()
 
     if working_directory is None:
-        working_directory = "."
+        working_directory = "~/data/ETtoolbox"
 
     working_directory = abspath(expanduser(working_directory))
 

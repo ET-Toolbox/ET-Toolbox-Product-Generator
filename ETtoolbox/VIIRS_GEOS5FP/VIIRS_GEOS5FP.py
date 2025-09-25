@@ -145,7 +145,7 @@ def VIIRS_GEOS5FP(target_date: Union[date, str], geometry: RasterGrid, target: s
     logger.info(f"VIIRS GEOS-5 FP target time UTC: {colored_logging.time(time_UTC)}")
 
     if working_directory is None:
-        working_directory = "."
+        working_directory = "~/data/VIIRS_GEOS5FP"
 
     working_directory = abspath(expanduser(working_directory))
 

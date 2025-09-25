@@ -9,7 +9,7 @@ from rasters import Raster, RasterGrid, RasterGeometry
 
 # URL = "https://e4ftl01.cr.usgs.gov/MOTA/MCD12C1.006/2019.01.01/MCD12C1.A2019001.006.2020220162300.hdf"
 URL = "https://e4ftl01.cr.usgs.gov/MOTA/MCD12C1.061/2019.01.01/MCD12C1.A2019001.061.2022170020638.hdf"
-DEFAULT_WORKING_DIRECTORY = "."
+DEFAULT_WORKING_DIRECTORY = "~/data/MCD12C1"
 DEFAULT_DOWNLOAD_DIRECTORY = "MCD12C1_download"
 
 logger = logging.getLogger(__name__)

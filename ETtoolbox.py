@@ -186,7 +186,7 @@ def ET_toolbox_hindcast_forecast_tile(
         f"generating ET Toolbox hindcast and forecast at tile {colored_logging.place(tile)} centered on present date: {colored_logging.time(present_date)}")
 
     if working_directory is None:
-        working_directory = "."
+        working_directory = "~/data/ETtoolbox"
 
     working_directory = abspath(expanduser(working_directory))
     logger.info(f"working directory: {working_directory}")

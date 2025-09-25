@@ -164,7 +164,7 @@ def LANCE_GEOS5FP_NRT(
     logger.info(f"LANCE target time UTC: {colored_logging.time(time_UTC)}")
 
     if working_directory is None:
-        working_directory = "."
+        working_directory = "~/data/LANCE_GEOS5FP"
 
     working_directory = abspath(expanduser(working_directory))
 
