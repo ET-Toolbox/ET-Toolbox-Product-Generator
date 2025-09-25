@@ -7,19 +7,59 @@ name = "ETtoolbox"
 version = "1.0.0"
 description = "Evapotranspiration Product Generator for the USBR-JPL Second Generation ET Toolbox"
 readme = "README.md"
-
+authors = [
+    { name = "Gregory H. Halverson", email = "gregory.h.halverson@jpl.nasa.gov" },
+]
 classifiers = [
     "Programming Language :: Python :: 3",
     "Operating System :: OS Independent",
 ]
-requires-python = ">=3.11"
+dependencies = [
+    "check-distribution",
+    "colored-logging",
+    "gedi-canopy-height",
+    "GEOS5FP",
+    "global-forecasting-system",
+    "harmonized-landsat-sentinel",
+    "LandsatL2C2>=1.0.3",
+    "MODISCI",
+    "NASADEM",
+    "PTJPL",
+    "rasters",
+    "sentinel-tiles",
+    "soil-capacity-wilting",
+    "solar-apparent-time",
+    "VNP09GA-002",
+    "VNP21A1D-002"
+]
+requires-python = ">=3.10"
+
+[project.optional-dependencies]
+dev = [
+    "build",
+    "pytest>=6.0",
+    "pytest-cov",
+    "jupyter",
+    "pytest",
+    "twine"
+]
 
 [tool.setuptools.package-data]
 ETtoolbox = ["*.txt"]
 
 [project.urls]
-Homepage = "https://gitlab.bor.doi.net/aao-et-toolbox/aao-et-calculation"
+Homepage = "https://github.com/ET-Toolbox/ET-Toolbox-Product-Generator"
+
+[project.scripts]
+LANCE-VIIRS-Dates = "ETtoolbox.available_lance_dates:main"
+ET-Toolbox-Credentials = "ETtoolbox.check_credentials:main"
+ET-Toolbox-Tile = "ETtoolbox.ETtoolbox_tile:main"
+ET-Toolbox-Rio-Grande = "ETtoolbox.ETtoolbox_riogrande:main"
+ET-Toolbox-Historical-Fine = "ETtoolbox.ETtoolbox_historical_fine:main"
+ET-Toolbox-Historical-Coarse = "ETtoolbox.ETtoolbox_historical_coarse:main"
+ET-Toolbox-Hindcast-Coarse = "ETtoolbox.ETtoolbox_hindcast_coarse:main"
+New-Mexico-VIIRS-Server = "new_mexico.new_mexico:main"
 
 [tool.setuptools.packages.find]
 include = ["ETtoolbox"]
-exclude = ["calval"]
+exclude = ["calval", "testing"]
