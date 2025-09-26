@@ -15,7 +15,7 @@ from ETtoolbox.LANCE import retrieve_vnp43ma4n, retrieve_vnp43ia4n, retrieve_vnp
 from ETtoolbox.LANCE_GEOS5FP_NRT import LANCE_GEOS5FP_NRT, LANCENotAvailableError, GEOS5FPNotAvailableError, retrieve_vnp21nrt_st, \
     check_LANCE_already_processed, DEFAULT_LANCE_OUTPUT_DIRECTORY, load_LANCE
 from ETtoolbox.LANCE_GFS_forecast import LANCE_GFS_forecast
-from ETtoolbox.LandsatL2C2 import LandsatL2C2
+from LandsatL2C2 import LandsatL2C2
 from MODISCI import MODISCI
 from ETtoolbox.SRTM import SRTM
 from soil_capacity_wilting import SoilGrids

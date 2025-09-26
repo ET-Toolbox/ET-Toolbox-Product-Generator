@@ -13,7 +13,7 @@ from gedi_canopy_height import GEDICanopyHeight
 from GEOS5FP import GEOS5FP
 from solar_apparent_time import solar_to_UTC
 from harmonized_landsat_sentinel import HLS2Connection
-from ETtoolbox.LandsatL2C2 import LandsatL2C2
+from LandsatL2C2 import LandsatL2C2
 from MODISCI import MODISCI
 from PTJPL import PTJPL
 from soil_capacity_wilting import SoilGrids
