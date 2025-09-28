@@ -1,14 +1,16 @@
 from glob import glob
 from os.path import splitext
 from typing import Dict, Callable
-
+from rasters import RasterGrid
 from gedi_canopy_height import GEDICanopyHeight
 from GEOS5FP import GEOS5FP
 from ETtoolbox.LANCE import *
 from MODISCI import MODISCI
 from PTJPL import PTJPL
+from verma_net_radiation import process_verma_net_radiation
 from ETtoolbox.SRTM import SRTM
 from soil_capacity_wilting import SoilGrids
+from FLiESANN import FLiESANN
 from ETtoolbox.VIIRS.VNP09GA import VNP09GA
 from ETtoolbox.VIIRS.VNP21A1D import VNP21A1D
 from ETtoolbox.VIIRS.VNP43MA4 import VNP43MA4
@@ -16,7 +18,7 @@ from GEOS5FP.downscaling import downscale_air_temperature, downscale_soil_moistu
     downscale_relative_humidity, bias_correct
 from PTJPL import FLOOR_TOPT
 
-ET_MODEL_NAME = "PTJPLSM"
+ET_MODEL_NAME = "PTJPL"
 
 VIIRS_DOWNLOAD_DIRECTORY = "VIIRS_download"
 VIIRS_PRODUCTS_DIRECTORY = "VIIRS_products"
@@ -127,8 +129,6 @@ def VIIRS_GEOS5FP(
     RH: Union[rt.Raster, str] = None,
     water: rt.Raster = None,
     elevation_km: rt.Raster = None,
-    model: PTJPLSM = None,
-    ET_model_name: str = ET_MODEL_NAME,
     working_directory: str = None,
     static_directory: str = None,
     VIIRS_download_directory: str = None,
@@ -207,12 +207,6 @@ def VIIRS_GEOS5FP(
     if VIIRS_shortwave_source is None:
         VIIRS_shortwave_source = VNP43MA4(working_directory=working_directory, download_directory=VIIRS_download_directory, products_directory=VIIRS_products_directory)
 
-        # VIIRS_shortwave_source = VNP09GA(
-        #     working_directory=working_directory,
-        #     download_directory=VIIRS_download_directory,
-        #     products_directory=VIIRS_products_directory
-        # )
-
     if VIIRS_GEOS5FP_output_directory is None:
         VIIRS_GEOS5FP_output_directory = join(working_directory, VIIRS_GEOS5FP_OUTPUT_DIRECTORY)
 
@@ -268,13 +262,6 @@ def VIIRS_GEOS5FP(
     if NDVI is None:
         logger.info(f"retrieving {colored_logging.name('VNP09GA')} {colored_logging.name('NDVI')} from LANCE on {colored_logging.time(target_date)}")
 
-        # NDVI = retrieve_VNP43IA4N(
-        #     geometry=geometry,
-        #     date_UTC=target_date,
-        #     variable="NDVI",
-        #     directory=VIIRS_download_directory,
-        #     resampling="cubic"
-        # )
         NDVI = VIIRS_shortwave_source.NDVI(date_UTC=target_date, geometry=geometry, resampling="cubic")
 
         if use_VIIRS_composite:
@@ -288,10 +275,6 @@ def VIIRS_GEOS5FP(
     results["NDVI"] = NDVI
 
     if emissivity is None:
-        # logger.info(
-        #     f"retrieving {colored_logging.name('VNP21_NRT')} {colored_logging.name('emissivity')} from LANCE on {colored_logging.time(target_date)}")
-        # emissivity = retrieve_VNP21NRT_emissivity(geometry=geometry, date_solar=target_date,
-        #                                           directory=VIIRS_download_directory, resampling="cubic")
 
         emissivity = 1.0094 + 0.047 * np.log(NDVI)
         emissivity = rt.where(water, 0.96, emissivity)
@@ -302,13 +285,6 @@ def VIIRS_GEOS5FP(
         logger.info(
             f"retrieving {colored_logging.name('VNP09GA')} {colored_logging.name('albedo')} from LANCE on {colored_logging.time(target_date)}")
 
-        # albedo = retrieve_VNP43MA4N(
-        #     geometry=geometry,
-        #     date_UTC=target_date,
-        #     variable="albedo",
-        #     directory=VIIRS_download_directory,
-        #     resampling="cubic"
-        # )
         albedo = VIIRS_shortwave_source.albedo(date_UTC=target_date, geometry=geometry, resampling="cubic")
 
         if use_VIIRS_composite:
@@ -320,32 +296,6 @@ def VIIRS_GEOS5FP(
                 albedo = rt.where(np.isnan(albedo), albedo_fill, albedo)
 
     results["albedo"] = albedo
-
-    if model is None:
-        if ET_model_name == "PTJPLSM":
-            model = PTJPLSM(working_directory=working_directory, static_directory=static_directory,
-                            SRTM_connection=SRTM_connection, SRTM_download=SRTM_download,
-                            GEOS5FP_connection=GEOS5FP_connection, GEOS5FP_download=GEOS5FP_download, GEOS5FP_products=GEOS5FP_products,
-                            GEDI_connection=GEDI_connection, GEDI_download=GEDI_download,
-                            ORNL_connection=ORNL_connection,
-                            CI_directory=CI_directory,
-                            soil_grids_connection=soil_grids_connection, soil_grids_download=soil_grids_download,
-                            intermediate_directory=intermediate_directory, preview_quality=preview_quality,
-                            ANN_model=ANN_model, ANN_model_filename=ANN_model_filename,
-                            resampling=resampling, downscale_air=downscale_air, downscale_humidity=downscale_humidity, downscale_moisture=downscale_moisture,
-                            floor_Topt=floor_Topt, save_intermediate=save_intermediate, include_preview=include_preview, show_distribution=show_distribution)
-        elif ET_model_name == "PTJPL":
-            model = PTJPL(working_directory=working_directory, static_directory=static_directory,
-                          SRTM_connection=SRTM_connection, SRTM_download=SRTM_download,
-                          GEOS5FP_connection=GEOS5FP_connection, GEOS5FP_download=GEOS5FP_download, GEOS5FP_products=GEOS5FP_products,
-                          GEDI_connection=GEDI_connection, GEDI_download=GEDI_download,
-                          ORNL_connection=ORNL_connection,
-                          CI_directory=CI_directory, intermediate_directory=intermediate_directory, preview_quality=preview_quality,
-                          ANN_model=ANN_model, ANN_model_filename=ANN_model_filename,
-                          resampling=resampling, downscale_air=downscale_air, downscale_humidity=downscale_humidity, downscale_moisture=downscale_moisture,
-                          floor_Topt=floor_Topt, save_intermediate=save_intermediate, include_preview=include_preview, show_distribution=show_distribution,)
-        else:
-            raise ValueError(f"unrecognized model: {ET_model_name}")
 
     coarse_geometry = geometry.rescale(coarse_cell_size)
 
@@ -362,7 +312,7 @@ def VIIRS_GEOS5FP(
     results["Ta"] = Ta_C
 
     if water is None:
-        water = model.SRTM_connection.swb(geometry)
+        water = SRTM_connection.swb(geometry)
 
     results["water"] = water
 
@@ -408,50 +358,14 @@ def VIIRS_GEOS5FP(
     VISdir = None
     NIRdir = None
 
-    if SWin is None or isinstance(SWin, str):
-        if SWin == "FLiES":
-            logger.info("generating solar radiation using the Forest Light Environmental Simulator")
-            Ra, Rg, UV, VIS, NIR, VISdiff, NIRdiff, VISdir, NIRdir = model.FLiES(geometry=geometry, target=target, time_UTC=time_UTC, albedo=albedo)
+    logger.info("generating solar radiation using GEOS-5 FP")
+    SWin = GEOS5FP_connection.SWin(time_UTC=time_UTC, geometry=geometry, resampling="cubic")
 
-            SWin = Rg
+    logger.info(f"running PT-JPL ET model at {colored_logging.time(time_UTC)}")
 
-        if SWin == "FLiES-GEOS5FP":
-            logger.info("generating solar radiation using Forest Light Environmental Simulator bias-corrected with GEOS-5 FP")
-            Ra, Rg, UV, VIS, NIR, VISdiff, NIRdiff, VISdir, NIRdir = model.FLiES(geometry=geometry, target=target, time_UTC=time_UTC, albedo=albedo)
+    PTJPL_results = PTJPL(geometry=geometry, target=target, time_UTC=time_UTC, ST_C=ST_C, emissivity=emissivity, NDVI=NDVI, albedo=albedo, SWin=SWin,
+                                wind_speed=wind_speed, Ta_C=Ta_C, RH=RH, Rn=Rn, water=water, output_variables=target_variables)
 
-            SWin_coarse = GEOS5FP_connection.SWin(time_UTC=time_UTC, geometry=coarse_geometry, resampling="cubic")
-            SWin = bias_correct(coarse_image=SWin_coarse, fine_image=Rg)
-        elif SWin == "GEOS5FP" or SWin is None:
-            logger.info("generating solar radiation using GEOS-5 FP")
-            SWin = GEOS5FP_connection.SWin(time_UTC=time_UTC, geometry=geometry, resampling="cubic")
-
-    if Rn is None or isinstance(Rn, str):
-        if Rn == "BESS":
-            logger.info(f"generating net radiation using Breathing Earth System Simulator for {colored_logging.place(target)} at {colored_logging.time(time_UTC)} UTC")
-
-            ST_K = ST_C + 273.15
-            Ta_K = Ta_C + 273.15
-
-            BESS_results = model.BESS(geometry=geometry, target=target, time_UTC=time_UTC, ST_K=ST_K, Ta_K=Ta_K, RH=RH, elevation_km=elevation_km, NDVI=NDVI,
-                                      albedo=albedo, Rg=SWin, VISdiff=VISdiff, VISdir=VISdir, NIRdiff=NIRdiff, NIRdir=NIRdir, UV=UV, water=water,
-                                      output_variables=["Rn", "LE", "GPP"])
-
-            Rn = BESS_results["Rn"]
-        if Rn == "Verma":
-            Rn = None
-
-    if ET_model_name == "PTJPLSM":
-        logger.info(f"running PT-JPL-SM ET model at {colored_logging.time(time_UTC)}")
-
-        PTJPL_results = model.PTJPL(geometry=geometry, target=target, time_UTC=time_UTC, ST_C=ST_C, emissivity=emissivity, NDVI=NDVI, albedo=albedo, SWin=SWin, SM=SM,
-                                    wind_speed=wind_speed, Ta_C=Ta_C, RH=RH, Rn=Rn, water=water, output_variables=target_variables,)
-    elif ET_model_name == "PTJPL":
-        logger.info(f"running PT-JPL ET model at {colored_logging.time(time_UTC)}")
-
-        PTJPL_results = model.PTJPL(geometry=geometry, target=target, time_UTC=time_UTC, ST_C=ST_C, emissivity=emissivity, NDVI=NDVI, albedo=albedo, SWin=SWin,
-                                    wind_speed=wind_speed, Ta_C=Ta_C, RH=RH, Rn=Rn, water=water, output_variables=target_variables)
-    else:
-        raise ValueError(f"unrecognized model: {ET_model_name}")
 
     for k, v in PTJPL_results.items():
         results[k] = v
