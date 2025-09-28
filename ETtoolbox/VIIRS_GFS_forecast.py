@@ -233,7 +233,7 @@ def VIIRS_GFS_forecast(
     # --- Section: Directory Setup ---
     # Set up the main working directory. If not provided, use the current directory.
     if working_directory is None:
-        working_directory = "."
+        working_directory = "~/data/VIIRS_GFS_forecast"
     # Resolve to an absolute path and expand user directory (e.g., '~' to '/home/user').
     working_directory = abspath(expanduser(working_directory))
     logger.info(f"GFS-VIIRS working directory: {cl.dir(working_directory)}")

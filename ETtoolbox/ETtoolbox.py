@@ -7,28 +7,28 @@ import numpy as np
 import colored_logging
 import rasters as rt
 from gedi_canopy_height import GEDICanopyHeight
-from geos5fp import GEOS5FP
-from openpyxl.reader.drawings import find_images
+from GEOS5FP import GEOS5FP
 
-from ETtoolbox.GFS import forecast_Ta_C, forecast_RH, get_gfs_listing, forecast_SWin
+from global_forecasting_system import forecast_Ta_C, forecast_RH, get_GFS_listing, forecast_SWin
 from harmonized_landsat_sentinel import HLS2Connection
 from ETtoolbox.LANCE import retrieve_vnp43ma4n, retrieve_vnp43ia4n, retrieve_vnp21nrt_emissivity, available_LANCE_dates
 from ETtoolbox.LANCE_GEOS5FP_NRT import LANCE_GEOS5FP_NRT, LANCENotAvailableError, GEOS5FPNotAvailableError, retrieve_vnp21nrt_st, \
     check_LANCE_already_processed, DEFAULT_LANCE_OUTPUT_DIRECTORY, load_LANCE
 from ETtoolbox.LANCE_GFS_forecast import LANCE_GFS_forecast
-from ETtoolbox.LandsatL2C2 import LandsatL2C2
-from modisci import MODISCI
-from ETtoolbox.PTJPLSM import PTJPLSM, DEFAULT_PREVIEW_QUALITY, DEFAULT_RESAMPLING
+from LandsatL2C2 import LandsatL2C2
+from MODISCI import MODISCI
 from ETtoolbox.SRTM import SRTM
 from soil_capacity_wilting import SoilGrids
 from solar_apparent_time import solar_to_UTC
+from PTJPL import PTJPL
+from GEOS5FP.downscaling import bias_correct, downscale_soil_moisture, downscale_air_temperature, downscale_vapor_pressure_deficit, downscale_relative_humidity
+from GEOS5FP.downscaling import linear_downscale
+from rasters import Raster, RasterGrid
+from sentinel_tiles import sentinel_tiles
 
 from .credentials import *
 from .daterange import date_range
-from geos5fp.downscaling import bias_correct, downscale_soil_moisture, downscale_air_temperature, downscale_vapor_pressure_deficit, downscale_relative_humidity
-from geos5fp.downscaling import linear_downscale
-from rasters import Raster, RasterGrid
-from sentinel_tiles import sentinel_tiles
+from .constants import *
 
 logger = logging.getLogger(__name__)
 
@@ -181,7 +181,7 @@ def ET_toolbox_hindcast_forecast_tile(
         tile: str,
         o_present_date: Union[date, str] = None,
         water: Raster = None,
-        model: PTJPLSM = None,
+        model: PTJPL = None,
         ET_model_name: str = ET_MODEL_NAME,
         SWin_model_name: str = SWIN_MODEL_NAME,
         Rn_model_name: str = RN_MODEL_NAME,
@@ -206,7 +206,6 @@ def ET_toolbox_hindcast_forecast_tile(
         soil_grids_connection: SoilGrids = None,
         soil_grids_download: str = None,
         intermediate_directory: str = None,
-        preview_quality: int = DEFAULT_PREVIEW_QUALITY,
         ANN_model: Callable = None,
         ANN_model_filename: str = None,
         resampling: str = DEFAULT_RESAMPLING,
@@ -247,7 +246,7 @@ def ET_toolbox_hindcast_forecast_tile(
     # Check if a working directory is provided
     if s_working_directory is None:
         # A working directory is not provided. Assume the local directory.
-        s_working_directory = "."
+        s_working_directory = "~/data/ET_toolbox"
 
     # Get the absolute path of the working directory
     s_working_directory = os.path.abspath(os.path.expanduser(s_working_directory))
@@ -367,7 +366,7 @@ def ET_toolbox_hindcast_forecast_tile(
     ## Create the GEOS5FP connection ##
     if o_geos5fp_connection is None:
         # Connection is not provided. Create a new connection object.
-        o_geos5fp_connection = GEOS5FP(working_directory=s_working_directory, download_directory=s_geos5fp_download_directory, products_directory=GEOS5FP_products)
+        o_geos5fp_connection = GEOS5FP(download_directory=s_geos5fp_download_directory)
 
     ## Create the SRTM connection ##
     if o_srtm_connection is None:
@@ -842,7 +841,6 @@ def ET_toolbox_hindcast_forecast_tile(
                               soil_grids_connection=soil_grids_connection, soil_grids_download=soil_grids_download,
                               s_lance_download_directory=s_lance_download_directory, LANCE_output_directory=s_lance_output_directory,
                               intermediate_directory=intermediate_directory,
-                              preview_quality=preview_quality,
                               ANN_model=ANN_model, ANN_model_filename=ANN_model_filename, o_model=model, s_model_name=ET_model_name,
                               o_st_band_celsius=o_landsat_scene_st_celsius,
                               o_emissivity=o_emissivity,
@@ -892,7 +890,7 @@ def ET_toolbox_hindcast_forecast_tile(
 
     # Get the available GFS forecats
     logger.info("getting GFS listing")
-    of_gfs_listing = get_gfs_listing(o_present_date)
+    of_gfs_listing = get_GFS_listing(o_present_date)
 
     ## Loop and process each forecast date ##
     for o_target_date in ol_forecast_dates:

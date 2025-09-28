@@ -15,7 +15,7 @@ from sentinel_tiles import sentinel_tiles
 from soil_capacity_wilting import SoilGrids
 from solar_apparent_time import solar_to_UTC
 
-from ETtoolbox.LandsatL2C2 import LandsatL2C2
+from LandsatL2C2 import LandsatL2C2
 from ETtoolbox.PTJPLSM import PTJPLSM, DEFAULT_PREVIEW_QUALITY, DEFAULT_RESAMPLING
 from ETtoolbox.SRTM import SRTM
 from ETtoolbox.VIIRS import VNP43MA4
@@ -392,7 +392,7 @@ def main(argv=sys.argv):
     if "--working" in argv:
         working_directory = argv[argv.index("--working") + 1]
     else:
-        working_directory = "."
+        working_directory = "~/data/ETtoolbox"
 
     if "--static" in argv:
         static_directory = argv[argv.index("--static") + 1]

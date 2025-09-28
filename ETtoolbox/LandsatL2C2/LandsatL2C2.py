@@ -1008,7 +1008,7 @@ class LandsatL2C2(EEAPI):
     _GRANULE_DOWNLOAD_SYSTEM = ["dds_zip", "dds", "ls_zip"]
     _BAND_DOWNLOAD_SYSTEM = "dds"
 
-    _DEFAULT_WORKING_DIRECTORY = "."
+    _DEFAULT_WORKING_DIRECTORY = "~/data/LandsatL2C2"
     _DEFAULT_DOWNLOAD_DIRECTORY = "landsat_download"
     _DEFAULT_PRODUCTS_DIRECTORY = "landsat_products"
     _DEFAULT_MOSAIC_DIRECTORY = "landsat_mosaic"

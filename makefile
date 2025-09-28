@@ -11,7 +11,8 @@ clean:
 	find . -type d -name "__pycache__" -exec rm -rf {} +
 
 test:
-	pytest
+	echo "PYTHONPATH=$(pwd):$(PYTHONPATH)"
+	PYTHONPATH=$(pwd):$(PYTHONPATH) python -m pytest --import-mode=importlib
 
 build:
 	python -m build

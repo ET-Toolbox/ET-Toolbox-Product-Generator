@@ -122,7 +122,7 @@ def main(argv=sys.argv):
     if "--working" in argv:
         working_directory = argv[argv.index("--working") + 1]
     else:
-        working_directory = "."
+        working_directory = "~/data/new_mexico_VIIRS"
 
     if "--output" in argv:
         output_directory = argv[argv.index("--output") + 1]

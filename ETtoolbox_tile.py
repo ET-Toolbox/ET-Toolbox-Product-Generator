@@ -1,6 +1,6 @@
 import sys
 from os.path import join
-import pip_system_certs.wrapt_requests
+
 from ETtoolbox import ET_toolbox_hindcast_forecast_tile
 
 
@@ -10,7 +10,7 @@ def main(argv=sys.argv):
     if "--working" in argv:
         working_directory = argv[argv.index("--working") + 1]
     else:
-        working_directory = "."
+        working_directory = "~/data/ETtoolbox"
 
     if "--static" in argv:
         static_directory = argv[argv.index("--static") + 1]
@@ -34,11 +34,11 @@ def main(argv=sys.argv):
 
     ET_toolbox_hindcast_forecast_tile(
         tile=tile,
-        s_working_directory=working_directory,
-        s_static_directory=static_directory,
-        s_srtm_download_directory=SRTM_download,
-        s_lance_download_directory=LANCE_download_directory,
-        s_geos5fp_download_directory=GEOS5FP_download,
+        working_directory=working_directory,
+        static_directory=static_directory,
+        SRTM_download_directory=SRTM_download,
+        LANCE_download_directory=LANCE_download_directory,
+        GEOS5FP_download_directory=GEOS5FP_download,
     )
 
 if __name__ == "__main__":
