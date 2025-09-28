@@ -8,7 +8,6 @@ from ETtoolbox.LANCE import *
 from MODISCI import MODISCI
 from PTJPL import PTJPL
 from verma_net_radiation import process_verma_net_radiation
-from ETtoolbox.SRTM import SRTM
 from NASADEM import NASADEMConnection
 from soil_capacity_wilting import SoilGrids
 from FLiESANN import FLiESANN
