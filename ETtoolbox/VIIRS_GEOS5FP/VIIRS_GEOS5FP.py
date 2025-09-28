@@ -9,6 +9,7 @@ from MODISCI import MODISCI
 from PTJPL import PTJPL
 from verma_net_radiation import process_verma_net_radiation
 from ETtoolbox.SRTM import SRTM
+from NASADEM import NASADEMConnection
 from soil_capacity_wilting import SoilGrids
 from FLiESANN import FLiESANN
 from ETtoolbox.VIIRS.VNP09GA import VNP09GA
@@ -137,7 +138,7 @@ def VIIRS_GEOS5FP(
     use_VIIRS_composite: bool = USE_VIIRS_COMPOSITE,
     VIIRS_composite_days: int = VIIRS_COMPOSITE_DAYS,
     VIIRS_GEOS5FP_output_directory: str = None,
-    SRTM_connection: SRTM = None,
+    SRTM_connection: NASADEMConnection = None,
     SRTM_download: str = None,
     GEOS5FP_connection: GEOS5FP = None,
     GEOS5FP_download: str = None,
@@ -182,7 +183,7 @@ def VIIRS_GEOS5FP(
     working_directory = abspath(expanduser(working_directory))
 
     if SRTM_connection is None:
-        SRTM_connection = SRTM(working_directory=static_directory, download_directory=SRTM_download, offline_ok=True)
+        SRTM_connection = NASADEMConnection(working_directory=static_directory, download_directory=SRTM_download, offline_ok=True)
 
     if water is None:
         water = SRTM_connection.swb(geometry)
