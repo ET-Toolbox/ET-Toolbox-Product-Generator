@@ -61,6 +61,7 @@ dependencies = [
     "verma-net-radiation",
     "VNP09GA-002",
     "VNP21A1D-002",
+    "xarray",
     "xmltodict",
 ]
 requires-python = ">=3.10"

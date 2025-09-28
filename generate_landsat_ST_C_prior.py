@@ -1,6 +1,17 @@
 from typing import Union
-from datetime import date
+from datetime import date, timedelta
 from rasters import RasterGrid
+import numpy as np
+import colored_logging as cl
+from LandsatL2C2 import LandsatL2C2
+from dateutil import parser
+from rasters import Raster
+
+import logging 
+
+from .constants import *
+
+logger = logging.getLogger(__name__)
 
 def generate_landsat_ST_C_prior(
         date_UTC: Union[date, str],
@@ -21,10 +32,10 @@ def generate_landsat_ST_C_prior(
 
     landsat_start = date_UTC - timedelta(days=landsat_initialization_days)
     landsat_end = date_UTC - timedelta(days=1)
-    logger.info(f"generating Landsat temperature composite from {colored_logging.time(landsat_start)} to {colored_logging.time(landsat_end)}")
+    logger.info(f"generating Landsat temperature composite from {cl.time(landsat_start)} to {cl.time(landsat_end)}")
     landsat_listing = landsat.scene_search(start=landsat_start, end=landsat_end, target_geometry=geometry)
     landsat_composite_dates = sorted(set(landsat_listing.date_UTC))
-    logger.info(f"found Landsat granules on dates: {', '.join([colored_logging.time(d) for d in landsat_composite_dates])}")
+    logger.info(f"found Landsat granules on dates: {', '.join([cl.time(d) for d in landsat_composite_dates])}")
 
     ST_C_images = []
 

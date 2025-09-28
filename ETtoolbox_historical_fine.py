@@ -7,7 +7,7 @@ from typing import List, Callable, Union
 import numpy as np
 from dateutil import parser
 
-import colored_logging
+import colored_logging as cl
 import rasters as rt
 from gedi_canopy_height import GEDICanopyHeight
 from GEOS5FP import GEOS5FP
@@ -61,10 +61,10 @@ def generate_landsat_ST_C_prior(
 
     landsat_start = date_UTC - timedelta(days=landsat_initialization_days)
     landsat_end = date_UTC - timedelta(days=1)
-    logger.info(f"generating Landsat temperature composite from {colored_logging.time(landsat_start)} to {colored_logging.time(landsat_end)}")
+    logger.info(f"generating Landsat temperature composite from {cl.time(landsat_start)} to {cl.time(landsat_end)}")
     landsat_listing = landsat.scene_search(start=landsat_start, end=landsat_end, target_geometry=geometry)
     landsat_composite_dates = sorted(set(landsat_listing.date_UTC))
-    logger.info(f"found Landsat granules on dates: {', '.join([colored_logging.time(d) for d in landsat_composite_dates])}")
+    logger.info(f"found Landsat granules on dates: {', '.join([cl.time(d) for d in landsat_composite_dates])}")
 
     ST_C_images = []
 
@@ -142,26 +142,26 @@ def ET_toolbox_historical_fine_tile(
         end_date = parser.parse(end_date).date()
 
     logger.info(
-        f"generating ET Toolbox hindcast and forecast at tile {colored_logging.place(tile)} from {colored_logging.time(start_date)} to {colored_logging.time(end_date)}")
+        f"generating ET Toolbox hindcast and forecast at tile {cl.place(tile)} from {cl.time(start_date)} to {cl.time(end_date)}")
 
     if HLS_geometry is None:
-        logger.info(f"HLS cell size: {colored_logging.val(HLS_cell_size)}m")
+        logger.info(f"HLS cell size: {cl.val(HLS_cell_size)}m")
         HLS_geometry = sentinel_tiles.grid(tile, cell_size=HLS_cell_size)
 
     if I_geometry is None:
-        logger.info(f"I-band cell size: {colored_logging.val(I_cell_size)}m")
+        logger.info(f"I-band cell size: {cl.val(I_cell_size)}m")
         I_geometry = sentinel_tiles.grid(tile, cell_size=I_cell_size)
 
     if M_geometry is None:
-        logger.info(f"I-band cell size: {colored_logging.val(M_cell_size)}m")
+        logger.info(f"I-band cell size: {cl.val(M_cell_size)}m")
         M_geometry = sentinel_tiles.grid(tile, cell_size=M_cell_size)
 
     if GEOS5FP_geometry is None:
-        logger.info(f"GEOS-5 FP cell size: {colored_logging.val(GEOS5FP_cell_size)}m")
+        logger.info(f"GEOS-5 FP cell size: {cl.val(GEOS5FP_cell_size)}m")
         GEOS5FP_geometry = sentinel_tiles.grid(tile, cell_size=GEOS5FP_cell_size)
 
     if GFS_geometry is None:
-        logger.info(f"GFS cell size: {colored_logging.val(GFS_cell_size)}m")
+        logger.info(f"GFS cell size: {cl.val(GFS_cell_size)}m")
         GFS_geometry = sentinel_tiles.grid(tile, cell_size=GFS_cell_size)
 
     if target_variables is None:
@@ -210,14 +210,14 @@ def ET_toolbox_historical_fine_tile(
         download_directory=VNP21A1D_download_directory,
         )
 
-    logger.info(f"VIIRS GEOS-5 FP output directory: {colored_logging.dir(VIIRS_GEOS5FP_output_directory)}")
+    logger.info(f"VIIRS GEOS-5 FP output directory: {cl.dir(VIIRS_GEOS5FP_output_directory)}")
 
     VIIRS_dates_processed = set()
 
     for target_date in date_range(start_date, end_date):
-        logger.info(f"ET Toolbox historical fine target date: {colored_logging.time(target_date)}")
+        logger.info(f"ET Toolbox historical fine target date: {cl.time(target_date)}")
         time_solar = datetime(target_date.year, target_date.month, target_date.day, 13, 30)
-        logger.info(f"ET Toolbox historical fine time solar: {colored_logging.time(time_solar)}")
+        logger.info(f"ET Toolbox historical fine time solar: {cl.time(time_solar)}")
         time_UTC = solar_to_UTC(time_solar, HLS_geometry.centroid.latlon.x)
 
         VIIRS_already_processed = check_VIIRS_GEOS5FP_already_processed(
@@ -229,7 +229,7 @@ def ET_toolbox_historical_fine_tile(
         )
 
         if VIIRS_already_processed:
-            logger.info(f"VIIRS GEOS-5 FP already processed at tile {colored_logging.place(tile)} for date {target_date}")
+            logger.info(f"VIIRS GEOS-5 FP already processed at tile {cl.place(tile)} for date {target_date}")
             VIIRS_dates_processed |= {target_date}
             continue
         else:
@@ -238,7 +238,7 @@ def ET_toolbox_historical_fine_tile(
     HLS_start = start_date - timedelta(days=HLS_initialization_days)
     HLS_end = start_date - timedelta(days=1)
 
-    logger.info(f"forming HLS NDVI composite from {colored_logging.time(HLS_start)} to {colored_logging.time(HLS_end)}")
+    logger.info(f"forming HLS NDVI composite from {cl.time(HLS_start)} to {cl.time(HLS_end)}")
 
     missing_dates = []
     NDVI_images = []
@@ -280,10 +280,10 @@ def ET_toolbox_historical_fine_tile(
     )
 
     for target_date in date_range(start_date, end_date):
-        logger.info(f"VIIRS GEOS-5 FP target date: {colored_logging.time(target_date)}")
+        logger.info(f"VIIRS GEOS-5 FP target date: {cl.time(target_date)}")
 
         time_solar = datetime(target_date.year, target_date.month, target_date.day, 13, 30)
-        logger.info(f"VIIRS target time solar: {colored_logging.time(time_solar)}")
+        logger.info(f"VIIRS target time solar: {cl.time(time_solar)}")
         time_UTC = solar_to_UTC(time_solar, HLS_geometry.centroid.latlon.x)
 
         try:
@@ -296,7 +296,7 @@ def ET_toolbox_historical_fine_tile(
             )
 
             if VIIRS_already_processed:
-                logger.info(f"VIIRS GEOS-5 FP already processed at tile {colored_logging.place(tile)} for date {target_date}")
+                logger.info(f"VIIRS GEOS-5 FP already processed at tile {cl.place(tile)} for date {target_date}")
                 continue
 
             try:
@@ -314,7 +314,7 @@ def ET_toolbox_historical_fine_tile(
             landsat_ST_C_prior = landsat_ST_C
 
             logger.info(
-                f"retrieving VIIRS VNP21 ST for tile {colored_logging.place(tile)} on date {colored_logging.time(target_date)} at {colored_logging.val(M_cell_size)}m resolution")
+                f"retrieving VIIRS VNP21 ST for tile {cl.place(tile)} on date {cl.time(target_date)} at {cl.val(M_cell_size)}m resolution")
 
             ST_C_M = VNP21A1D_connection.ST_C(
                 date_UTC=target_date,
@@ -326,7 +326,7 @@ def ET_toolbox_historical_fine_tile(
                 for days_back in range(1, VIIRS_composite_days):
                     fill_date = target_date - timedelta(days_back)
                     logger.info(
-                        f"gap-filling {colored_logging.name('VNP21A1D')} {colored_logging.name('ST_C')} from VIIRS on {colored_logging.time(fill_date)} for {colored_logging.time(target_date)}")
+                        f"gap-filling {cl.name('VNP21A1D')} {cl.name('ST_C')} from VIIRS on {cl.time(fill_date)} for {cl.time(target_date)}")
                     ST_C_M_fill = VNP21A1D_connection.ST_C(date_UTC=target_date, geometry=M_geometry, resampling="cubic")
                     ST_C_M = rt.where(np.isnan(ST_C_M), ST_C_M_fill, ST_C_M)
 
@@ -343,7 +343,7 @@ def ET_toolbox_historical_fine_tile(
             NDVI_HLS_prior = NDVI_HLS
 
             logger.info(
-                f"retrieving VIIRS I-band NDVI for tile {colored_logging.place(tile)} on date {colored_logging.time(target_date)} at {colored_logging.val(I_cell_size)}m resolution")
+                f"retrieving VIIRS I-band NDVI for tile {cl.place(tile)} on date {cl.time(target_date)} at {cl.val(I_cell_size)}m resolution")
 
             NDVI_I = VIIRS_shortwave_source.NDVI(
                 date_UTC=target_date,
@@ -355,7 +355,7 @@ def ET_toolbox_historical_fine_tile(
                 for days_back in range(1, VIIRS_composite_days):
                     fill_date = target_date - timedelta(days_back)
                     logger.info(
-                        f"gap-filling {colored_logging.name('VNP09GA')} {colored_logging.name('NDVI')} from VIIRS on {colored_logging.time(fill_date)} for {colored_logging.time(target_date)}")
+                        f"gap-filling {cl.name('VNP09GA')} {cl.name('NDVI')} from VIIRS on {cl.time(fill_date)} for {cl.time(target_date)}")
                     NDVI_I_fill = VIIRS_shortwave_source.NDVI(date_UTC=target_date, geometry=I_geometry, resampling="cubic")
                     NDVI_I = rt.where(np.isnan(NDVI_I), NDVI_I_fill, NDVI_I)
 
@@ -364,7 +364,7 @@ def ET_toolbox_historical_fine_tile(
             NDVI_I = rt.where(water_I, np.nan, NDVI_I)
 
             logger.info(
-                f"down-scaling I-band NDVI to HLS composite for tile {colored_logging.place(tile)} on date {colored_logging.time(target_date)} from {colored_logging.val(I_cell_size)}m to {colored_logging.val(HLS_cell_size)}m resolution")
+                f"down-scaling I-band NDVI to HLS composite for tile {cl.place(tile)} on date {cl.time(target_date)} from {cl.val(I_cell_size)}m to {cl.val(HLS_cell_size)}m resolution")
             NDVI = bias_correct(
                 coarse_image=NDVI_I,
                 fine_image=NDVI_HLS
@@ -377,7 +377,7 @@ def ET_toolbox_historical_fine_tile(
             check_distribution(NDVI, "NDVI", target_date, tile)
 
             logger.info(
-                f"retrieving VIIRS VNP21 emissivity for tile {colored_logging.place(tile)} on date {colored_logging.time(target_date)} at {colored_logging.val(M_cell_size)}m resolution")
+                f"retrieving VIIRS VNP21 emissivity for tile {cl.place(tile)} on date {cl.time(target_date)} at {cl.val(M_cell_size)}m resolution")
             
             emissivity = 1.0094 + 0.047 * np.log(NDVI)
             emissivity = rt.where(water, 0.96, emissivity)
@@ -392,7 +392,7 @@ def ET_toolbox_historical_fine_tile(
             albedo_HLS_prior = albedo_HLS
 
             logger.info(
-                f"retrieving VIIRS M-band albedo for tile {colored_logging.place(tile)} on date {colored_logging.time(target_date)} at {colored_logging.val(M_cell_size)}m resolution")
+                f"retrieving VIIRS M-band albedo for tile {cl.place(tile)} on date {cl.time(target_date)} at {cl.val(M_cell_size)}m resolution")
             
             albedo_M = VIIRS_shortwave_source.albedo(date_UTC=target_date, geometry=M_geometry, resampling="cubic")
 
@@ -400,7 +400,7 @@ def ET_toolbox_historical_fine_tile(
                 for days_back in range(1, VIIRS_composite_days):
                     fill_date = target_date - timedelta(days_back)
                     logger.info(
-                        f"gap-filling {colored_logging.name('VNP09GA')} {colored_logging.name('albedo')} from VIIRS on {colored_logging.time(fill_date)} for {colored_logging.time(target_date)}")
+                        f"gap-filling {cl.name('VNP09GA')} {cl.name('albedo')} from VIIRS on {cl.time(fill_date)} for {cl.time(target_date)}")
                     albedo_M_fill = VIIRS_shortwave_source.albedo(date_UTC=target_date, geometry=M_geometry, resampling="cubic")
                     albedo_M = rt.where(np.isnan(albedo_M), albedo_M_fill, albedo_M)
 
@@ -408,7 +408,7 @@ def ET_toolbox_historical_fine_tile(
             albedo_M = rt.where(np.isnan(albedo_M), albedo_M_smooth, albedo_M)
 
             logger.info(
-                f"down-scaling M-band albedo to HLS composite for tile {colored_logging.place(tile)} on date {colored_logging.time(target_date)} from {colored_logging.val(M_cell_size)}m to {colored_logging.val(HLS_cell_size)}m resolution")
+                f"down-scaling M-band albedo to HLS composite for tile {cl.place(tile)} on date {cl.time(target_date)} from {cl.val(M_cell_size)}m to {cl.val(HLS_cell_size)}m resolution")
             albedo = bias_correct(
                 coarse_image=albedo_M,
                 fine_image=albedo_HLS
@@ -420,7 +420,7 @@ def ET_toolbox_historical_fine_tile(
             check_distribution(albedo, "albedo", target_date, tile)
 
             logger.info(
-                f"down-scaling VNP21 ST to Landsat 8/9 for tile {colored_logging.place(tile)} on date {colored_logging.time(target_date)} from {colored_logging.val(M_cell_size)}m to {colored_logging.val(HLS_cell_size)}m resolution")
+                f"down-scaling VNP21 ST to Landsat 8/9 for tile {cl.place(tile)} on date {cl.time(target_date)} from {cl.val(M_cell_size)}m to {cl.val(HLS_cell_size)}m resolution")
 
             ST_C = bias_correct(
                 coarse_image=ST_C_M,
@@ -437,7 +437,7 @@ def ET_toolbox_historical_fine_tile(
 
             if downscale_moisture:
                 logger.info(
-                    f"down-scaling GEOS-5 FP soil moisture to HLS composite for tile {colored_logging.place(tile)} on date {colored_logging.time(target_date)} from {colored_logging.val(GEOS5FP_cell_size)}m to {colored_logging.val(HLS_cell_size)}m resolution")
+                    f"down-scaling GEOS-5 FP soil moisture to HLS composite for tile {cl.place(tile)} on date {cl.time(target_date)} from {cl.val(GEOS5FP_cell_size)}m to {cl.val(HLS_cell_size)}m resolution")
 
                 SM_coarse_GEOS5FP = GEOS5FP_connection.SFMC(time_UTC=time_UTC, geometry=GEOS5FP_geometry,
                                                             resampling="cubic")
@@ -455,7 +455,7 @@ def ET_toolbox_historical_fine_tile(
                 )
             else:
                 logger.info(
-                    f"down-sampling GEOS-5 FP soil moisture for tile {colored_logging.place(tile)} on date {colored_logging.time(target_date)} from {colored_logging.val(GEOS5FP_cell_size)}m to {colored_logging.val(HLS_cell_size)}m resolution")
+                    f"down-sampling GEOS-5 FP soil moisture for tile {cl.place(tile)} on date {cl.time(target_date)} from {cl.val(GEOS5FP_cell_size)}m to {cl.val(HLS_cell_size)}m resolution")
                 SM = GEOS5FP_connection.SFMC(time_UTC=time_UTC, geometry=HLS_geometry, resampling="cubic")
 
             check_distribution(SM, "SM", target_date, tile)
@@ -464,7 +464,7 @@ def ET_toolbox_historical_fine_tile(
 
             if downscale_air:
                 logger.info(
-                    f"down-scaling GEOS-5 FP air temperature to HLS composite for tile {colored_logging.place(tile)} on date {colored_logging.time(target_date)} from {colored_logging.val(GEOS5FP_cell_size)}m to {colored_logging.val(HLS_cell_size)}m resolution")
+                    f"down-scaling GEOS-5 FP air temperature to HLS composite for tile {cl.place(tile)} on date {cl.time(target_date)} from {cl.val(GEOS5FP_cell_size)}m to {cl.val(HLS_cell_size)}m resolution")
                 Ta_K_coarse = GEOS5FP_connection.Ta_K(time_UTC=time_UTC, geometry=GEOS5FP_geometry, resampling="cubic")
                 Ta_K_smooth = GEOS5FP_connection.Ta_K(time_UTC=time_UTC, geometry=HLS_geometry, resampling="cubic")
                 Ta_K = downscale_air_temperature(
@@ -478,7 +478,7 @@ def ET_toolbox_historical_fine_tile(
                 Ta_K = rt.where(np.isnan(Ta_K), Ta_K_smooth, Ta_K)
             else:
                 logger.info(
-                    f"down-sampling GEOS-5 FP air temperature for tile {colored_logging.place(tile)} on date {colored_logging.time(target_date)} from {colored_logging.val(GEOS5FP_cell_size)}m to {colored_logging.val(HLS_cell_size)}m resolution")
+                    f"down-sampling GEOS-5 FP air temperature for tile {cl.place(tile)} on date {cl.time(target_date)} from {cl.val(GEOS5FP_cell_size)}m to {cl.val(HLS_cell_size)}m resolution")
                 Ta_K = GEOS5FP_connection.Ta_K(time_UTC=time_UTC, geometry=HLS_geometry, resampling="cubic")
 
             Ta_C = Ta_K - 273.15
@@ -488,7 +488,7 @@ def ET_toolbox_historical_fine_tile(
 
             if downscale_humidity:
                 logger.info(
-                    f"down-scaling GEOS-5 FP humidity to HLS composite for tile {colored_logging.place(tile)} on date {colored_logging.time(target_date)} from {colored_logging.val(GEOS5FP_cell_size)}m to {colored_logging.val(HLS_cell_size)}m resolution")
+                    f"down-scaling GEOS-5 FP humidity to HLS composite for tile {cl.place(tile)} on date {cl.time(target_date)} from {cl.val(GEOS5FP_cell_size)}m to {cl.val(HLS_cell_size)}m resolution")
 
                 VPD_Pa_coarse = GEOS5FP_connection.VPD_Pa(time_UTC=time_UTC, geometry=GEOS5FP_geometry,
                                                           resampling="cubic")
@@ -523,7 +523,7 @@ def ET_toolbox_historical_fine_tile(
                 RH = rt.where(np.isnan(RH), RH_smooth, RH)
             else:
                 logger.info(
-                    f"down-sampling GEOS-5 FP relative humidity for tile {colored_logging.place(tile)} on date {colored_logging.time(target_date)} from {colored_logging.val(GEOS5FP_cell_size)}m to {colored_logging.val(HLS_cell_size)}m resolution")
+                    f"down-sampling GEOS-5 FP relative humidity for tile {cl.place(tile)} on date {cl.time(target_date)} from {cl.val(GEOS5FP_cell_size)}m to {cl.val(HLS_cell_size)}m resolution")
                 RH = GEOS5FP_connection.RH(time_UTC=time_UTC, geometry=HLS_geometry, resampling="cubic")
 
             check_distribution(RH, "RH", target_date, tile)
@@ -581,7 +581,7 @@ def ET_toolbox_historical_fine_tile(
             missing_dates.append(target_date)
             continue
 
-    logger.info("missing VIIRS GEOS-5 FP dates: " + ", ".join(colored_logging.time(d) for d in missing_dates))
+    logger.info("missing VIIRS GEOS-5 FP dates: " + ", ".join(cl.time(d) for d in missing_dates))
 
 def main(argv=sys.argv):
     tile = argv[1]

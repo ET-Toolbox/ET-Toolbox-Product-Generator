@@ -17,7 +17,7 @@ from ETtoolbox.LANCE_GEOS5FP_NRT import LANCE_GEOS5FP_NRT, LANCENotAvailableErro
 from ETtoolbox.LANCE_GFS_forecast import LANCE_GFS_forecast
 from LandsatL2C2 import LandsatL2C2
 from MODISCI import MODISCI
-from ETtoolbox.SRTM import SRTM
+from NASADEM import NASADEMConnection
 from soil_capacity_wilting import SoilGrids
 from solar_apparent_time import solar_to_UTC
 from PTJPL import PTJPL
@@ -194,7 +194,7 @@ def ET_toolbox_hindcast_forecast_tile(
         s_gfs_download_directory: str = None,
         s_lance_download_directory: str = None,
         s_lance_output_directory: str = None,
-        o_srtm_connection: SRTM = None,
+        o_srtm_connection: NASADEMConnection = None,
         s_srtm_download_directory: str = None,
         o_geos5fp_connection: GEOS5FP = None,
         s_geos5fp_download_directory: str = None,
@@ -1040,7 +1040,6 @@ def ET_toolbox_hindcast_forecast_tile(
                                    soil_grids_download=soil_grids_download,
                                    LANCE_download_directory=s_lance_download_directory,
                                    intermediate_directory=intermediate_directory,
-                                   preview_quality=preview_quality,
                                    ANN_model=ANN_model,
                                    ANN_model_filename=ANN_model_filename,
                                    model=model,

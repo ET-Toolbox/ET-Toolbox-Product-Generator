@@ -9,7 +9,7 @@ from global_forecasting_system import *
 from ETtoolbox.LANCE import *
 from MODISCI import MODISCI
 from PTJPL import PTJPL
-from ETtoolbox.SRTM import SRTM
+from NASADEM import NASADEMConnection
 from soil_capacity_wilting import SoilGrids
 from GEOS5FP.downscaling import downscale_air_temperature, downscale_soil_moisture, bias_correct
 from sentinel_tiles import sentinel_tiles
@@ -127,7 +127,7 @@ def LANCE_GFS_forecast(
         GFS_download: str = None,
         GFS_output_directory: str = None,
         LANCE_download_directory: str = None,
-        SRTM_connection: SRTM = None,
+        SRTM_connection: NASADEMConnection = None,
         SRTM_download: str = None,
         GEOS5FP_connection: GEOS5FP = None,
         GEOS5FP_download: str = None,
@@ -188,7 +188,7 @@ def LANCE_GFS_forecast(
     logger.info(f"GFS output directory: {colored_logging.dir(GFS_output_directory)}")
 
     if SRTM_connection is None:
-        SRTM_connection = SRTM(working_directory=working_directory, download_directory=SRTM_download, offline_ok=True)
+        SRTM_connection = NASADEMConnection(working_directory=working_directory, download_directory=SRTM_download, offline_ok=True)
 
     if water is None:
         water = SRTM_connection.swb(geometry)

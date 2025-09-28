@@ -4,7 +4,7 @@ from datetime import datetime, timedelta, date
 from typing import List, Callable, Union
 from os.path import join
 
-import colored_logging
+import colored_logging as cl
 from gedi_canopy_height import GEDICanopyHeight
 from GEOS5FP import GEOS5FP
 
@@ -110,7 +110,7 @@ def ET_toolbox_hindcast_tile(
         present_date = datetime.utcnow().date()
 
     logger.info(
-        f"generating ET Toolbox hindcast and forecast at tile {colored_logging.place(tile)} centered on present date: {colored_logging.time(present_date)}")
+        f"generating ET Toolbox hindcast and forecast at tile {cl.place(tile)} centered on present date: {cl.time(present_date)}")
 
     # If no geometry is provided, use the default Sentinel-2 tile grid
     if geometry is None:
@@ -142,11 +142,11 @@ def ET_toolbox_hindcast_tile(
     # Loop over the past 7 days up to present (inclusive)
     for relative_days in range(-7, 1):
         target_date = present_date + timedelta(days=relative_days)
-        logger.info(f"VIIRS GEOS-5 FP target date: {colored_logging.time(target_date)} ({colored_logging.time(relative_days)} days)")
+        logger.info(f"VIIRS GEOS-5 FP target date: {cl.time(target_date)} ({cl.time(relative_days)} days)")
 
         # Set target solar time to 13:30 local
         time_solar = datetime(target_date.year, target_date.month, target_date.day, 13, 30)
-        logger.info(f"VIIRS target time solar: {colored_logging.time(time_solar)}")
+        logger.info(f"VIIRS target time solar: {cl.time(time_solar)}")
 
         try:
             # Main processing routine for this date
@@ -198,4 +198,4 @@ def ET_toolbox_hindcast_tile(
             continue
 
     # Log any dates for which processing failed
-    logger.info("missing VIIRS GEOS-5 FP dates: " + ", ".join(colored_logging.time(d) for d in missing_dates))
+    logger.info("missing VIIRS GEOS-5 FP dates: " + ", ".join(cl.time(d) for d in missing_dates))
