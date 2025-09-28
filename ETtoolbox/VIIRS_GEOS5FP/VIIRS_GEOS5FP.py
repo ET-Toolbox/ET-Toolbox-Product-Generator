@@ -3,19 +3,18 @@ from os.path import splitext
 from typing import Dict, Callable
 
 from gedi_canopy_height import GEDICanopyHeight
-from geos5fp import GEOS5FP
+from GEOS5FP import GEOS5FP
 from ETtoolbox.LANCE import *
-from modisci import MODISCI
-from ETtoolbox.PTJPL import PTJPL
-from ETtoolbox.PTJPLSM import PTJPLSM
+from MODISCI import MODISCI
+from PTJPL import PTJPL
 from ETtoolbox.SRTM import SRTM
 from soil_capacity_wilting import SoilGrids
 from ETtoolbox.VIIRS.VNP09GA import VNP09GA
 from ETtoolbox.VIIRS.VNP21A1D import VNP21A1D
 from ETtoolbox.VIIRS.VNP43MA4 import VNP43MA4
-from geos5fp.downscaling import downscale_air_temperature, downscale_soil_moisture, downscale_vapor_pressure_deficit, \
+from GEOS5FP.downscaling import downscale_air_temperature, downscale_soil_moisture, downscale_vapor_pressure_deficit, \
     downscale_relative_humidity, bias_correct
-from ETtoolbox.PTJPL import FLOOR_TOPT
+from PTJPL import FLOOR_TOPT
 
 ET_MODEL_NAME = "PTJPLSM"
 
@@ -112,27 +111,60 @@ def load_VIIRS_GEOS5FP(VIIRS_GEOS5FP_output_directory: str, target_date: Union[d
     return dataset
 
 
-def VIIRS_GEOS5FP(target_date: Union[date, str], geometry: RasterGrid, target: str,
-                  ST_C: rt.Raster = None, emissivity: rt.Raster = None, NDVI: rt.Raster = None, albedo: rt.Raster = None, SWin: Union[rt.Raster, str] = None,
-                  Rn: Union[rt.Raster, str] = None, SM: Union[rt.Raster, str] = None, wind_speed: rt.Raster = None, Ta_C: Union[rt.Raster, str] = None,
-                  RH: Union[rt.Raster, str] = None, water: rt.Raster = None, elevation_km: rt.Raster = None,
-                  model: PTJPLSM = None, ET_model_name: str = ET_MODEL_NAME,
-                  working_directory: str = None, static_directory: str = None,
-                  VIIRS_download_directory: str = None, VIIRS_products_directory: str = None, VIIRS_shortwave_source: Union[VNP09GA, VNP43MA4] = None,
-                  use_VIIRS_composite: bool = USE_VIIRS_COMPOSITE, VIIRS_composite_days: int = VIIRS_COMPOSITE_DAYS, VIIRS_GEOS5FP_output_directory: str = None,
-                  SRTM_connection: SRTM = None, SRTM_download: str = None,
-                  GEOS5FP_connection: GEOS5FP = None, GEOS5FP_download: str = None, GEOS5FP_products: str = None, GEOS5FP_offline_processing: bool = True,
-                  GEDI_connection: GEDICanopyHeight = None, GEDI_download: str = None,
-                  ORNL_connection: MODISCI = None,
-                  CI_directory: str = None,
-                  soil_grids_connection: SoilGrids = None, soil_grids_download: str = None,
-                  intermediate_directory: str = None, preview_quality: int = DEFAULT_PREVIEW_QUALITY,
-                  ANN_model: Callable = None, ANN_model_filename: str = None,
-                  resampling: str = DEFAULT_RESAMPLING, coarse_cell_size: float = DEFAULT_COARSE_CELL_SIZE, downscale_air: bool = DEFAULT_DOWNSCALE_AIR,
-                  downscale_humidity: bool = DEFAULT_DOWNSCALE_HUMIDITY, downscale_moisture: bool = DEFAULT_DOWNSCALE_MOISTURE,
-                  floor_Topt: bool = FLOOR_TOPT,
-                  save_intermediate: bool = False, include_preview: bool = True, show_distribution: bool = True, load_previous: bool = True,
-                  target_variables: List[str] = DEFAULT_TARGET_VARIABLES) -> Dict[str, rt.Raster]:
+def VIIRS_GEOS5FP(
+    target_date: Union[date, str],
+    geometry: RasterGrid,
+    target: str,
+    ST_C: rt.Raster = None,
+    emissivity: rt.Raster = None,
+    NDVI: rt.Raster = None,
+    albedo: rt.Raster = None,
+    SWin: Union[rt.Raster, str] = None,
+    Rn: Union[rt.Raster, str] = None,
+    SM: Union[rt.Raster, str] = None,
+    wind_speed: rt.Raster = None,
+    Ta_C: Union[rt.Raster, str] = None,
+    RH: Union[rt.Raster, str] = None,
+    water: rt.Raster = None,
+    elevation_km: rt.Raster = None,
+    model: PTJPLSM = None,
+    ET_model_name: str = ET_MODEL_NAME,
+    working_directory: str = None,
+    static_directory: str = None,
+    VIIRS_download_directory: str = None,
+    VIIRS_products_directory: str = None,
+    VIIRS_shortwave_source: Union[VNP09GA, VNP43MA4] = None,
+    use_VIIRS_composite: bool = USE_VIIRS_COMPOSITE,
+    VIIRS_composite_days: int = VIIRS_COMPOSITE_DAYS,
+    VIIRS_GEOS5FP_output_directory: str = None,
+    SRTM_connection: SRTM = None,
+    SRTM_download: str = None,
+    GEOS5FP_connection: GEOS5FP = None,
+    GEOS5FP_download: str = None,
+    GEOS5FP_products: str = None,
+    GEOS5FP_offline_processing: bool = True,
+    GEDI_connection: GEDICanopyHeight = None,
+    GEDI_download: str = None,
+    ORNL_connection: MODISCI = None,
+    CI_directory: str = None,
+    soil_grids_connection: SoilGrids = None,
+    soil_grids_download: str = None,
+    intermediate_directory: str = None,
+    preview_quality: int = DEFAULT_PREVIEW_QUALITY,
+    ANN_model: Callable = None,
+    ANN_model_filename: str = None,
+    resampling: str = DEFAULT_RESAMPLING,
+    coarse_cell_size: float = DEFAULT_COARSE_CELL_SIZE,
+    downscale_air: bool = DEFAULT_DOWNSCALE_AIR,
+    downscale_humidity: bool = DEFAULT_DOWNSCALE_HUMIDITY,
+    downscale_moisture: bool = DEFAULT_DOWNSCALE_MOISTURE,
+    floor_Topt: bool = FLOOR_TOPT,
+    save_intermediate: bool = False,
+    include_preview: bool = True,
+    show_distribution: bool = True,
+    load_previous: bool = True,
+    target_variables: List[str] = DEFAULT_TARGET_VARIABLES
+) -> Dict[str, rt.Raster]:
     results = {}
 
     if isinstance(target_date, str):
