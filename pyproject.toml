@@ -30,7 +30,7 @@ dependencies = [
     "harmonized-landsat-sentinel>=2.0.1",
     "h5py",
     "koppengeiger",
-    "LandsatL2C2>=1.1.0",
+    "LandsatL2C2>=2.0.0",
     "matplotlib",
     "MCD12C1_2019_v006",
     "MODISCI",
