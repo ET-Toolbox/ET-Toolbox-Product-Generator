@@ -2,7 +2,7 @@ from typing import Union, List
 from datetime import date, datetime, timedelta
 from dateutil import parser
 from glob import glob
-from os.path import splitext
+from os.path import splitext, abspath, expanduser, join, exists, basename
 from typing import Dict, Callable
 from rasters import RasterGrid
 import rasters as rt
@@ -20,12 +20,13 @@ from GEOS5FP.downscaling import downscale_air_temperature, downscale_soil_moistu
 from PTJPL import FLOOR_TOPT
 import logging
 import colored_logging as cl
+from solar_apparent_time import solar_to_UTC
+import numpy as np
 
 ET_MODEL_NAME = "PTJPL"
 
-VIIRS_DOWNLOAD_DIRECTORY = "VIIRS_download"
-VIIRS_PRODUCTS_DIRECTORY = "VIIRS_products"
-VIIRS_GEOS5FP_OUTPUT_DIRECTORY = "VIIRS_GEOS5FP_output"
+VIIRS_DOWNLOAD_DIRECTORY = join("~", "data", "VIIRS_download")
+VIIRS_GEOS5FP_OUTPUT_DIRECTORY = join("~", "data", "VIIRS_GEOS5FP_output")
 
 USE_VIIRS_COMPOSITE = True
 VIIRS_COMPOSITE_DAYS = 0
@@ -36,7 +37,7 @@ DEFAULT_DOWNSCALE_AIR = False
 DEFAULT_DOWNSCALE_HUMIDITY = False
 DEFAULT_DOWNSCALE_MOISTURE = False
 DEFAULT_COARSE_CELL_SIZE = 27375
-DEFAULT_TARGET_VARIABLES = ["LE", "ET", "ESI"]
+DEFAULT_TARGET_VARIABLES = ["ET_daylight_kg", "ESI"]
 
 logger = logging.getLogger(__name__)
 
@@ -135,7 +136,6 @@ def VIIRS_GEOS5FP(
     working_directory: str = None,
     static_directory: str = None,
     VIIRS_download_directory: str = None,
-    VIIRS_products_directory: str = None,
     VIIRS_shortwave_source: VNP09GA = None,
     use_VIIRS_composite: bool = USE_VIIRS_COMPOSITE,
     VIIRS_composite_days: int = VIIRS_COMPOSITE_DAYS,
@@ -196,22 +196,17 @@ def VIIRS_GEOS5FP(
     logger.info(f"VIIRS GEOS-5 FP working directory: {cl.dir(working_directory)}")
 
     if VIIRS_download_directory is None:
-        VIIRS_download_directory = join(working_directory, VIIRS_DOWNLOAD_DIRECTORY)
+        VIIRS_download_directory = VIIRS_DOWNLOAD_DIRECTORY
 
     logger.info(f"VIIRS download directory: {cl.dir(VIIRS_download_directory)}")
 
-    if VIIRS_products_directory is None:
-        VIIRS_products_directory = join(working_directory, VIIRS_PRODUCTS_DIRECTORY)
-
-    logger.info(f"VIIRS products directory: {cl.dir(VIIRS_products_directory)}")
-
-    vnp21 = VNP21A1D(working_directory=working_directory, download_directory=VIIRS_download_directory, products_directory=VIIRS_products_directory)
+    vnp21 = VNP21A1D(download_directory=VIIRS_download_directory)
 
     if VIIRS_shortwave_source is None:
-        VIIRS_shortwave_source = VNP43MA4(working_directory=working_directory, download_directory=VIIRS_download_directory, products_directory=VIIRS_products_directory)
+        VIIRS_shortwave_source = VNP09GA(download_directory=VIIRS_download_directory)
 
     if VIIRS_GEOS5FP_output_directory is None:
-        VIIRS_GEOS5FP_output_directory = join(working_directory, VIIRS_GEOS5FP_OUTPUT_DIRECTORY)
+        VIIRS_GEOS5FP_output_directory = VIIRS_GEOS5FP_OUTPUT_DIRECTORY
 
     logger.info(f"VIIRS GEOS-5 FP output directory: {cl.dir(VIIRS_GEOS5FP_output_directory)}")
 
@@ -228,7 +223,7 @@ def VIIRS_GEOS5FP(
     if GEOS5FP_connection is None:
         try:
             logger.info(f"connecting to GEOS-5 FP")
-            GEOS5FP_connection = GEOS5FP(working_directory=working_directory, download_directory=GEOS5FP_download, products_directory=GEOS5FP_products)
+            GEOS5FP_connection = GEOS5FP(download_directory=GEOS5FP_download)
         except Exception as e:
             logger.exception(e)
             raise GEOS5FPNotAvailableError("unable to connect to GEOS-5 FP")
@@ -366,14 +361,32 @@ def VIIRS_GEOS5FP(
 
     logger.info(f"running PT-JPL ET model at {cl.time(time_UTC)}")
 
-    PTJPL_results = PTJPL(geometry=geometry, target=target, time_UTC=time_UTC, ST_C=ST_C, emissivity=emissivity, NDVI=NDVI, albedo=albedo, SWin=SWin,
-                                wind_speed=wind_speed, Ta_C=Ta_C, RH=RH, Rn=Rn, water=water, output_variables=target_variables)
+    PTJPL_results = PTJPL(
+        geometry=geometry,
+        time_UTC=time_UTC,
+        ST_C=ST_C,
+        emissivity=emissivity,
+        NDVI=NDVI,
+        albedo=albedo,
+        Ta_C=Ta_C,
+        RH=RH,
+        Rn_Wm2=Rn,
+        GEOS5FP_connection=GEOS5FP_connection,
+        upscale_to_daylight=True
+    )
 
+    ET_daylight_kg = PTJPL_results["ET_daylight_kg"]
+
+    results = {"ET": ET_daylight_kg}
 
     for k, v in PTJPL_results.items():
         results[k] = v
 
     for product, image in results.items():
+        if product not in target_variables:
+            logger.info(f"skipping {product} as it is not in target variables")
+            continue
+
         filename = generate_VIIRS_GEOS5FP_output_filename(VIIRS_GEOS5FP_output_directory=VIIRS_GEOS5FP_output_directory, target_date=target_date, time_UTC=time_UTC,
                                                           target=target, product=product)
 

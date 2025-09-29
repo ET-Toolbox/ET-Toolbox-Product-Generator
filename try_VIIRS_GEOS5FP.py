@@ -5,7 +5,7 @@ tile = "11SPS"
 geometry = sentinel_tiles.grid(tile)
 
 VIIRS_GEOS5FP(
-    target_date="2025-09-28",
+    target_date="2025-09-27",
     geometry=geometry,
     target=tile
 )
