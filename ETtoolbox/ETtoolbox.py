@@ -8,7 +8,7 @@ import colored_logging
 import rasters as rt
 from gedi_canopy_height import GEDICanopyHeight
 from GEOS5FP import GEOS5FP
-
+from check_distribution import check_distribution
 from global_forecasting_system import forecast_Ta_C, forecast_RH, get_GFS_listing, forecast_SWin
 from harmonized_landsat_sentinel import HLS2Connection
 from ETtoolbox.LANCE import retrieve_vnp43ma4n, retrieve_vnp43ia4n, retrieve_vnp21nrt_emissivity, available_LANCE_dates
@@ -56,125 +56,6 @@ LANDSAT_INITIALIZATION_DAYS = 16
 HLS_INITIALIZATION_DAYS = 10
 
 TARGET_VARIABLES = ["Rn", "LE", "ET", "ESI", "SM", "ST", "Ta", "RH", "SWin"]
-
-
-def check_distribution(o_image: Raster, s_variable: str, s_date_utc: date or str, s_target: str):
-    """
-    Checks the properties of the raster and logs messages appropriately
-
-    Parameters
-    ----------
-    o_image: object
-        Opened raster image to be tested
-    s_variable: str
-        Variable to analyze within the raster setup
-    s_date_utc: date or str
-        Date of the file
-    s_target: str
-        Data sources
-
-    Returns
-    -------
-    None. Values are written into the log file.
-
-    """
-
-    ### Perform math checks on the raster ###
-    # Get the unique values
-    da_unique = np.unique(o_image)
-
-    # Calculate the nan fraction. This is used as a proxy for the data quality
-    d_nan_proportion = np.count_nonzero(np.isnan(o_image)) / np.size(o_image)
-
-    ### Log the quality of the raster ###
-    if len(da_unique) < 10:
-        # The number of unique values is low. Log the data as problematic and continue
-        # Log the file and variable information
-        logger.info("variable " + colored_logging.name(s_variable) + " on " + colored_logging.time(f"{s_date_utc:%Y-%m-%d}") + " at " + colored_logging.place(s_target))
-
-        # Count occurences of each unique value
-        for d_value in da_unique:
-            # Count the occurences of the specific value
-            i_count = np.count_nonzero(o_image == d_value)
-
-            # Log based on the trial value
-            if d_value == 0:
-                # Log the occurences of a zero value in the raster
-                logger.info(f"* {colored_logging.colored(d_value, 'red')}: {colored_logging.colored(i_count, 'red')}")
-
-            else:
-                # Log the occurence of any other value
-                logger.info(f"* {colored_logging.val(d_value)}: {colored_logging.val(i_count)}")
-
-    else:
-        # There are many unique values in the dataset. Calculate the dataset quality based on the minimum/maximum
-        ## Process the raster minimum ##
-        # Calculate the minimum value
-        d_minimum = np.nanmin(o_image)
-
-        # Convert to a string based on the sign of the value
-        if d_minimum < 0:
-            # The minimum value is less than zero. This is not expected, so log it as an angry red
-            s_minimum_string = colored_logging.colored(f"{d_minimum:0.3f}", "red")
-
-        else:
-            # The minimum value is zero or greater. Log normally.
-            s_minimum_string = colored_logging.val(f"{d_minimum:0.3f}")
-
-        ## Process the raster maximum ##
-        # Calculate the raster maximum
-        d_maximum = np.nanmax(o_image)
-
-        # Convert to a string based on the sign of the value
-        if d_maximum <= 0:
-            # The maximum values is less than zero. This is not expected, so log it as an angry red
-            s_maximum_string = colored_logging.colored(f"{d_maximum:0.3f}", "red")
-
-        else:
-            # The maximum is greater than zero. Log normally.
-            s_maximum_string = colored_logging.val(f"{d_maximum:0.3f}")
-
-        ## Process the fraction of nans ##
-        # Convert to a sting based on the fraction of nans
-        if d_nan_proportion == 1:
-            # All of the dataset is nans. Log it as angry red.
-            s_nan_proportion_string = colored_logging.colored(f"{(d_nan_proportion * 100):0.2f}%", "red")
-
-        elif d_nan_proportion > 0.5:
-            # More than half the dataset is nans. This is likely concerning. Log it as unhappy yellow.
-            s_nan_proportion_string = colored_logging.colored(f"{(d_nan_proportion * 100):0.2f}%", "yellow")
-
-        else:
-            # Less than half the dataset is nans. Lot it as normal.
-            s_nan_proportion_string = colored_logging.val(f"{(d_nan_proportion * 100):0.2f}%")
-
-        ## Output the message ##
-        # Construct the log message
-        s_message = "variable " + colored_logging.name(s_variable) + \
-                  " on " + colored_logging.time(f"{s_date_utc:%Y-%m-%d}") + \
-                  " at " + colored_logging.place(s_target) + \
-                  " min: " + s_minimum_string + \
-                  " mean: " + colored_logging.val(f"{np.nanmean(o_image):0.3f}") + \
-                  " max: " + s_maximum_string + \
-                  " nan: " + s_nan_proportion_string + f" ({colored_logging.val(o_image.nodata)})"
-
-        # Add a zero check message onto the end of the log and determine log type
-        if np.all(o_image == 0):
-            # The whole datsaet is zeros.
-            # Append a message
-            s_message += " all zeros"
-
-            # Log as a warning
-            logger.warning(s_message)
-
-        else:
-            # The dataset has nonzero values. Log normally.
-            logger.info(s_message)
-
-    ### Perform an nan check ###
-    if d_nan_proportion == 1:
-        # The whole dataset is nans. Log it.
-        logger.error(f"variable {s_variable} on {s_date_utc:%Y-%m-%d} at {s_target} is a blank image")
 
 
 def ET_toolbox_hindcast_forecast_tile(
