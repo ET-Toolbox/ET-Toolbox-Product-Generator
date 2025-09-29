@@ -80,7 +80,7 @@ Homepage = "https://github.com/ET-Toolbox/ET-Toolbox-Product-Generator"
 [project.scripts]
 LANCE-VIIRS-Dates = "ETtoolbox.available_lance_dates:main"
 ET-Toolbox-Credentials = "ETtoolbox.check_credentials:main"
-ET-Toolbox-Tile = "ETtoolbox.ETtoolbox_tile:main"
+ET-Toolbox-Tile = "ETtoolbox.ETtoolbox_hindcast_forecast_tile:main"
 ET-Toolbox-Rio-Grande = "ETtoolbox.ETtoolbox_riogrande:main"
 ET-Toolbox-Historical-Fine = "ETtoolbox.ETtoolbox_historical_fine:main"
 ET-Toolbox-Historical-Coarse = "ETtoolbox.ETtoolbox_historical_coarse:main"
