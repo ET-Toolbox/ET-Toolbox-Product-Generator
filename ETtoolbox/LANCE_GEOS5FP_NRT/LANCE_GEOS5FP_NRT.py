@@ -1,19 +1,18 @@
 from glob import glob
 from os.path import splitext
 from typing import Dict, Callable
-import boto3
 from rasters import RasterGrid
 
 from gedi_canopy_height import GEDICanopyHeight
-from geos5fp import GEOS5FP
+from GEOS5FP import GEOS5FP
 from ETtoolbox.LANCE import *
 from ETtoolbox.LANCE import LANCENotAvailableError
-from modisci import MODISCI
-from ETtoolbox.PTJPL import PTJPL
-from ETtoolbox.PTJPLSM import PTJPLSM
-from ETtoolbox.SRTM import SRTM
+from MODISCI import MODISCI
+from PTJPL import PTJPL
+from PTJPLSM import PTJPLSM
+from NASADEM import NASADEMConnection
 from soil_capacity_wilting import SoilGrids
-from geos5fp.downscaling import downscale_air_temperature, downscale_soil_moisture, downscale_vapor_pressure_deficit, \
+from GEOS5FP.downscaling import downscale_air_temperature, downscale_soil_moisture, downscale_vapor_pressure_deficit, \
     downscale_relative_humidity, bias_correct
 
 from ETtoolbox.LANCE import ARCHIVE
@@ -126,7 +125,7 @@ def LANCE_GEOS5FP_NRT(
         s_lance_download_directory: str = None,
         LANCE_output_directory: str = None,
         output_bucket_name: str = None,
-        SRTM_connection: SRTM = None,
+        SRTM_connection: NASADEMConnection = None,
         SRTM_download: str = None,
         GEOS5FP_connection: GEOS5FP = None,
         GEOS5FP_download: str = None,
@@ -165,12 +164,12 @@ def LANCE_GEOS5FP_NRT(
     logger.info(f"LANCE target time UTC: {colored_logging.time(time_UTC)}")
 
     if working_directory is None:
-        working_directory = "."
+        working_directory = "~/data/LANCE_GEOS5FP"
 
     working_directory = abspath(expanduser(working_directory))
 
     if SRTM_connection is None:
-        SRTM_connection = SRTM(working_directory=static_directory, download_directory=SRTM_download, offline_ok=True)
+        SRTM_connection = NASADEMConnection(working_directory=static_directory, download_directory=SRTM_download, offline_ok=True)
 
     if o_water is None:
         o_water = SRTM_connection.swb(o_geometry)
@@ -189,12 +188,6 @@ def LANCE_GEOS5FP_NRT(
         LANCE_output_directory = join(working_directory, DEFAULT_LANCE_OUTPUT_DIRECTORY)
 
     logger.info(f"LANCE output directory: {colored_logging.dir(LANCE_output_directory)}")
-
-    if output_bucket_name is not None:
-        logger.info(f"output S3 bucket: {output_bucket_name}")
-        session = boto3.Session()
-        s3 = session.resource("s3")
-        output_bucket = s3.Bucket(output_bucket_name)
 
     LANCE_already_processed = check_LANCE_already_processed(LANCE_output_directory=LANCE_output_directory, target_date=target_date, time_UTC=time_UTC,
                                                             target=target, products=target_variables)

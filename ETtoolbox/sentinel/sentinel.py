@@ -54,7 +54,7 @@ DEFAULT_ORDER_BY = "-beginposition"
 
 SENTINEL_POLYGONS_FILENAME = join(abspath(dirname(__file__)), "sentinel2_tiles_world.geojson")
 
-DEFAULT_WORKING_DIRECTORY = "."
+DEFAULT_WORKING_DIRECTORY = "~/data/Sentinel"
 DEFAULT_DOWNLOAD_DIRECTORY = "sentinel_download"
 DEFAULT_PRODUCTS_DIRECTORY = "sentinel_products"
 

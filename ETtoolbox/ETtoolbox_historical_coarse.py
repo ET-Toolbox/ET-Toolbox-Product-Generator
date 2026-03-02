@@ -8,16 +8,16 @@ import colored_logging
 import numpy as np
 from dateutil import parser
 from gedi_canopy_height import GEDICanopyHeight
-from geos5fp import GEOS5FP
-from modisci import MODISCI
+from GEOS5FP import GEOS5FP
+from MODISCI import MODISCI
 from rasters import Raster, RasterGrid
 from sentinel_tiles import sentinel_tiles
 from soil_capacity_wilting import SoilGrids
 from solar_apparent_time import solar_to_UTC
-
-from ETtoolbox.LandsatL2C2 import LandsatL2C2
-from ETtoolbox.PTJPLSM import PTJPLSM, DEFAULT_PREVIEW_QUALITY, DEFAULT_RESAMPLING
-from ETtoolbox.SRTM import SRTM
+from check_distribution import check_distribution
+from LandsatL2C2 import LandsatL2C2
+from PTJPL import PTJPL
+from NASADEM import NASADEMConnection
 from ETtoolbox.VIIRS import VNP43MA4
 from ETtoolbox.VIIRS.VNP09GA import VNP09GA
 from ETtoolbox.VIIRS.VNP21A1D import VNP21A1D
@@ -25,9 +25,11 @@ from ETtoolbox.VIIRS_GEOS5FP import VIIRS_GEOS5FP, check_VIIRS_GEOS5FP_already_p
     VIIRS_PRODUCTS_DIRECTORY
 from ETtoolbox.daterange import date_range
 
+from .constants import *
+
 logger = logging.getLogger(__name__)
 
-ET_MODEL_NAME = "PTJPLSM"
+ET_MODEL_NAME = "PTJPL"
 SWIN_MODEL_NAME = "GEOS5FP"
 RN_MODEL_NAME = "Verma"
 
@@ -80,66 +82,6 @@ class BlankOutputError(ValueError):
     pass
 
 
-def check_distribution(
-        image: Raster,
-        variable: str,
-        date_UTC: date or str,
-        target: str):
-    unique = np.unique(image)
-    nan_proportion = np.count_nonzero(np.isnan(image)) / np.size(image)
-
-    if len(unique) < 10:
-        logger.info(
-            "variable " + colored_logging.name(variable) + " on " + colored_logging.time(f"{date_UTC:%Y-%m-%d}") + " at " + colored_logging.place(
-                target))
-
-        for value in unique:
-            count = np.count_nonzero(image == value)
-
-            if value == 0:
-                logger.info(f"* {colored_logging.colored(value, 'red')}: {colored_logging.colored(count, 'red')}")
-            else:
-                logger.info(f"* {colored_logging.val(value)}: {colored_logging.val(count)}")
-    else:
-        minimum = np.nanmin(image)
-
-        if minimum < 0:
-            minimum_string = colored_logging.colored(f"{minimum:0.3f}", "red")
-        else:
-            minimum_string = colored_logging.val(f"{minimum:0.3f}")
-
-        maximum = np.nanmax(image)
-
-        if maximum <= 0:
-            maximum_string = colored_logging.colored(f"{maximum:0.3f}", "red")
-        else:
-            maximum_string = colored_logging.val(f"{maximum:0.3f}")
-
-        if nan_proportion > 0.5:
-            nan_proportion_string = colored_logging.colored(f"{(nan_proportion * 100):0.2f}%", "yellow")
-        elif nan_proportion == 1:
-            nan_proportion_string = colored_logging.colored(f"{(nan_proportion * 100):0.2f}%", "red")
-        else:
-            nan_proportion_string = colored_logging.val(f"{(nan_proportion * 100):0.2f}%")
-
-        message = "variable " + colored_logging.name(variable) + \
-                  " on " + colored_logging.time(f"{date_UTC:%Y-%m-%d}") + \
-                  " at " + colored_logging.place(target) + \
-                  " min: " + minimum_string + \
-                  " mean: " + colored_logging.val(f"{np.nanmean(image):0.3f}") + \
-                  " max: " + maximum_string + \
-                  " nan: " + nan_proportion_string + f" ({colored_logging.val(image.nodata)})"
-
-        if np.all(image == 0):
-            message += " all zeros"
-            logger.warning(message)
-        else:
-            logger.info(message)
-
-    if nan_proportion == 1:
-        raise BlankOutputError(f"variable {variable} on {date_UTC:%Y-%m-%d} at {target} is a blank image")
-
-
 def generate_landsat_ST_C_prior(
         date_UTC: Union[date, str],
         geometry: RasterGrid,
@@ -185,7 +127,7 @@ def ET_toolbox_historical_coarse_tile(
         start_date: Union[date, str] = None,
         end_date: Union[date, str] = None,
         water: Raster = None,
-        model: PTJPLSM = None,
+        model: PTJPL = None,
         ET_model_name: str = ET_MODEL_NAME,
         SWin_model_name: str = SWIN_MODEL_NAME,
         Rn_model_name: str = RN_MODEL_NAME,
@@ -196,8 +138,8 @@ def ET_toolbox_historical_coarse_tile(
         use_VIIRS_composite: bool = USE_VIIRS_COMPOSITE,
         VIIRS_composite_days: int = VIIRS_COMPOSITE_DAYS,
         VIIRS_GEOS5FP_output_directory: str = None,
-        VIIRS_shortwave_source: Union[VNP09GA, VNP43MA4] = None,
-        SRTM_connection: SRTM = None,
+        VIIRS_shortwave_source: VNP09GA = None,
+        SRTM_connection: NASADEMConnection = None,
         SRTM_download: str = None,
         GEOS5FP_connection: GEOS5FP = None,
         GEOS5FP_download: str = None,
@@ -209,7 +151,6 @@ def ET_toolbox_historical_coarse_tile(
         soil_grids_connection: SoilGrids = None,
         soil_grids_download: str = None,
         intermediate_directory: str = None,
-        preview_quality: int = DEFAULT_PREVIEW_QUALITY,
         ANN_model: Callable = None,
         ANN_model_filename: str = None,
         resampling: str = DEFAULT_RESAMPLING,
@@ -392,7 +333,7 @@ def main(argv=sys.argv):
     if "--working" in argv:
         working_directory = argv[argv.index("--working") + 1]
     else:
-        working_directory = "."
+        working_directory = "~/data/ETtoolbox"
 
     if "--static" in argv:
         static_directory = argv[argv.index("--static") + 1]

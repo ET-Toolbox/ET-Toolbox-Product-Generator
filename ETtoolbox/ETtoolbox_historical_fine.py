@@ -13,7 +13,7 @@ from gedi_canopy_height import GEDICanopyHeight
 from geos5fp import GEOS5FP
 from solar_apparent_time import solar_to_UTC
 from harmonized_landsat_sentinel import HLS2Connection
-from ETtoolbox.LandsatL2C2 import LandsatL2C2
+from LandsatL2C2 import LandsatL2C2
 from modisci import MODISCI
 from ETtoolbox.PTJPLSM import PTJPLSM, DEFAULT_PREVIEW_QUALITY, DEFAULT_RESAMPLING
 from ETtoolbox.SRTM import SRTM
@@ -783,7 +783,7 @@ def main(argv=sys.argv):
     if "--working" in argv:
         working_directory = argv[argv.index("--working") + 1]
     else:
-        working_directory = "."
+        working_directory = "~/data/ETtoolbox"
 
     if "--static" in argv:
         static_directory = argv[argv.index("--static") + 1]

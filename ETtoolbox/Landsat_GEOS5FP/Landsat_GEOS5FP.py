@@ -1,4 +1,4 @@
-from ETtoolbox.LandsatL2C2 import LandsatL2C2
+from LandsatL2C2 import LandsatL2C2
 from ETtoolbox.PTJPLSM import PTJPLSM
 from datetime import datetime, date, timedelta
 from typing import Union, List
@@ -108,7 +108,7 @@ def Landsat_GEOS5FP(target_date: Union[date, str], geometry: rt.RasterGeometry, 
     logger.info(f"Landsat target time UTC: {colored_logging.time(time_UTC)}")
 
     if working_directory is None:
-        working_directory = "."
+        working_directory = "~/data/Landsat_GEOS5FP"
     
     working_directory = abspath(expanduser(working_directory))
     
